@@ -86,6 +86,11 @@
 		<servlet-class>@MODULE_PACKAGE@.web.FormDownloadServlet</servlet-class>
 	</servlet>
 	-->
+
+	<servlet>
+		<servlet-name>gpconnectServlet</servlet-name>
+		<servlet-class>org.openmrs.module.gpconnect.server.GPConnectServer</servlet-class>
+	</servlet>
 	<!-- /Servlets -->
 	
 	
