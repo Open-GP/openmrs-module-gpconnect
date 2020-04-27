@@ -92,7 +92,15 @@
 		<servlet-class>org.openmrs.module.gpconnect.server.GPConnectServer</servlet-class>
 	</servlet>
 	<!-- /Servlets -->
-	
+
+	<filter>
+		<filter-name>gpconnectAuthenticationFilter</filter-name>
+		<filter-class>org.openmrs.module.fhir.filter.AuthorizationFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>gpconnectAuthenticationFilter</filter-name>
+		<url-pattern>/ms/gpconnect/*</url-pattern>
+	</filter-mapping>
 	
 	<!-- Internationalization -->
 	<!-- All message codes should start with @MODULE_ID@.* -->
