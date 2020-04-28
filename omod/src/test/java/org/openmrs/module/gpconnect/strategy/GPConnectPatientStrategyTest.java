@@ -11,20 +11,20 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class GPConnectPatientStrategyTest {
-
-    @Test
-    public void shouldMapFakeEmail() {
-        String patientUuid = "test";
-
-        ServiceContext serviceContext = ServiceContext.getInstance();
-        PatientService mockPatientService = mock(PatientService.class);
-        when(mockPatientService.getPatientByUuid(patientUuid)).thenReturn(new org.openmrs.Patient());
-        serviceContext.setPatientService(mockPatientService);
-        Context.setContext(serviceContext);
-        GPConnectPatientStrategy patientStrategy = new GPConnectPatientStrategy();
-
-        Patient test = patientStrategy.getPatient(patientUuid);
-
-        assertEquals(test.getTelecom().get(0).getValue(), "test@mail.com");
-    }
+	
+	@Test
+	public void shouldMapFakeEmail() {
+		String patientUuid = "test";
+		
+		ServiceContext serviceContext = ServiceContext.getInstance();
+		PatientService mockPatientService = mock(PatientService.class);
+		when(mockPatientService.getPatientByUuid(patientUuid)).thenReturn(new org.openmrs.Patient());
+		serviceContext.setPatientService(mockPatientService);
+		Context.setContext(serviceContext);
+		GPConnectPatientStrategy patientStrategy = new GPConnectPatientStrategy();
+		
+		Patient test = patientStrategy.getPatient(patientUuid);
+		
+		assertEquals(test.getTelecom().get(0).getValue(), "test@mail.com");
+	}
 }
