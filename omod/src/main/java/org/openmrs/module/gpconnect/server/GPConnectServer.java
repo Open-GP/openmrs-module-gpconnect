@@ -8,6 +8,7 @@ import ca.uhn.fhir.rest.server.RestfulServer;
 import ca.uhn.fhir.rest.server.interceptor.LoggingInterceptor;
 import ca.uhn.fhir.rest.server.interceptor.ResponseHighlighterInterceptor;
 import org.hl7.fhir.dstu3.hapi.rest.server.ServerCapabilityStatementProvider;
+import org.openmrs.api.impl.AdministrationServiceImpl;
 import org.openmrs.module.fhir.addressstrategy.OpenMRSFHIRRequestAddressStrategy;
 import org.openmrs.module.fhir.api.util.FHIRUtils;
 import org.openmrs.module.fhir.providers.RestfulPatientResourceProvider;
@@ -30,6 +31,7 @@ public class GPConnectServer extends RestfulServer {
 	 */
 	@Override
 	protected void initialize() {
+		new AdministrationServiceImpl().setGlobalProperty("fhir.patient.strategy", "GPConnectPatientStrategy");
 		this.setServerAddressStrategy(new OpenMRSFHIRRequestAddressStrategy());
 		List<IResourceProvider> resourceProviders = new ArrayList<IResourceProvider>();
 		resourceProviders.add(new RestfulPatientResourceProvider());

@@ -101,7 +101,7 @@
 		<filter-name>gpconnectAuthenticationFilter</filter-name>
 		<url-pattern>/ms/gpconnect/*</url-pattern>
 	</filter-mapping>
-	
+
 	<!-- Internationalization -->
 	<!-- All message codes should start with @MODULE_ID@.* -->
 	<messages>
