@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                  http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+
+   <changeSet id="gpconnect-nhs-patient-1" author="mmoise">
+      <preConditions onFail="MARK_RAN">
+         <not><tableExists tableName="nhs_patient"/></not>
+      </preConditions>
+      <comment>
+         Creating the nhs patient table
+      </comment>
+      <createTable tableName="nhs_patient">
+         <column name="patient_id" type="int" autoIncrement="false">
+            <constraints primaryKey="true" nullable="false"/>
+         </column>
+         <column name="cadaveric_donor" type="boolean">
+         </column>
+      </createTable>
+      <addForeignKeyConstraint constraintName="nhs_patient_owner_fk" baseTableName="nhs_patient" baseColumnNames="patient_id"  referencedTableName="patient"
+                               referencedColumnNames="patient_id" />
+   </changeSet>
+ 
+</databaseChangeLog>
