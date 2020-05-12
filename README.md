@@ -1,30 +1,25 @@
-${moduleName}
-==========================
+GPConnect module
+==========
 
-Description
------------
-This is a very basic module which can be used as a starting point in creating a new module.
+The aim of this module is to enhance the existing FHIR OpenMRS module to be GPConnect compatible - see more details about what GPConnect is [here](https://digital.nhs.uk/services/gp-connect). 
 
-Building from Source
---------------------
-You will need to have Java 1.6+ and Maven 2.x+ installed.  Use the command 'mvn package' to 
-compile and package the module.  The .omod file will be in the omod/target folder.
+A high level specification of the API can be found here: https://digital.nhs.uk/services/gp-connect/gp-connect-specifications-for-developers. Technically speaking, GPConnect is a standard extending [FHIR STU3](https://www.hl7.org/fhir/stu3/) - to note that is **not** the latest version of the FHIR standard. 
 
-Alternatively you can add the snippet provided in the [Creating Modules](https://wiki.openmrs.org/x/cAEr) page to your 
-omod/pom.xml and use the mvn command:
+Currently there are 2 FHIR OpenMRS modules:
+* https://github.com/openmrs/openmrs-module-fhir2 - which currently under development and implements [FHIR R4](https://hl7.org/fhir/R4/) which is the latest FHIR version
+* https://github.com/openmrs/openmrs-module-fhir - which is part of the vanilla OpenMRS reference application (ie. implementation finished) and implements [FHIR STU3](https://www.hl7.org/fhir/stu3/) (the version GPConnect is based on)
 
-    mvn package -P deploy-web -D deploy.path="../../openmrs-1.8.x/webapp/src/main/webapp"
+This module relies on [openmrs-module-fhir](https://github.com/openmrs/openmrs-module-fhir) 
 
-It will allow you to deploy any changes to your web 
-resources such as jsp or js files without re-installing the module. The deploy path says 
-where OpenMRS is deployed.
+A technical specification of GPConnect API can be found here: http://orange.testlab.nhs.uk/. It contains Swagger docs, a Postman collection and a simple test webapp using the test deployment of GPConnect. 
 
-Installation
-------------
-1. Build the module to produce the .omod file.
-2. Use the OpenMRS Administration > Manage Modules screen to upload and install the .omod file.
+As part of this modules we would implement the extension of FHIR resources needed to match the GPConnect API. These resources are:
+* Patient
+* Organization
+* Practitioner
+* Location
+* Appointment
 
-If uploads are not allowed from the web (changable via a runtime property), you can drop the omod
-into the ~/.OpenMRS/modules folder.  (Where ~/.OpenMRS is assumed to be the Application 
-Data Directory that the running openmrs is currently using.)  After putting the file in there 
-simply restart OpenMRS/tomcat and the module will be loaded and started.
+For each of the resources above there is an associated GPConnect FHIR profile found here: https://fhir.nhs.uk/StructureDefinition 
+
+ 
