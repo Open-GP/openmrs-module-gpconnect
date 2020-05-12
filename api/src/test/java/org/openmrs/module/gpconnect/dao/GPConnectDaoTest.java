@@ -7,17 +7,20 @@
  * Copyright (C) OpenMRS Inc. OpenMRS is a registered trademark and the OpenMRS
  * graphic logo is a trademark of OpenMRS Inc.
  */
-package org.openmrs.module.gpconnect.api.dao;
+package org.openmrs.module.gpconnect.dao;
 
-import org.junit.Test;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+
 import org.junit.Ignore;
+import org.junit.Test;
 import org.openmrs.api.UserService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.gpconnect.Item;
+import org.openmrs.module.gpconnect.api.dao.GPConnectDao;
 import org.openmrs.test.BaseModuleContextSensitiveTest;
 import org.springframework.beans.factory.annotation.Autowired;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
 
 /**
  * It is an integration test (extends BaseModuleContextSensitiveTest), which verifies DAO methods
