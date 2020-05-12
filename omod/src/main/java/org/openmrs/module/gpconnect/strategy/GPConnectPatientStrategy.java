@@ -1,12 +1,15 @@
 package org.openmrs.module.gpconnect.strategy;
 
+import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.ContactPoint;
+import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.openmrs.module.fhir.api.strategies.patient.PatientStrategy;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.entity.Person;
 import org.openmrs.module.gpconnect.repository.NhsPatientRepository;
 import org.openmrs.module.gpconnect.repository.PersonRepository;
+import org.openmrs.module.gpconnect.util.GPConnectExtensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,9 +37,9 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 			Optional<NhsPatient> nhsPatient = nhsPatientRepository.findById(person.get().id);
 			
 			if (nhsPatient.isPresent()) {
-				System.out.printf("cadaveric donor: %s\n", nhsPatient.get().cadavericDonor);
-			} else {
-				System.out.println("no cadaveric donor information");
+				Extension cadavericDonor = new Extension(GPConnectExtensions.CADAVERIC_DONOR_URL, new BooleanType(
+				        nhsPatient.get().cadavericDonor));
+				patient.addExtension(cadavericDonor);
 			}
 		}
 		
