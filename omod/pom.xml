@@ -144,7 +144,7 @@
     <repository>
       <id>openmrs-repo</id>
       <name>OpenMRS Nexus Repository</name>
-      <url>https://mavenrepo.openmrs.org</url>
+      <url>http://mavenrepo.openmrs.org/nexus/content/repositories/public</url>
     </repository>
     <repository>
       <id>central</id>
