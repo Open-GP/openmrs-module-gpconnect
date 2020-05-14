@@ -3,13 +3,13 @@
 <module configVersion="1.2">
 	
 	<!-- Base Module Properties -->
-	<id>${project.parent.artifactId}</id>
-	<name>${project.parent.name}</name>
-	<version>${project.parent.version}</version>
+	<id>gpconnect</id>
+	<name>GPConnect</name>
+	<version>0.0.2-SNAPSHOT</version>
 	<package>org.openmrs.module.gpconnect</package>
 	<author>mmoise</author>
 	<description>
-			${project.parent.description}
+		This module implements GPConnect API as defined by NHS Digital
 	</description>
 
 	<activator>org.openmrs.module.gpconnect.GPConnectActivator</activator>
@@ -17,7 +17,7 @@
 	<!-- <updateURL>https://modules.openmrs.org/modules/download/@MODULE_ID@/update.rdf</updateURL> -->
 	<!-- /Base Module Properties -->
 	
-	<require_version>1.11.6</require_version>
+	<require_version>2.3.0</require_version>
 
 	<require_modules>
 		<require_module version="1.20.0">org.openmrs.module.fhir</require_module>

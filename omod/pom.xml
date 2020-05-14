@@ -165,7 +165,7 @@
   </repositories>
 
   <build>
-    <finalName>${project.parent.artifactId}-${project.parent.version}</finalName>
+    <finalName>gpconnect-0.0.2-SNAPSHOT</finalName>
 
     <plugins>
       <plugin>
