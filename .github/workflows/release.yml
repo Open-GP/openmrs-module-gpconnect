@@ -19,6 +19,6 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Publish package
-        run: mvn -B deploy
+        run: mvn -B deploy -Dmaven.test.skip=true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
