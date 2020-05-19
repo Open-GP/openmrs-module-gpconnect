@@ -9,7 +9,7 @@
 
   <groupId>org.openmrs.module</groupId>
   <artifactId>gpconnect</artifactId>
-  <version>0.0.2-SNAPSHOT</version>
+  <version>0.0.3-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>GPConnect</name>
   <description>This module implements GPConnect API as defined by NHS Digital</description>
