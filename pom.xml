@@ -63,6 +63,12 @@
 			<name>GitHub OWNER Apache Maven Packages</name>
 			<url>https://maven.pkg.github.com/Open-GP/openmrs-module-gpconnect</url>
 		</repository>
+
+		<snapshotRepository>
+			<id>github</id>
+			<name>GitHub OWNER Apache Maven Packages</name>
+			<url>https://maven.pkg.github.com/Open-GP/openmrs-module-gpconnect</url>
+		</snapshotRepository>
 	</distributionManagement>
 
 	<properties>
