@@ -49,22 +49,50 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 
 	@Override
 	public List<Patient> searchPatients(boolean active) {
-		return super.searchPatients(active);
+		return super.searchPatients(active)
+				.stream()
+				.map(patient -> nhsPatientMapper.enhance(patient))
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	public Bundle searchPatientsByGivenName(String givenName) {
-		return super.searchPatientsByGivenName(givenName);
+		Bundle bundle = super.searchPatientsByGivenName(givenName);
+
+		bundle.getEntry()
+				.forEach(bundleEntryComponent -> {
+					Patient patient = (Patient) bundleEntryComponent.getResource();
+					bundleEntryComponent.setResource(nhsPatientMapper.enhance(patient));
+				});
+
+		return bundle;
+
 	}
 
 	@Override
 	public Bundle searchPatientsByFamilyName(String familyName) {
-		return super.searchPatientsByFamilyName(familyName);
+		Bundle bundle = super.searchPatientsByFamilyName(familyName);
+
+		bundle.getEntry()
+				.forEach(bundleEntryComponent -> {
+					Patient patient = (Patient) bundleEntryComponent.getResource();
+					bundleEntryComponent.setResource(nhsPatientMapper.enhance(patient));
+				});
+
+		return bundle;
 	}
 
 	@Override
 	public Bundle searchPatientsByName(String name) {
-		return super.searchPatientsByName(name);
+		Bundle bundle = super.searchPatientsByName(name);
+
+		bundle.getEntry()
+				.forEach(bundleEntryComponent -> {
+					Patient patient = (Patient) bundleEntryComponent.getResource();
+					bundleEntryComponent.setResource(nhsPatientMapper.enhance(patient));
+				});
+
+		return bundle;
 	}
 
 	@Override
