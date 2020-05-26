@@ -1,6 +1,5 @@
 package org.openmrs.module.gpconnect.entity;
 
-
 import lombok.EqualsAndHashCode;
 import lombok.Setter;
 import lombok.ToString;

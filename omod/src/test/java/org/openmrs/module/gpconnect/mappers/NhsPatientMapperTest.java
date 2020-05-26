@@ -76,18 +76,26 @@ public class NhsPatientMapperTest {
 		Extension extension = actualPatient.getExtensionsByUrl(GPConnectExtensions.CADAVERIC_DONOR_URL).get(0);
 		assertEquals(((BooleanType) extension.getValue()).booleanValue(), true);
 	}
-
-
+	
 	@Test
-	public void shouldSaveNhsPatient() {
+	public void shouldMapNhsPatient() {
 		Patient patient = new Patient();
-
-		patient.setExtension(Collections.singletonList(
-				new Extension(GPConnectExtensions.CADAVERIC_DONOR_URL, new BooleanType(true))
-		));
-
+		
+		patient.setExtension(Collections.singletonList(new Extension(GPConnectExtensions.CADAVERIC_DONOR_URL,
+		        new BooleanType(true))));
+		
 		NhsPatient expectedPatient = new NhsPatient();
 		expectedPatient.setCadavericDonor(true);
+		expectedPatient.setId(3L);
+		
+		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
+	}
+
+	@Test
+	public void shouldSkipCadavericDonorWhenMissing() {
+		Patient patient = new Patient();
+
+		NhsPatient expectedPatient = new NhsPatient();
 		expectedPatient.setId(3L);
 
 		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));

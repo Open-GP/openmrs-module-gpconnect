@@ -18,7 +18,7 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 	
 	@Autowired
 	NhsPatientMapper nhsPatientMapper;
-
+	
 	@Autowired
 	NhsPatientService nhsPatientService;
 	
@@ -37,14 +37,14 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 				.map(patient -> nhsPatientMapper.enhance(patient))
 				.collect(Collectors.toList());
 	}
-
+	
 	@Override
 	public List<Patient> searchPatientsByIdentifier(String identifierValue, String identifierTypeName) {
 		return super.searchPatientsByIdentifier(identifierValue, identifierTypeName).stream()
 				.map(patient -> nhsPatientMapper.enhance(patient))
 				.collect(Collectors.toList());
 	}
-
+	
 	@Override
 	public List<Patient> searchPatientsByIdentifier(String identifier) {
 		return super.searchPatientsByIdentifier(identifier)
@@ -52,7 +52,7 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 				.map(patient -> nhsPatientMapper.enhance(patient))
 				.collect(Collectors.toList());
 	}
-
+	
 	@Override
 	public List<Patient> searchPatients(boolean active) {
 		return super.searchPatients(active)
@@ -60,7 +60,7 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 				.map(patient -> nhsPatientMapper.enhance(patient))
 				.collect(Collectors.toList());
 	}
-
+	
 	@Override
 	public Bundle searchPatientsByGivenName(String givenName) {
 		Bundle bundle = super.searchPatientsByGivenName(givenName);
@@ -74,7 +74,7 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 		return bundle;
 
 	}
-
+	
 	@Override
 	public Bundle searchPatientsByFamilyName(String familyName) {
 		Bundle bundle = super.searchPatientsByFamilyName(familyName);
@@ -87,7 +87,7 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 
 		return bundle;
 	}
-
+	
 	@Override
 	public Bundle searchPatientsByName(String name) {
 		Bundle bundle = super.searchPatientsByName(name);
@@ -100,30 +100,36 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 
 		return bundle;
 	}
-
+	
 	@Override
 	public Bundle getPatientOperationsById(String patientId) {
 		return super.getPatientOperationsById(patientId);
 	}
-
+	
 	@Override
 	public void deletePatient(String uuid) {
 		super.deletePatient(uuid);
 	}
-
+	
 	//Todo handle the case where writing the nhs patient fails - maybe reverting the write for the patient
 	@Override
 	public Patient createFHIRPatient(Patient patient) {
 		Patient fhirPatient = super.createFHIRPatient(patient);
-
+		
 		org.openmrs.Patient patientByUuid = Context.getPatientService().getPatientByUuid(fhirPatient.getId());
-		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(fhirPatient, patientByUuid.getPatientId());
-		nhsPatientService.save(nhsPatient);
+		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, patientByUuid.getPatientId());
+		nhsPatientService.saveOrUpdate(nhsPatient);
 		return nhsPatientMapper.enhance(fhirPatient);
 	}
-
+	
+	//Todo check if update and create scenarios are working smoothly
 	@Override
 	public Patient updatePatient(Patient patient, String uuid) {
-		return super.updatePatient(patient, uuid);
+		Patient fhirPatient = super.updatePatient(patient, uuid);
+		
+		org.openmrs.Patient patientByUuid = Context.getPatientService().getPatientByUuid(fhirPatient.getId());
+		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, patientByUuid.getPatientId());
+		nhsPatientService.saveOrUpdate(nhsPatient);
+		return nhsPatientMapper.enhance(fhirPatient);
 	}
 }

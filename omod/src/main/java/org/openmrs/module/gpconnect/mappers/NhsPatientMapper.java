@@ -11,6 +11,8 @@ import org.openmrs.module.gpconnect.util.GPConnectExtensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class NhsPatientMapper {
 	
@@ -24,9 +26,9 @@ public class NhsPatientMapper {
 		if (patient == null) {
 			return null;
 		}
-
+		
 		String uuid = patient.getId();
-
+		
 		ContactPoint email = new ContactPoint();
 		email.setSystem(ContactPoint.ContactPointSystem.EMAIL).setValue("test@mail.com");
 		patient.addTelecom(email);
@@ -49,10 +51,13 @@ public class NhsPatientMapper {
 		
 		return patient;
 	}
-
+	
 	public NhsPatient toNhsPatient(Patient patient, long patientId) {
 		NhsPatient nhsPatient = new NhsPatient();
-		nhsPatient.cadavericDonor = ((BooleanType)patient.getExtensionsByUrl(GPConnectExtensions.CADAVERIC_DONOR_URL).get(0).getValue()).booleanValue();
+		List<Extension> extensionsByUrl = patient.getExtensionsByUrl(GPConnectExtensions.CADAVERIC_DONOR_URL);
+		if (extensionsByUrl.size() > 0) {
+			nhsPatient.cadavericDonor = ((BooleanType) extensionsByUrl.get(0).getValue()).booleanValue();
+		}
 		nhsPatient.setId(patientId);
 		return nhsPatient;
 	}
