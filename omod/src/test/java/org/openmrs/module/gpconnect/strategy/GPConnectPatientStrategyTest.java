@@ -1,5 +1,6 @@
 package org.openmrs.module.gpconnect.strategy;
 
+import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -10,13 +11,17 @@ import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 
+import java.util.List;
+
+import static junit.framework.TestCase.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class GPConnectPatientStrategyTest {
-	
+
+	public static final String TEST_UUID = "test";
 	@Mock
 	NhsPatientMapper nhsPatientMapper;
 
@@ -40,8 +45,20 @@ public class GPConnectPatientStrategyTest {
 
 	@Test
 	public void shouldEnhancePatientOnGet() {
-		setup("test");
-		patientStrategy.getPatient("test");
-		verify(nhsPatientMapper).enhance(any(),eq("test"));
+		setup(TEST_UUID);
+		patientStrategy.getPatient(TEST_UUID);
+		verify(nhsPatientMapper).enhance(any(),eq(TEST_UUID));
+	}
+
+	@Test
+	public void shouldEnhancePatientOnSearch() {
+		setup(TEST_UUID);
+		Patient enhancedPatient = new Patient();
+		when(nhsPatientMapper.enhance(any(), eq(TEST_UUID))).thenReturn(enhancedPatient);
+
+		List<Patient> actualPatients = patientStrategy.searchPatientsById(TEST_UUID);
+
+		assertEquals(actualPatients.size(), 1);
+		assertEquals(actualPatients.get(0), enhancedPatient);
 	}
 }
