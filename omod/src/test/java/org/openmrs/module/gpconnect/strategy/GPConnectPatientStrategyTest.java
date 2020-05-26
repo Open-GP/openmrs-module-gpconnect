@@ -6,11 +6,14 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openmrs.PatientIdentifierType;
 import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.TestCase.assertEquals;
@@ -30,34 +33,68 @@ public class GPConnectPatientStrategyTest {
 	
 	@InjectMocks
 	GPConnectPatientStrategy patientStrategy;
-	
+
 	@Before
-	public void initMocks() {
+	public void setup() {
 		MockitoAnnotations.initMocks(this);
-	}
-	
-	private void setup(String patientUuid) {
 		ServiceContext serviceContext = ServiceContext.getInstance();
-		when(mockPatientService.getPatientByUuid(patientUuid)).thenReturn(new org.openmrs.Patient(1));
 		serviceContext.setPatientService(mockPatientService);
 		Context.setContext(serviceContext);
 	}
 	
 	@Test
 	public void shouldEnhancePatientOnGet() {
-		setup(TEST_UUID);
+		when(mockPatientService.getPatientByUuid(TEST_UUID)).thenReturn(new org.openmrs.Patient(1));
 		patientStrategy.getPatient(TEST_UUID);
 		verify(nhsPatientMapper).enhance(any());
 	}
 	
 	@Test
-	public void shouldEnhancePatientOnSearch() {
-		setup(TEST_UUID);
+	public void shouldEnhancePatientOnSearchById() {
+		when(mockPatientService.getPatientByUuid(TEST_UUID)).thenReturn(new org.openmrs.Patient(1));
+
 		Patient enhancedPatient = new Patient();
 		when(nhsPatientMapper.enhance(any())).thenReturn(enhancedPatient);
 		
 		List<Patient> actualPatients = patientStrategy.searchPatientsById(TEST_UUID);
 		
+		assertEquals(actualPatients.size(), 1);
+		assertEquals(actualPatients.get(0), enhancedPatient);
+	}
+
+	@Test
+	public void shouldEnhancePatientOnSearchByIdentifier() {
+		List<PatientIdentifierType> patientIdentifierTypes = Arrays.asList(new PatientIdentifierType(), new PatientIdentifierType());
+		List<org.openmrs.Patient> patients = Arrays.asList(new org.openmrs.Patient(1), new org.openmrs.Patient(2));
+
+		when(mockPatientService.getAllPatientIdentifierTypes()).thenReturn(patientIdentifierTypes);
+		when(mockPatientService.getPatients("some identifier", null, patientIdentifierTypes, true)).thenReturn(patients);
+
+		Patient enhancedPatient = new Patient();
+		Patient secondEnhancedPatient = new Patient();
+		when(nhsPatientMapper.enhance(any())).thenReturn(enhancedPatient, secondEnhancedPatient);
+
+		List<Patient> actualPatients = patientStrategy.searchPatientsByIdentifier("some identifier");
+
+		assertEquals(actualPatients.size(), 2);
+		assertEquals(actualPatients.get(0), enhancedPatient);
+		assertEquals(actualPatients.get(1), secondEnhancedPatient);
+	}
+
+	@Test
+	public void shouldEnhancePatientOnSearchByFullIdentifier() {
+		PatientIdentifierType patientIdentifierType = new PatientIdentifierType();
+		List<PatientIdentifierType> patientIdentifierTypes = Collections.singletonList(patientIdentifierType);
+		List<org.openmrs.Patient> patients = Arrays.asList(new org.openmrs.Patient(11));
+
+		when(mockPatientService.getPatientIdentifierTypeByName("identifier type")).thenReturn(patientIdentifierType);
+		when(mockPatientService.getPatients("some identifier", null, patientIdentifierTypes, true)).thenReturn(patients);
+
+		Patient enhancedPatient = new Patient();
+		when(nhsPatientMapper.enhance(any())).thenReturn(enhancedPatient);
+
+		List<Patient> actualPatients = patientStrategy.searchPatientsByIdentifier("some identifier", "identifier type");
+
 		assertEquals(actualPatients.size(), 1);
 		assertEquals(actualPatients.get(0), enhancedPatient);
 	}
