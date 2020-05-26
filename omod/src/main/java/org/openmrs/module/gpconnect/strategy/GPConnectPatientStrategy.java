@@ -2,8 +2,11 @@ package org.openmrs.module.gpconnect.strategy;
 
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.openmrs.api.context.Context;
 import org.openmrs.module.fhir.api.strategies.patient.PatientStrategy;
+import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
+import org.openmrs.module.gpconnect.services.NhsPatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +18,9 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 	
 	@Autowired
 	NhsPatientMapper nhsPatientMapper;
+
+	@Autowired
+	NhsPatientService nhsPatientService;
 	
 	@Override
 	public Patient getPatient(String uuid) {
@@ -105,9 +111,15 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 		super.deletePatient(uuid);
 	}
 
+	//Todo handle the case where writing the nhs patient fails - maybe reverting the write for the patient
 	@Override
 	public Patient createFHIRPatient(Patient patient) {
-		return super.createFHIRPatient(patient);
+		Patient fhirPatient = super.createFHIRPatient(patient);
+
+		org.openmrs.Patient patientByUuid = Context.getPatientService().getPatientByUuid(fhirPatient.getId());
+		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(fhirPatient, patientByUuid.getPatientId());
+		nhsPatientService.save(nhsPatient);
+		return nhsPatientMapper.enhance(fhirPatient);
 	}
 
 	@Override

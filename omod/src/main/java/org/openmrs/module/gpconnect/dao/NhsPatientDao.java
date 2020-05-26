@@ -19,4 +19,8 @@ public class NhsPatientDao {
 		return (NhsPatient) sessionFactory.getCurrentSession().createCriteria(NhsPatient.class).add(eq("id", id))
 		        .uniqueResult();
 	}
+
+	public void save(NhsPatient nhsPatient) {
+		sessionFactory.getCurrentSession().saveOrUpdate(nhsPatient);
+	}
 }

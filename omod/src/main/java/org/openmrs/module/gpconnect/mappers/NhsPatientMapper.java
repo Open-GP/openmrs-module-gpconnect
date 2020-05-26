@@ -21,11 +21,12 @@ public class NhsPatientMapper {
 	PatientService patientService;
 	
 	public Patient enhance(Patient patient) {
-		String uuid = patient.getId();
-		
 		if (patient == null) {
 			return null;
 		}
+
+		String uuid = patient.getId();
+
 		ContactPoint email = new ContactPoint();
 		email.setSystem(ContactPoint.ContactPointSystem.EMAIL).setValue("test@mail.com");
 		patient.addTelecom(email);
@@ -47,5 +48,12 @@ public class NhsPatientMapper {
 		patient.addExtension(cadavericDonor);
 		
 		return patient;
+	}
+
+	public NhsPatient toNhsPatient(Patient patient, long patientId) {
+		NhsPatient nhsPatient = new NhsPatient();
+		nhsPatient.cadavericDonor = ((BooleanType)patient.getExtensionsByUrl(GPConnectExtensions.CADAVERIC_DONOR_URL).get(0).getValue()).booleanValue();
+		nhsPatient.setId(patientId);
+		return nhsPatient;
 	}
 }

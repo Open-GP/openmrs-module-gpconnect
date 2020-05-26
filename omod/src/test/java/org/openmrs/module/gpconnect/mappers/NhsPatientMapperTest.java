@@ -15,6 +15,8 @@ import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
 import org.openmrs.module.gpconnect.util.GPConnectExtensions;
 
+import java.util.Collections;
+
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -74,5 +76,20 @@ public class NhsPatientMapperTest {
 		Extension extension = actualPatient.getExtensionsByUrl(GPConnectExtensions.CADAVERIC_DONOR_URL).get(0);
 		assertEquals(((BooleanType) extension.getValue()).booleanValue(), true);
 	}
-	
+
+
+	@Test
+	public void shouldSaveNhsPatient() {
+		Patient patient = new Patient();
+
+		patient.setExtension(Collections.singletonList(
+				new Extension(GPConnectExtensions.CADAVERIC_DONOR_URL, new BooleanType(true))
+		));
+
+		NhsPatient expectedPatient = new NhsPatient();
+		expectedPatient.setCadavericDonor(true);
+		expectedPatient.setId(3L);
+
+		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
+	}
 }

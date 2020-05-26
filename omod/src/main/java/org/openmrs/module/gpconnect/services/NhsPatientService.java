@@ -14,5 +14,8 @@ public class NhsPatientService {
 	public NhsPatient findById(Long id) {
 		return nhsPatientDao.getPatientById(id);
 	}
-	
+
+	public void save(NhsPatient nhsPatient) {
+		nhsPatientDao.save(nhsPatient);
+	}
 }
