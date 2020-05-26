@@ -13,37 +13,39 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class NhsPatientMapper {
-
-    @Autowired
-    NhsPatientService nhsPatientService;
-
-    @Autowired
-    PatientService patientService;
-
-    public Patient enhance(Patient patient, String uuid) {
-        if (patient == null) {
-            return null;
-        }
-        ContactPoint email = new ContactPoint();
-        email.setSystem(ContactPoint.ContactPointSystem.EMAIL).setValue("test@mail.com");
-        patient.addTelecom(email);
-
-        org.openmrs.Patient omrsPatient = patientService.getPatientByUuid(uuid);
-
-        if (omrsPatient == null) {
-            return patient;
-        }
-
-        NhsPatient nhsPatient = nhsPatientService.findById(omrsPatient.getPatientId().longValue());
-
-        if (nhsPatient == null) {
-            return patient;
-        }
-
-        Extension cadavericDonor = new Extension(GPConnectExtensions.CADAVERIC_DONOR_URL, new BooleanType(
-                nhsPatient.cadavericDonor));
-        patient.addExtension(cadavericDonor);
-
-        return patient;
-    }
+	
+	@Autowired
+	NhsPatientService nhsPatientService;
+	
+	@Autowired
+	PatientService patientService;
+	
+	public Patient enhance(Patient patient) {
+		String uuid = patient.getId();
+		
+		if (patient == null) {
+			return null;
+		}
+		ContactPoint email = new ContactPoint();
+		email.setSystem(ContactPoint.ContactPointSystem.EMAIL).setValue("test@mail.com");
+		patient.addTelecom(email);
+		
+		org.openmrs.Patient omrsPatient = patientService.getPatientByUuid(uuid);
+		
+		if (omrsPatient == null) {
+			return patient;
+		}
+		
+		NhsPatient nhsPatient = nhsPatientService.findById(omrsPatient.getPatientId().longValue());
+		
+		if (nhsPatient == null) {
+			return patient;
+		}
+		
+		Extension cadavericDonor = new Extension(GPConnectExtensions.CADAVERIC_DONOR_URL, new BooleanType(
+		        nhsPatient.cadavericDonor));
+		patient.addExtension(cadavericDonor);
+		
+		return patient;
+	}
 }

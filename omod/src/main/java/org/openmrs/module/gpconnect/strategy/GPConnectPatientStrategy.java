@@ -11,23 +11,23 @@ import java.util.stream.Collectors;
 
 @Component("GPConnectPatientStrategy")
 public class GPConnectPatientStrategy extends PatientStrategy {
-
+	
 	@Autowired
 	NhsPatientMapper nhsPatientMapper;
-
+	
 	@Override
 	public Patient getPatient(String uuid) {
 		Patient patient = super.getPatient(uuid);
-
-		return nhsPatientMapper.enhance(patient, uuid);
+		
+		return nhsPatientMapper.enhance(patient);
 	}
-
+	
 	@Override
 	public List<Patient> searchPatientsById(String uuid) {
 		List<Patient> patients = super.searchPatientsById(uuid);
 
 		return patients.stream()
-				.map(patient -> nhsPatientMapper.enhance(patient, uuid))
+				.map(patient -> nhsPatientMapper.enhance(patient))
 				.collect(Collectors.toList());
 	}
 }
