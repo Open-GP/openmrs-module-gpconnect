@@ -5,7 +5,7 @@
 	<!-- Base Module Properties -->
 	<id>gpconnect</id>
 	<name>GPConnect</name>
-	<version>0.0.4-SNAPSHOT</version>
+	<version>0.0.5-SNAPSHOT</version>
 	<package>org.openmrs.module.gpconnect</package>
 	<author>mmoise</author>
 	<description>
