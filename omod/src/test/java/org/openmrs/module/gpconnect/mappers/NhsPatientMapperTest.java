@@ -16,6 +16,7 @@ import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
+import org.openmrs.module.gpconnect.mappers.valueSets.EthnicCategory;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
 import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.GPConnectExtensions;
@@ -176,20 +177,20 @@ public class NhsPatientMapperTest {
 		
 		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
 	}
-
+	
 	@Test
 	public void shouldSetEthnicCategory() {
 		String patientUuid = "test";
-
+		
 		setup(patientUuid);
-
+		
 		NhsPatient nhsPatient = new NhsPatient();
 		nhsPatient.ethnicCategory = "C";
-
+		
 		when(mockNhsPatientService.findById(any())).thenReturn(nhsPatient);
-
+		
 		Patient actualPatient = nhsPatientMapper.enhance(patient);
-
+		
 		Extension extension = actualPatient.getExtensionsByUrl(GPConnectExtensions.ETHNIC_CATEGORY_URL).get(0);
 		CodeableConcept codeableConcept = (CodeableConcept) extension.getValue();
 		List<Coding> coding = codeableConcept.getCoding();
@@ -198,20 +199,72 @@ public class NhsPatientMapperTest {
 		assertEquals(coding.get(0).getSystem(), CodeSystems.ETHNIC_CATEGORY);
 		assertEquals(coding.get(0).getDisplay(), "Any other White background");
 	}
-
+	
 	@Test
 	public void shouldNotSetEthnicCategoryWhenUnknown() {
 		String patientUuid = "test";
-
+		
 		setup(patientUuid);
-
+		
 		NhsPatient nhsPatient = new NhsPatient();
 		nhsPatient.ethnicCategory = "something else";
-
+		
 		when(mockNhsPatientService.findById(any())).thenReturn(nhsPatient);
-
+		
 		Patient actualPatient = nhsPatientMapper.enhance(patient);
-
+		
 		assertEquals(0, actualPatient.getExtensionsByUrl(GPConnectExtensions.ETHNIC_CATEGORY_URL).size());
+	}
+	
+	@Test
+	public void shouldMapEthnicCategory() {
+		Patient patient = new Patient();
+		
+		CodeableConcept codeableConcept = new CodeableConcept();
+		codeableConcept.addCoding(EthnicCategory.CT.getCoding());
+		Extension extension = new Extension(GPConnectExtensions.ETHNIC_CATEGORY_URL, codeableConcept);
+		patient.setExtension(Collections.singletonList(extension));
+		
+		NhsPatient nhsPatient = new NhsPatient();
+		nhsPatient.setId(1L);
+		nhsPatient.setEthnicCategory("CT");
+		
+		NhsPatient actualPatient = nhsPatientMapper.toNhsPatient(patient, 1);
+		
+		assertEquals(nhsPatient, actualPatient);
+	}
+	
+	@Test
+	public void shouldSkipEthnicCategoryMappingWhenSystemUnknown() {
+		Patient patient = new Patient();
+		
+		CodeableConcept codeableConcept = new CodeableConcept();
+		codeableConcept.addCoding(new Coding("something", "test", "soemthing wrong"));
+		Extension extension = new Extension(GPConnectExtensions.ETHNIC_CATEGORY_URL, codeableConcept);
+		patient.setExtension(Collections.singletonList(extension));
+		
+		NhsPatient nhsPatient = new NhsPatient();
+		nhsPatient.setId(1L);
+		
+		NhsPatient actualPatient = nhsPatientMapper.toNhsPatient(patient, 1);
+		
+		assertEquals(nhsPatient, actualPatient);
+	}
+	
+	@Test
+	public void shouldSkipEthnicCategoryMappingWhenCodeUnknown() {
+		Patient patient = new Patient();
+		
+		CodeableConcept codeableConcept = new CodeableConcept();
+		codeableConcept.addCoding(new Coding(CodeSystems.ETHNIC_CATEGORY, "test", "soemthing wrong"));
+		Extension extension = new Extension(GPConnectExtensions.ETHNIC_CATEGORY_URL, codeableConcept);
+		patient.setExtension(Collections.singletonList(extension));
+		
+		NhsPatient nhsPatient = new NhsPatient();
+		nhsPatient.setId(1L);
+		
+		NhsPatient actualPatient = nhsPatientMapper.toNhsPatient(patient, 1);
+		
+		assertEquals(nhsPatient, actualPatient);
 	}
 }

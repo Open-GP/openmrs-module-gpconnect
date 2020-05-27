@@ -2,6 +2,7 @@ package org.openmrs.module.gpconnect.mappers;
 
 import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
+import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.ContactPoint;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Identifier;
@@ -11,6 +12,7 @@ import org.openmrs.api.PatientService;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.EthnicCategory;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
+import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.GPConnectExtensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -63,17 +65,20 @@ public class NhsPatientMapper {
 		nhsNoIdentifier.setExtension(Collections.singletonList(verficationStatus));
 		
 		patient.addIdentifier(nhsNoIdentifier);
-
-		try {
-			EthnicCategory ethnicCategoryEnum = EthnicCategory.valueOf(nhsPatient.ethnicCategory);
-			CodeableConcept ethnicConcept = new CodeableConcept();
-			ethnicConcept.addCoding(ethnicCategoryEnum.getCoding());
-			Extension ethnicCategory = new Extension(GPConnectExtensions.ETHNIC_CATEGORY_URL, ethnicConcept);
-			patient.addExtension(ethnicCategory);
-		} catch (IllegalArgumentException e){
-			System.out.printf("The ethnic category: %s is not a known one\n", nhsPatient.ethnicCategory);
+		
+		if (nhsPatient.ethnicCategory != null) {
+			try {
+				EthnicCategory ethnicCategoryEnum = EthnicCategory.valueOf(nhsPatient.ethnicCategory);
+				CodeableConcept ethnicConcept = new CodeableConcept();
+				ethnicConcept.addCoding(ethnicCategoryEnum.getCoding());
+				Extension ethnicCategory = new Extension(GPConnectExtensions.ETHNIC_CATEGORY_URL, ethnicConcept);
+				patient.addExtension(ethnicCategory);
+			}
+			catch (IllegalArgumentException e) {
+				System.out.printf("The ethnic category: %s is not a known one\n", nhsPatient.ethnicCategory);
+			}
 		}
-
+		
 		return patient;
 	}
 	
@@ -94,6 +99,16 @@ public class NhsPatientMapper {
 			nhsPatient.setNhsNumberVerificationStatus(
 					optionalNhsNo.get()
 							.getExtensionString(GPConnectExtensions.NHS_VERFICATION_STATUS_URL));
+
+		}
+
+		List<Extension> ethnicCategoryExtensions = patient.getExtensionsByUrl(GPConnectExtensions.ETHNIC_CATEGORY_URL);
+		if (ethnicCategoryExtensions.size() > 0) {
+			Coding coding = ((CodeableConcept) ethnicCategoryExtensions.get(0).getValue()).getCoding().get(0);
+
+			if (coding.getSystem().equals(CodeSystems.ETHNIC_CATEGORY) && EthnicCategory.isValid(coding.getCode())) {
+				nhsPatient.setEthnicCategory(coding.getCode());
+			}
 
 		}
 

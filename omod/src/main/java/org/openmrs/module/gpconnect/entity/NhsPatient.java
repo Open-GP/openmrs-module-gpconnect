@@ -13,8 +13,8 @@ import javax.persistence.Id;
 @ToString
 @Setter
 public class NhsPatient {
-
-    @Id
+	
+	@Id
 	@Column(name = "patient_id")
 	Long id;
 	
@@ -26,7 +26,7 @@ public class NhsPatient {
 	
 	@Column(name = "nhs_number_verification_status")
 	public String nhsNumberVerificationStatus;
-
+	
 	@Column(name = "ethnic_category")
 	public String ethnicCategory;
 }
