@@ -1,6 +1,7 @@
 package org.openmrs.module.gpconnect.mappers;
 
 import org.hl7.fhir.dstu3.model.BooleanType;
+import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.ContactPoint;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Identifier;
@@ -8,6 +9,7 @@ import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.StringType;
 import org.openmrs.api.PatientService;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
+import org.openmrs.module.gpconnect.mappers.valueSets.EthnicCategory;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
 import org.openmrs.module.gpconnect.util.GPConnectExtensions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +63,17 @@ public class NhsPatientMapper {
 		nhsNoIdentifier.setExtension(Collections.singletonList(verficationStatus));
 		
 		patient.addIdentifier(nhsNoIdentifier);
-		
+
+		try {
+			EthnicCategory ethnicCategoryEnum = EthnicCategory.valueOf(nhsPatient.ethnicCategory);
+			CodeableConcept ethnicConcept = new CodeableConcept();
+			ethnicConcept.addCoding(ethnicCategoryEnum.getCoding());
+			Extension ethnicCategory = new Extension(GPConnectExtensions.ETHNIC_CATEGORY_URL, ethnicConcept);
+			patient.addExtension(ethnicCategory);
+		} catch (IllegalArgumentException e){
+			System.out.printf("The ethnic category: %s is not a known one\n", nhsPatient.ethnicCategory);
+		}
+
 		return patient;
 	}
 	

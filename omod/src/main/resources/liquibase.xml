@@ -51,5 +51,14 @@
          <where>name = 'OpenMRS ID'</where>
       </update>
    </changeSet>
+
+   <changeSet id="gpconnect-nhs-connect-3" author="mmoise">
+      <preConditions>
+         <tableExists tableName="nhs_patient"/>
+      </preConditions>
+      <addColumn tableName="nhs_patient">
+         <column name="ethnic_category" type="varchar(100)"/>
+      </addColumn>
+   </changeSet>
  
 </databaseChangeLog>
