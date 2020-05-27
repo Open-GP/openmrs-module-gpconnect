@@ -40,7 +40,7 @@ public class GPConnectPatientStrategyTest {
 	
 	@Mock
 	NhsPatientService mockNhsPatientService;
-
+	
 	@Mock
 	PatientService mockPatientService;
 	

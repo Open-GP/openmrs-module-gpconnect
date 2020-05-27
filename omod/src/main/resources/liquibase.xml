@@ -22,5 +22,20 @@
       <addForeignKeyConstraint constraintName="nhs_patient_owner_fk" baseTableName="nhs_patient" baseColumnNames="patient_id"  referencedTableName="patient"
                                referencedColumnNames="patient_id" />
    </changeSet>
+
+   <changeSet id="gpconnect-nhs-patient-2" author="mmoise">
+      <preConditions>
+         <tableExists tableName="nhs_patient"/>
+      </preConditions>
+      <comment>
+         Adding nhs number related columns
+      </comment>
+      <addColumn tableName="nhs_patient">
+         <column name="nhs_number" type="varchar(100)"/>
+      </addColumn>
+      <addColumn tableName="nhs_patient">
+         <column name="nhs_number_verification_status" type="varchar(100)"/>
+      </addColumn>
+   </changeSet>
  
 </databaseChangeLog>

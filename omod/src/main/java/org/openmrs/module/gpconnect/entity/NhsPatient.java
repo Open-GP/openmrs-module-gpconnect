@@ -20,4 +20,10 @@ public class NhsPatient {
 	
 	@Column(name = "cadaveric_donor")
 	public boolean cadavericDonor;
+	
+	@Column(name = "nhs_number")
+	public String nhsNumber;
+	
+	@Column(name = "nhs_number_verification_status")
+	public String nhsNumberVerificationStatus;
 }

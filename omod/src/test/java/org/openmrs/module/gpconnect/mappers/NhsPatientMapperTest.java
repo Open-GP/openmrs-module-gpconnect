@@ -2,7 +2,9 @@ package org.openmrs.module.gpconnect.mappers;
 
 import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.Extension;
+import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.StringType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -90,14 +92,55 @@ public class NhsPatientMapperTest {
 		
 		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
 	}
-
+	
 	@Test
 	public void shouldSkipCadavericDonorWhenMissing() {
 		Patient patient = new Patient();
-
+		
 		NhsPatient expectedPatient = new NhsPatient();
 		expectedPatient.setId(3L);
-
+		
 		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
 	}
+	
+	@Test
+	public void shouldAddNhsNumber() {
+		String patientUuid = "test";
+		
+		setup(patientUuid);
+		
+		NhsPatient nhsPatient = new NhsPatient();
+		nhsPatient.nhsNumber = "123456";
+		
+		when(mockNhsPatientService.findById(any())).thenReturn(nhsPatient);
+		
+		Patient actualPatient = nhsPatientMapper.enhance(patient);
+		
+		Identifier identifier = actualPatient.getIdentifier().get(0);
+		
+		assertEquals(identifier.getSystem(), "https://fhir.nhs.uk/Id/nhs-number");
+		assertEquals(identifier.getValue(), "123456");
+	}
+	
+	@Test
+	public void shouldAddNhsNumberVerificationStatus() {
+		String patientUuid = "test";
+		
+		setup(patientUuid);
+		
+		NhsPatient nhsPatient = new NhsPatient();
+		nhsPatient.nhsNumber = "123456";
+		nhsPatient.nhsNumberVerificationStatus = "01";
+		
+		when(mockNhsPatientService.findById(any())).thenReturn(nhsPatient);
+		
+		Patient actualPatient = nhsPatientMapper.enhance(patient);
+		
+		Identifier identifier = actualPatient.getIdentifier().get(0);
+		
+		Extension extension = identifier.getExtensionsByUrl(
+		    "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-NHSNumberVerificationStatus-1").get(0);
+		assertEquals("01", ((StringType) extension.getValue()).getValue());
+	}
+	
 }
