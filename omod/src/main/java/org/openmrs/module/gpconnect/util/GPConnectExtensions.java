@@ -9,4 +9,5 @@ public final class GPConnectExtensions {
 	public static final String NHS_NUMBER_SYSTEM = "https://fhir.nhs.uk/Id/nhs-number";
 	
 	public static final String ETHNIC_CATEGORY_URL = "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-EthnicCategory-1";
+	public static final String RESIDENTIAL_STATUS_URL = "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-ResidentialStatus-1";
 }

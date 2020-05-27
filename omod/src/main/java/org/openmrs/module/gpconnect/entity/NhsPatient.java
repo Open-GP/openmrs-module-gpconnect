@@ -29,4 +29,7 @@ public class NhsPatient {
 	
 	@Column(name = "ethnic_category")
 	public String ethnicCategory;
+
+	@Column(name = "residential_status")
+	public String residentialStatus;
 }

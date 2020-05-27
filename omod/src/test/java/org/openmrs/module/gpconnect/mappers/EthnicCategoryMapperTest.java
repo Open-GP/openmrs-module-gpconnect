@@ -16,7 +16,8 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class EthnicCategoryMapperTest {
-    
+
+    public static final NhsPatient EMPTY_NHS_PATIENT = new NhsPatient();
     EthnicCategoryMapper ethnicCategoryMapper = new EthnicCategoryMapper();
 
     Patient patient = new Patient();
@@ -59,7 +60,7 @@ public class EthnicCategoryMapperTest {
         NhsPatient nhsPatient = new NhsPatient();
         nhsPatient.setEthnicCategory("CT");
 
-        NhsPatient actualPatient = ethnicCategoryMapper.mapToNhsPatient(patient, nhsPatient);
+        NhsPatient actualPatient = ethnicCategoryMapper.mapToNhsPatient(patient, new NhsPatient());
 
         assertEquals(nhsPatient, actualPatient);
     }
@@ -73,11 +74,9 @@ public class EthnicCategoryMapperTest {
         Extension extension = new Extension(GPConnectExtensions.ETHNIC_CATEGORY_URL, codeableConcept);
         patient.setExtension(Collections.singletonList(extension));
 
-        NhsPatient nhsPatient = new NhsPatient();
+        NhsPatient actualPatient = ethnicCategoryMapper.mapToNhsPatient(patient, EMPTY_NHS_PATIENT);
 
-        NhsPatient actualPatient = ethnicCategoryMapper.mapToNhsPatient(patient, nhsPatient);
-
-        assertEquals(nhsPatient, actualPatient);
+        assertEquals(EMPTY_NHS_PATIENT, actualPatient);
     }
 
     @Test
@@ -89,11 +88,9 @@ public class EthnicCategoryMapperTest {
         Extension extension = new Extension(GPConnectExtensions.ETHNIC_CATEGORY_URL, codeableConcept);
         patient.setExtension(Collections.singletonList(extension));
 
-        NhsPatient nhsPatient = new NhsPatient();
+        NhsPatient actualPatient = ethnicCategoryMapper.mapToNhsPatient(patient, EMPTY_NHS_PATIENT);
 
-        NhsPatient actualPatient = ethnicCategoryMapper.mapToNhsPatient(patient, nhsPatient);
-
-        assertEquals(nhsPatient, actualPatient);
+        assertEquals(EMPTY_NHS_PATIENT, actualPatient);
     }
 
 }
