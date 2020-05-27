@@ -25,7 +25,7 @@ public class ResidentialStatusMapper implements PatientFieldMapper {
             Extension residentialStatusExt = new Extension(GPConnectExtensions.RESIDENTIAL_STATUS_URL, residentialStatus);
             patient.addExtension(residentialStatusExt);
         } catch (IllegalArgumentException e) {
-            System.out.printf("The ethnic category: %s is not a known one\n", nhsPatient.residentialStatus);
+            System.out.printf("The residential status: %s is not a known one\n", nhsPatient.residentialStatus);
         }
 
         return patient;

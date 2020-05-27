@@ -30,7 +30,7 @@ public class NhsPatientMapper {
 	List<PatientFieldMapper> mappers;
 
 	public NhsPatientMapper() {
-		mappers = Arrays.asList(new EthnicCategoryMapper(), new ResidentialStatusMapper());
+		mappers = Arrays.asList(new EthnicCategoryMapper(), new ResidentialStatusMapper(), new TreatmentCategoryMapper());
 	}
 
 	public Patient enhance(Patient patient) {

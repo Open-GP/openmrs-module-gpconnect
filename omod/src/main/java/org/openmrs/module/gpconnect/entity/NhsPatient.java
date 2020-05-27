@@ -32,4 +32,7 @@ public class NhsPatient {
 
 	@Column(name = "residential_status")
 	public String residentialStatus;
+
+	@Column(name = "treatment_category")
+	public String treatmentCategory;
 }
