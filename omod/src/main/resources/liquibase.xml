@@ -36,6 +36,20 @@
       <addColumn tableName="nhs_patient">
          <column name="nhs_number_verification_status" type="varchar(100)"/>
       </addColumn>
+      <insert tableName="patient_identifier_type">
+         <column name="name" value="https://fhir.nhs.uk/Id/nhs-number"/>
+         <column name="description" value="NHS Number"/>
+         <column name="check_digit" valueNumeric="0"/>
+         <column name="creator" valueNumeric="2"/>
+         <column name="required" valueNumeric="0"/>
+         <column name="retired" valueNumeric="0"/>
+         <column name="uuid" value="58cf0a8a-a007-11ea-bb37-0242ac130002"/>
+         <column name="date_created" valueDate="2020-05-27 11:47:06"/>
+      </insert>
+      <update tableName="patient_identifier_type">
+         <column name="required" valueNumeric="0"/>
+         <where>name = 'OpenMRS ID'</where>
+      </update>
    </changeSet>
  
 </databaseChangeLog>

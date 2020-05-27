@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class NhsPatientMapper {
@@ -53,11 +54,10 @@ public class NhsPatientMapper {
 		patient.addExtension(cadavericDonor);
 		
 		Identifier nhsNoIdentifier = new Identifier();
-		nhsNoIdentifier.setSystem("https://fhir.nhs.uk/Id/nhs-number");
+		nhsNoIdentifier.setSystem(GPConnectExtensions.NHS_NUMBER_SYSTEM);
 		nhsNoIdentifier.setValue(nhsPatient.nhsNumber);
-		Extension verficationStatus = new Extension(
-		        "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-NHSNumberVerificationStatus-1",
-		        new StringType(nhsPatient.nhsNumberVerificationStatus));
+		Extension verficationStatus = new Extension(GPConnectExtensions.NHS_VERFICATION_STATUS_URL, new StringType(
+		        nhsPatient.nhsNumberVerificationStatus));
 		nhsNoIdentifier.setExtension(Collections.singletonList(verficationStatus));
 		
 		patient.addIdentifier(nhsNoIdentifier);
@@ -71,7 +71,22 @@ public class NhsPatientMapper {
 		if (extensionsByUrl.size() > 0) {
 			nhsPatient.cadavericDonor = ((BooleanType) extensionsByUrl.get(0).getValue()).booleanValue();
 		}
+
+		Optional<Identifier> optionalNhsNo = patient.getIdentifier()
+				.stream()
+				.filter((identifier -> identifier.getSystem().equals(GPConnectExtensions.NHS_NUMBER_SYSTEM)))
+				.findFirst();
+
+		if (optionalNhsNo.isPresent()) {
+			nhsPatient.setNhsNumber(optionalNhsNo.get().getValue());
+			nhsPatient.setNhsNumberVerificationStatus(
+					optionalNhsNo.get()
+							.getExtensionString(GPConnectExtensions.NHS_VERFICATION_STATUS_URL));
+
+		}
+
 		nhsPatient.setId(patientId);
+
 		return nhsPatient;
 	}
 }

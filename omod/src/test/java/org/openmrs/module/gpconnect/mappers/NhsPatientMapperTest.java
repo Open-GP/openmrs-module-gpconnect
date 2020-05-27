@@ -22,6 +22,7 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
+import static org.openmrs.module.gpconnect.util.GPConnectExtensions.NHS_VERFICATION_STATUS_URL;
 
 public class NhsPatientMapperTest {
 	
@@ -138,9 +139,37 @@ public class NhsPatientMapperTest {
 		
 		Identifier identifier = actualPatient.getIdentifier().get(0);
 		
-		Extension extension = identifier.getExtensionsByUrl(
-		    "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-NHSNumberVerificationStatus-1").get(0);
+		Extension extension = identifier.getExtensionsByUrl(NHS_VERFICATION_STATUS_URL).get(0);
 		assertEquals("01", ((StringType) extension.getValue()).getValue());
 	}
 	
+	@Test
+	public void shouldMapNhsNumber() {
+		Patient patient = new Patient();
+		
+		Identifier nhsNoIdentifier = new Identifier();
+		nhsNoIdentifier.setSystem(GPConnectExtensions.NHS_NUMBER_SYSTEM);
+		nhsNoIdentifier.setValue("123");
+		Extension verificationStatus = new Extension(NHS_VERFICATION_STATUS_URL, new StringType("02"));
+		nhsNoIdentifier.setExtension(Collections.singletonList(verificationStatus));
+		
+		patient.addIdentifier(nhsNoIdentifier);
+		
+		NhsPatient expectedPatient = new NhsPatient();
+		expectedPatient.setId(3L);
+		expectedPatient.setNhsNumber("123");
+		expectedPatient.setNhsNumberVerificationStatus("02");
+		
+		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
+	}
+	
+	@Test
+	public void shouldSkipMappingNhsNumberWhenMissing() {
+		Patient patient = new Patient();
+		
+		NhsPatient expectedPatient = new NhsPatient();
+		expectedPatient.setId(3L);
+		
+		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
+	}
 }
