@@ -46,10 +46,6 @@
          <column name="uuid" value="58cf0a8a-a007-11ea-bb37-0242ac130002"/>
          <column name="date_created" valueDate="2020-05-27 11:47:06"/>
       </insert>
-      <update tableName="patient_identifier_type">
-         <column name="required" valueNumeric="0"/>
-         <where>name = 'OpenMRS ID'</where>
-      </update>
    </changeSet>
 
    <changeSet id="gpconnect-nhs-connect-3" author="mmoise">
@@ -59,6 +55,12 @@
       <addColumn tableName="nhs_patient">
          <column name="ethnic_category" type="varchar(100)"/>
       </addColumn>
+      <addColumn tableName="nhs_patient">
+         <column name="residential_status" type="varchar(100)"/>
+      </addColumn>
+      <addColumn tableName="nhs_patient">
+         <column name="treatment_category" type="varchar(100)"/>
+      </addColumn>
    </changeSet>
- 
+
 </databaseChangeLog>
