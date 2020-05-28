@@ -1,15 +1,11 @@
 package org.openmrs.module.gpconnect.mappers;
 
 import org.hl7.fhir.dstu3.model.CodeableConcept;
-import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.EthnicCategory;
-import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.Extensions;
-
-import java.util.List;
 
 public class EthnicCategoryMapper implements PatientFieldMapper{
 
@@ -33,15 +29,7 @@ public class EthnicCategoryMapper implements PatientFieldMapper{
 
     @Override
     public NhsPatient mapToNhsPatient(Patient patient, NhsPatient nhsPatient) {
-        List<Extension> ethnicCategoryExtensions = patient.getExtensionsByUrl(Extensions.ETHNIC_CATEGORY_URL);
-        if (ethnicCategoryExtensions.size() > 0) {
-            Coding coding = ((CodeableConcept) ethnicCategoryExtensions.get(0).getValue()).getCoding().get(0);
-
-            if (coding.getSystem().equals(CodeSystems.ETHNIC_CATEGORY) && EthnicCategory.isValid(coding.getCode())) {
-                nhsPatient.setEthnicCategory(coding.getCode());
-            }
-
-        }
+        CodeableConceptExtension.ETHNIC_CATEGORY.getValue(patient).ifPresent(nhsPatient::setEthnicCategory);
 
         return  nhsPatient;
     }

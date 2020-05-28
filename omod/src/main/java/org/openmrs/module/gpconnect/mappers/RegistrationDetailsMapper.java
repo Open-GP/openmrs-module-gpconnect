@@ -1,14 +1,12 @@
 package org.openmrs.module.gpconnect.mappers;
 
 import org.hl7.fhir.dstu3.model.CodeableConcept;
-import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.Reference;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
-import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.List;
@@ -62,14 +60,7 @@ public class RegistrationDetailsMapper implements PatientFieldMapper {
                 nhsPatient.setRegistrationEnd(((Period) registrationPeriodExt.getValue()).getEnd());
             }
 
-            List<Extension> typeExtensions = registrationDetailsExt.getExtensionsByUrl(Extensions.REGISTRATION_TYPE);
-
-            if (typeExtensions.size() > 0) {
-                Coding coding = ((CodeableConcept) typeExtensions.get(0).getValue()).getCoding().get(0);
-                if (coding.getSystem().equals(CodeSystems.REGISTRATION_TYPE) && RegistrationType.isValid(coding.getCode())) {
-                    nhsPatient.setRegistrationType(coding.getCode());
-                }
-            }
+            CodeableConceptExtension.REGISTRATION_TYPE.getValue(registrationDetailsExt).ifPresent(nhsPatient::setRegistrationType);
 
             List<Extension> preferredBranchExtensions = registrationDetailsExt.getExtensionsByUrl(Extensions.PREFERRED_BRANCH);
 
