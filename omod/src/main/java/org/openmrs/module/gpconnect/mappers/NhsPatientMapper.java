@@ -11,6 +11,7 @@ import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.EthnicCategory;
 import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
 import org.openmrs.module.gpconnect.mappers.valueSets.ResidentialStatus;
+import org.openmrs.module.gpconnect.mappers.valueSets.TreatmentCategory;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
 import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.Extensions;
@@ -37,7 +38,7 @@ public class NhsPatientMapper {
 		mappers = Arrays.asList(
 				new EthnicCategoryMapper(new CodeableConceptExtension(Extensions.ETHNIC_CATEGORY_URL, CodeSystems.ETHNIC_CATEGORY, EthnicCategory.dict())),
 				new RegistrationDetailsMapper(new CodeableConceptExtension(Extensions.REGISTRATION_TYPE, CodeSystems.REGISTRATION_TYPE, RegistrationType.dict())),
-				new TreatmentCategoryMapper(),
+				new TreatmentCategoryMapper(new CodeableConceptExtension(Extensions.TREATMENT_CATEGORY_URL, CodeSystems.TREATMENT_CATEGORY, TreatmentCategory.dict())),
 				new ResidentialStatusMapper(new CodeableConceptExtension(Extensions.RESIDENTIAL_STATUS_URL, CodeSystems.RESIDENTIAL_STATUS, ResidentialStatus.dict()))
 		);
 	}

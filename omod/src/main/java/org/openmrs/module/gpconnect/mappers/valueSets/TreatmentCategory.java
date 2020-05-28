@@ -5,6 +5,7 @@ import org.hl7.fhir.dstu3.model.Coding;
 import org.openmrs.module.gpconnect.util.CodeSystems;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -26,6 +27,15 @@ public enum TreatmentCategory {
         this.code = code;
         this.display = display;
     }
+
+    public static Map<String, String> dict(){
+        return Arrays.stream(values())
+                .collect(Collectors.toMap(
+                        TreatmentCategory::getCode,
+                        TreatmentCategory::getDisplay
+                ));
+    }
+
 
     public Coding getCoding() {
         return new Coding(CodeSystems.TREATMENT_CATEGORY, code, display);

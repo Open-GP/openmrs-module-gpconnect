@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 public class TreatmentCategoryMapperTest {
 
     public static final NhsPatient EMPTY_NHS_PATIENT = new NhsPatient();
-    TreatmentCategoryMapper treatmentCategoryMapper = new TreatmentCategoryMapper();
+    TreatmentCategoryMapper treatmentCategoryMapper = new TreatmentCategoryMapper(new CodeableConceptExtension(Extensions.TREATMENT_CATEGORY_URL, CodeSystems.TREATMENT_CATEGORY, TreatmentCategory.dict()));
 
     Patient patient = new Patient();
 
