@@ -1,8 +1,6 @@
 package org.openmrs.module.gpconnect.mappers.valueSets;
 
 import lombok.Getter;
-import org.hl7.fhir.dstu3.model.Coding;
-import org.openmrs.module.gpconnect.util.CodeSystems;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -40,9 +38,5 @@ public enum EthnicCategory {
 						Enum::name,
 						EthnicCategory::getDisplay
 				));
-	}
-
-	public Coding getCoding() {
-		return new Coding(CodeSystems.ETHNIC_CATEGORY, name(), display);
 	}
 }

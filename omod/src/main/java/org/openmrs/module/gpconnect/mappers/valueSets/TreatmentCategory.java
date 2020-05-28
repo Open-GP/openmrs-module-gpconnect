@@ -6,7 +6,6 @@ import org.openmrs.module.gpconnect.util.CodeSystems;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public enum TreatmentCategory {
@@ -39,18 +38,5 @@ public enum TreatmentCategory {
 
     public Coding getCoding() {
         return new Coding(CodeSystems.TREATMENT_CATEGORY, code, display);
-    }
-
-    public static boolean isValid(String code){
-        return Arrays.stream(values())
-                .map(TreatmentCategory::getCode)
-                .collect(Collectors.toList())
-                .contains(code);
-    }
-
-    public static Optional<TreatmentCategory> findByCode(String code) {
-        return Arrays.stream(values())
-                .filter(treatmentCategory -> treatmentCategory.getCode().equals(code))
-                .findFirst();
     }
 }
