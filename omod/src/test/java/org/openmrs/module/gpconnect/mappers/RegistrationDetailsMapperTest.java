@@ -1,28 +1,38 @@
 package org.openmrs.module.gpconnect.mappers;
 
-import org.hl7.fhir.dstu3.model.CodeableConcept;
-import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.Reference;
 import org.joda.time.DateTime;
+import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
-import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
-import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.Date;
+import java.util.Optional;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class RegistrationDetailsMapperTest {
 
     public static final NhsPatient EMPTY_NHS_PATIENT = new NhsPatient();
-    RegistrationDetailsMapper mapper = new RegistrationDetailsMapper();
+    CodeableConceptExtension mockCodeableConcept = mock(CodeableConceptExtension.class);
+
+    RegistrationDetailsMapper mapper = new RegistrationDetailsMapper(mockCodeableConcept);
 
     Patient patient = new Patient();
+
+    @Before
+    public void setUp(){
+        when(mockCodeableConcept.getValue(any(Patient.class))).thenReturn(Optional.empty());
+        when(mockCodeableConcept.getValue(any(Extension.class))).thenReturn(Optional.empty());
+        when(mockCodeableConcept.createExtension(any(String.class))).thenReturn(Optional.empty());
+    }
 
     @Test
     public void shouldEnhanceWithRegistrationPeriod() {
@@ -68,15 +78,15 @@ public class RegistrationDetailsMapperTest {
         NhsPatient nhsPatient = new NhsPatient();
         nhsPatient.setRegistrationType("R");
 
+        Extension extension = new Extension(Extensions.REGISTRATION_TYPE);
+        when(mockCodeableConcept.createExtension("R")).thenReturn(Optional.of(extension));
+
         Patient enhancedPatient = mapper.enhance(patient, nhsPatient);
 
         Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(Extensions.REGISTRATION_DETAILS_URL).get(0);
         Extension registrationTypeExt = registrationDetailsExt.getExtensionsByUrl(Extensions.REGISTRATION_TYPE).get(0);
 
-        Coding registrationType = ((CodeableConcept) registrationTypeExt.getValue()).getCoding().get(0);
-        assertEquals("R", registrationType.getCode());
-        assertEquals(CodeSystems.REGISTRATION_TYPE, registrationType.getSystem());
-        assertEquals("Regular", registrationType.getDisplay());
+        assertEquals(extension, registrationTypeExt);
     }
 
     @Test
@@ -84,6 +94,7 @@ public class RegistrationDetailsMapperTest {
         NhsPatient nhsPatient = new NhsPatient();
         nhsPatient.setRegistrationType("something else");
 
+        when(mockCodeableConcept.createExtension("something else")).thenReturn(Optional.empty());
         Patient enhancedPatient = mapper.enhance(patient, nhsPatient);
 
         Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(Extensions.REGISTRATION_DETAILS_URL).get(0);
@@ -95,6 +106,7 @@ public class RegistrationDetailsMapperTest {
     public void shouldSkipTypeWhenMissing() {
         NhsPatient nhsPatient = new NhsPatient();
 
+        when(mockCodeableConcept.createExtension(null)).thenReturn(Optional.empty());
         Patient enhancedPatient = mapper.enhance(patient, nhsPatient);
 
         Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(Extensions.REGISTRATION_DETAILS_URL).get(0);
@@ -147,13 +159,12 @@ public class RegistrationDetailsMapperTest {
         Patient patient = new Patient();
 
         Extension ext = new Extension(Extensions.REGISTRATION_DETAILS_URL);
-
-        CodeableConcept type = new CodeableConcept();
-        type.addCoding(RegistrationType.T.getCoding());
-        Extension periodExt = new Extension(Extensions.REGISTRATION_TYPE, type);
-        ext.addExtension(periodExt);
+        Extension typeExt = new Extension(Extensions.REGISTRATION_TYPE);
+        ext.addExtension(typeExt);
 
         patient.addExtension(ext);
+
+        when(mockCodeableConcept.getValue(ext)).thenReturn(Optional.of("T"));
 
         NhsPatient nhsPatient = mapper.mapToNhsPatient(patient, new NhsPatient());
 
@@ -168,31 +179,12 @@ public class RegistrationDetailsMapperTest {
         Patient patient = new Patient();
 
         Extension ext = new Extension(Extensions.REGISTRATION_DETAILS_URL);
-
-        CodeableConcept type = new CodeableConcept();
-        type.addCoding(new Coding("some system", "T", "display"));
-        Extension periodExt = new Extension(Extensions.REGISTRATION_TYPE, type);
-        ext.addExtension(periodExt);
+        Extension typeExt = new Extension(Extensions.REGISTRATION_TYPE);
+        ext.addExtension(typeExt);
 
         patient.addExtension(ext);
 
-        NhsPatient nhsPatient = mapper.mapToNhsPatient(patient, new NhsPatient());
-
-        assertEquals(EMPTY_NHS_PATIENT, nhsPatient);
-    }
-
-    @Test
-    public void shouldSkipMapTypeWhenCodeUnknown() {
-        Patient patient = new Patient();
-
-        Extension ext = new Extension(Extensions.REGISTRATION_DETAILS_URL);
-
-        CodeableConcept type = new CodeableConcept();
-        type.addCoding(new Coding(CodeSystems.REGISTRATION_TYPE, "something", "display"));
-        Extension periodExt = new Extension(Extensions.REGISTRATION_TYPE, type);
-        ext.addExtension(periodExt);
-
-        patient.addExtension(ext);
+        when(mockCodeableConcept.getValue(ext)).thenReturn(Optional.empty());
 
         NhsPatient nhsPatient = mapper.mapToNhsPatient(patient, new NhsPatient());
 

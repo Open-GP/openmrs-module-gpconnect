@@ -10,6 +10,13 @@ import org.openmrs.module.gpconnect.util.Extensions;
 import java.util.List;
 
 public class RegistrationDetailsMapper implements PatientFieldMapper {
+
+    CodeableConceptExtension codeableConceptExtension;
+
+    public RegistrationDetailsMapper(CodeableConceptExtension codeableConceptExtension) {
+        this.codeableConceptExtension = codeableConceptExtension;
+    }
+
     @Override
     public Patient enhance(Patient patient, NhsPatient nhsPatient) {
         Extension extension = new Extension(Extensions.REGISTRATION_DETAILS_URL);
@@ -22,7 +29,7 @@ public class RegistrationDetailsMapper implements PatientFieldMapper {
             extension.addExtension(periodExtension);
         }
 
-        CodeableConceptExtension.REGISTRATION_TYPE.createExtension(nhsPatient.registrationType).ifPresent(extension::addExtension);
+        codeableConceptExtension.createExtension(nhsPatient.registrationType).ifPresent(extension::addExtension);
 
         if (nhsPatient.preferredBranch != null) {
             Extension preferredBranchExt = new Extension(Extensions.PREFERRED_BRANCH, new Reference(nhsPatient.preferredBranch));
@@ -49,7 +56,7 @@ public class RegistrationDetailsMapper implements PatientFieldMapper {
                 nhsPatient.setRegistrationEnd(((Period) registrationPeriodExt.getValue()).getEnd());
             }
 
-            CodeableConceptExtension.REGISTRATION_TYPE.getValue(registrationDetailsExt).ifPresent(nhsPatient::setRegistrationType);
+            codeableConceptExtension.getValue(registrationDetailsExt).ifPresent(nhsPatient::setRegistrationType);
 
             List<Extension> preferredBranchExtensions = registrationDetailsExt.getExtensionsByUrl(Extensions.PREFERRED_BRANCH);
 

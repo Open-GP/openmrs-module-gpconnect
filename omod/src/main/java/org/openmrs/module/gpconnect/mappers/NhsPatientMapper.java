@@ -31,10 +31,10 @@ public class NhsPatientMapper {
 
 	public NhsPatientMapper() {
 		mappers = Arrays.asList(
-				new EthnicCategoryMapper(),
-				new ResidentialStatusMapper(),
+				new EthnicCategoryMapper(new CodeableConceptExtension(CodeableConceptExtension.CodeableConceptExtensionEnum.ETHNIC_CATEGORY)),
+				new ResidentialStatusMapper(new CodeableConceptExtension(CodeableConceptExtension.CodeableConceptExtensionEnum.RESIDENTIAL_STATUS)),
 				new TreatmentCategoryMapper(),
-				new ResidentialStatusMapper()
+				new RegistrationDetailsMapper(new CodeableConceptExtension(CodeableConceptExtension.CodeableConceptExtensionEnum.RESIDENTIAL_STATUS))
 		);
 	}
 
