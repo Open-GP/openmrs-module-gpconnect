@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class CodeableConceptExtension {
+public class CodeableConceptExtension implements PatientExtension<String>{
 
     private final String extensionUrl;
     private final String codeSystem;

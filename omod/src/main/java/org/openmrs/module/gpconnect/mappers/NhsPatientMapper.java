@@ -1,6 +1,5 @@
 package org.openmrs.module.gpconnect.mappers;
 
-import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.ContactPoint;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Identifier;
@@ -37,6 +36,7 @@ public class NhsPatientMapper {
 
 	public NhsPatientMapper() {
 		mappers = Arrays.asList(
+				new CadavericDonorMapper(new BooleanExtension(Extensions.CADAVERIC_DONOR_URL)),
 				new EthnicCategoryMapper(new CodeableConceptExtension(Extensions.ETHNIC_CATEGORY_URL, CodeSystems.ETHNIC_CATEGORY, EthnicCategory.dict())),
 				new RegistrationDetailsMapper(new CodeableConceptExtension(Extensions.REGISTRATION_TYPE, CodeSystems.REGISTRATION_TYPE, RegistrationType.dict())),
 				new TreatmentCategoryMapper(new CodeableConceptExtension(Extensions.TREATMENT_CATEGORY_URL, CodeSystems.TREATMENT_CATEGORY, TreatmentCategory.dict())),
@@ -68,11 +68,7 @@ public class NhsPatientMapper {
 		if (nhsPatient == null) {
 			return patient;
 		}
-		
-		Extension cadavericDonor = new Extension(Extensions.CADAVERIC_DONOR_URL, new BooleanType(
-		        nhsPatient.cadavericDonor));
-		patient.addExtension(cadavericDonor);
-		
+
 		Identifier nhsNoIdentifier = new Identifier();
 		nhsNoIdentifier.setSystem(Extensions.NHS_NUMBER_SYSTEM);
 		nhsNoIdentifier.setValue(nhsPatient.nhsNumber);
@@ -93,10 +89,6 @@ public class NhsPatientMapper {
 	
 	public NhsPatient toNhsPatient(Patient patient, long patientId) {
 		NhsPatient nhsPatient = new NhsPatient();
-		List<Extension> extensionsByUrl = patient.getExtensionsByUrl(Extensions.CADAVERIC_DONOR_URL);
-		if (extensionsByUrl.size() > 0) {
-			nhsPatient.cadavericDonor = ((BooleanType) extensionsByUrl.get(0).getValue()).booleanValue();
-		}
 
 		Optional<Identifier> optionalNhsNo = patient.getIdentifier()
 				.stream()
