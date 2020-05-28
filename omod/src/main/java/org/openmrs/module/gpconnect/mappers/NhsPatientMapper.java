@@ -8,6 +8,7 @@ import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.StringType;
 import org.openmrs.api.PatientService;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
+import org.openmrs.module.gpconnect.mappers.valueSets.DeathNotificationStatus;
 import org.openmrs.module.gpconnect.mappers.valueSets.EthnicCategory;
 import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
 import org.openmrs.module.gpconnect.mappers.valueSets.ResidentialStatus;
@@ -39,7 +40,9 @@ public class NhsPatientMapper {
 				new EthnicCategoryMapper(new CodeableConceptExtension(Extensions.ETHNIC_CATEGORY_URL, CodeSystems.ETHNIC_CATEGORY, EthnicCategory.dict())),
 				new RegistrationDetailsMapper(new CodeableConceptExtension(Extensions.REGISTRATION_TYPE, CodeSystems.REGISTRATION_TYPE, RegistrationType.dict())),
 				new TreatmentCategoryMapper(new CodeableConceptExtension(Extensions.TREATMENT_CATEGORY_URL, CodeSystems.TREATMENT_CATEGORY, TreatmentCategory.dict())),
-				new ResidentialStatusMapper(new CodeableConceptExtension(Extensions.RESIDENTIAL_STATUS_URL, CodeSystems.RESIDENTIAL_STATUS, ResidentialStatus.dict()))
+				new ResidentialStatusMapper(new CodeableConceptExtension(Extensions.RESIDENTIAL_STATUS_URL, CodeSystems.RESIDENTIAL_STATUS, ResidentialStatus.dict())),
+				new DeathNotificationStatusMapper(
+						new CodeableConceptExtension(Extensions.DEATH_NOTIFICATION_STATUS_URL, CodeSystems.DEATH_NOTIFICATION_STATUS, DeathNotificationStatus.dict()))
 		);
 	}
 

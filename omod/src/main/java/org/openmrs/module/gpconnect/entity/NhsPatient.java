@@ -48,4 +48,7 @@ public class NhsPatient {
 
 	@Column(name = "preferred_branch")
 	public String preferredBranch;
+
+	@Column(name = "death_notification_status")
+	public String deathNotificationStatus;
 }

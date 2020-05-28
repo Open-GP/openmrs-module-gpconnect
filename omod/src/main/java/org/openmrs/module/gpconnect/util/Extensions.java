@@ -15,4 +15,5 @@ public final class Extensions {
 	public static final String REGISTRATION_PERIOD = "registrationPeriod";
 	public static final String REGISTRATION_TYPE = "registrationType";
 	public static final String PREFERRED_BRANCH = "preferredBranchSurgery";
+	public static final String DEATH_NOTIFICATION_STATUS_URL = "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-DeathNotificationStatus-1";
 }
