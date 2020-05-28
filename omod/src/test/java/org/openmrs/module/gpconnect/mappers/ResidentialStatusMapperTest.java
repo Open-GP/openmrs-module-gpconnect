@@ -8,7 +8,7 @@ import org.junit.Test;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.ResidentialStatus;
 import org.openmrs.module.gpconnect.util.CodeSystems;
-import org.openmrs.module.gpconnect.util.GPConnectExtensions;
+import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +29,7 @@ public class ResidentialStatusMapperTest {
 
         Patient actualPatient = residentialStatueMapper.enhance(patient, nhsPatient);
 
-        Extension extension = actualPatient.getExtensionsByUrl(GPConnectExtensions.RESIDENTIAL_STATUS_URL).get(0);
+        Extension extension = actualPatient.getExtensionsByUrl(Extensions.RESIDENTIAL_STATUS_URL).get(0);
         CodeableConcept codeableConcept = (CodeableConcept) extension.getValue();
         List<Coding> coding = codeableConcept.getCoding();
         assertEquals(coding.size(), 1);
@@ -45,7 +45,7 @@ public class ResidentialStatusMapperTest {
 
         Patient actualPatient = residentialStatueMapper.enhance(patient, nhsPatient);
 
-        assertEquals(0, actualPatient.getExtensionsByUrl(GPConnectExtensions.RESIDENTIAL_STATUS_URL).size());
+        assertEquals(0, actualPatient.getExtensionsByUrl(Extensions.RESIDENTIAL_STATUS_URL).size());
     }
 
     @Test
@@ -54,7 +54,7 @@ public class ResidentialStatusMapperTest {
 
         CodeableConcept codeableConcept = new CodeableConcept();
         codeableConcept.addCoding(ResidentialStatus.H.getCoding());
-        Extension extension = new Extension(GPConnectExtensions.RESIDENTIAL_STATUS_URL, codeableConcept);
+        Extension extension = new Extension(Extensions.RESIDENTIAL_STATUS_URL, codeableConcept);
         patient.setExtension(Collections.singletonList(extension));
 
         NhsPatient nhsPatient = new NhsPatient();
@@ -71,7 +71,7 @@ public class ResidentialStatusMapperTest {
 
         CodeableConcept codeableConcept = new CodeableConcept();
         codeableConcept.addCoding(new Coding("something", "test", "soemthing wrong"));
-        Extension extension = new Extension(GPConnectExtensions.RESIDENTIAL_STATUS_URL, codeableConcept);
+        Extension extension = new Extension(Extensions.RESIDENTIAL_STATUS_URL, codeableConcept);
         patient.setExtension(Collections.singletonList(extension));
 
         NhsPatient actualPatient = residentialStatueMapper.mapToNhsPatient(patient, EMPTY_NHS_PATIENT);
@@ -85,7 +85,7 @@ public class ResidentialStatusMapperTest {
 
         CodeableConcept codeableConcept = new CodeableConcept();
         codeableConcept.addCoding(new Coding(CodeSystems.RESIDENTIAL_STATUS, "test", "soemthing wrong"));
-        Extension extension = new Extension(GPConnectExtensions.RESIDENTIAL_STATUS_URL, codeableConcept);
+        Extension extension = new Extension(Extensions.RESIDENTIAL_STATUS_URL, codeableConcept);
         patient.setExtension(Collections.singletonList(extension));
 
         NhsPatient actualPatient = residentialStatueMapper.mapToNhsPatient(patient, EMPTY_NHS_PATIENT);

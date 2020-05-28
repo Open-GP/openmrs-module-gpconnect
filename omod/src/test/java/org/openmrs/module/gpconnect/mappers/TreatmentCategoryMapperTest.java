@@ -8,7 +8,7 @@ import org.junit.Test;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.TreatmentCategory;
 import org.openmrs.module.gpconnect.util.CodeSystems;
-import org.openmrs.module.gpconnect.util.GPConnectExtensions;
+import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +29,7 @@ public class TreatmentCategoryMapperTest {
 
         Patient actualPatient = treatmentCategoryMapper.enhance(patient, nhsPatient);
 
-        Extension extension = actualPatient.getExtensionsByUrl(GPConnectExtensions.TREATMENT_CATEGORY_URL).get(0);
+        Extension extension = actualPatient.getExtensionsByUrl(Extensions.TREATMENT_CATEGORY_URL).get(0);
         CodeableConcept codeableConcept = (CodeableConcept) extension.getValue();
         List<Coding> coding = codeableConcept.getCoding();
         assertEquals(coding.size(), 1);
@@ -45,7 +45,7 @@ public class TreatmentCategoryMapperTest {
 
         Patient actualPatient = treatmentCategoryMapper.enhance(patient, nhsPatient);
 
-        assertEquals(0, actualPatient.getExtensionsByUrl(GPConnectExtensions.TREATMENT_CATEGORY_URL).size());
+        assertEquals(0, actualPatient.getExtensionsByUrl(Extensions.TREATMENT_CATEGORY_URL).size());
     }
 
     @Test
@@ -54,7 +54,7 @@ public class TreatmentCategoryMapperTest {
 
         CodeableConcept codeableConcept = new CodeableConcept();
         codeableConcept.addCoding(TreatmentCategory.ONE.getCoding());
-        Extension extension = new Extension(GPConnectExtensions.TREATMENT_CATEGORY_URL, codeableConcept);
+        Extension extension = new Extension(Extensions.TREATMENT_CATEGORY_URL, codeableConcept);
         patient.setExtension(Collections.singletonList(extension));
 
         NhsPatient nhsPatient = new NhsPatient();
@@ -71,7 +71,7 @@ public class TreatmentCategoryMapperTest {
 
         CodeableConcept codeableConcept = new CodeableConcept();
         codeableConcept.addCoding(new Coding("something", "test", "soemthing wrong"));
-        Extension extension = new Extension(GPConnectExtensions.TREATMENT_CATEGORY_URL, codeableConcept);
+        Extension extension = new Extension(Extensions.TREATMENT_CATEGORY_URL, codeableConcept);
         patient.setExtension(Collections.singletonList(extension));
 
         NhsPatient actualPatient = treatmentCategoryMapper.mapToNhsPatient(patient, EMPTY_NHS_PATIENT);
@@ -85,7 +85,7 @@ public class TreatmentCategoryMapperTest {
 
         CodeableConcept codeableConcept = new CodeableConcept();
         codeableConcept.addCoding(new Coding(CodeSystems.TREATMENT_CATEGORY, "test", "soemthing wrong"));
-        Extension extension = new Extension(GPConnectExtensions.TREATMENT_CATEGORY_URL, codeableConcept);
+        Extension extension = new Extension(Extensions.TREATMENT_CATEGORY_URL, codeableConcept);
         patient.setExtension(Collections.singletonList(extension));
 
         NhsPatient actualPatient = treatmentCategoryMapper.mapToNhsPatient(patient, EMPTY_NHS_PATIENT);

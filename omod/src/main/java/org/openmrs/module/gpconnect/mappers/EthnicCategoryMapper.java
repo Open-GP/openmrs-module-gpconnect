@@ -7,7 +7,7 @@ import org.hl7.fhir.dstu3.model.Patient;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.EthnicCategory;
 import org.openmrs.module.gpconnect.util.CodeSystems;
-import org.openmrs.module.gpconnect.util.GPConnectExtensions;
+import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class EthnicCategoryMapper implements PatientFieldMapper{
             EthnicCategory ethnicCategoryEnum = EthnicCategory.valueOf(nhsPatient.ethnicCategory);
             CodeableConcept ethnicConcept = new CodeableConcept();
             ethnicConcept.addCoding(ethnicCategoryEnum.getCoding());
-            Extension ethnicCategory = new Extension(GPConnectExtensions.ETHNIC_CATEGORY_URL, ethnicConcept);
+            Extension ethnicCategory = new Extension(Extensions.ETHNIC_CATEGORY_URL, ethnicConcept);
             patient.addExtension(ethnicCategory);
         } catch (IllegalArgumentException e) {
             System.out.printf("The ethnic category: %s is not a known one\n", nhsPatient.ethnicCategory);
@@ -33,7 +33,7 @@ public class EthnicCategoryMapper implements PatientFieldMapper{
 
     @Override
     public NhsPatient mapToNhsPatient(Patient patient, NhsPatient nhsPatient) {
-        List<Extension> ethnicCategoryExtensions = patient.getExtensionsByUrl(GPConnectExtensions.ETHNIC_CATEGORY_URL);
+        List<Extension> ethnicCategoryExtensions = patient.getExtensionsByUrl(Extensions.ETHNIC_CATEGORY_URL);
         if (ethnicCategoryExtensions.size() > 0) {
             Coding coding = ((CodeableConcept) ethnicCategoryExtensions.get(0).getValue()).getCoding().get(0);
 

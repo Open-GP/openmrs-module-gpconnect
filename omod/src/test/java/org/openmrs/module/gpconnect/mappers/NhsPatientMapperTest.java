@@ -15,14 +15,14 @@ import org.openmrs.api.context.Context;
 import org.openmrs.api.context.ServiceContext;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
-import org.openmrs.module.gpconnect.util.GPConnectExtensions;
+import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.openmrs.module.gpconnect.util.GPConnectExtensions.NHS_VERFICATION_STATUS_URL;
+import static org.openmrs.module.gpconnect.util.Extensions.NHS_VERFICATION_STATUS_URL;
 
 public class NhsPatientMapperTest {
 	
@@ -76,7 +76,7 @@ public class NhsPatientMapperTest {
 		
 		Patient actualPatient = nhsPatientMapper.enhance(patient);
 		
-		Extension extension = actualPatient.getExtensionsByUrl(GPConnectExtensions.CADAVERIC_DONOR_URL).get(0);
+		Extension extension = actualPatient.getExtensionsByUrl(Extensions.CADAVERIC_DONOR_URL).get(0);
 		assertEquals(((BooleanType) extension.getValue()).booleanValue(), true);
 	}
 	
@@ -84,7 +84,7 @@ public class NhsPatientMapperTest {
 	public void shouldMapNhsPatient() {
 		Patient patient = new Patient();
 		
-		patient.setExtension(Collections.singletonList(new Extension(GPConnectExtensions.CADAVERIC_DONOR_URL,
+		patient.setExtension(Collections.singletonList(new Extension(Extensions.CADAVERIC_DONOR_URL,
 		        new BooleanType(true))));
 		
 		NhsPatient expectedPatient = new NhsPatient();
@@ -148,7 +148,7 @@ public class NhsPatientMapperTest {
 		Patient patient = new Patient();
 		
 		Identifier nhsNoIdentifier = new Identifier();
-		nhsNoIdentifier.setSystem(GPConnectExtensions.NHS_NUMBER_SYSTEM);
+		nhsNoIdentifier.setSystem(Extensions.NHS_NUMBER_SYSTEM);
 		nhsNoIdentifier.setValue("123");
 		Extension verificationStatus = new Extension(NHS_VERFICATION_STATUS_URL, new StringType("02"));
 		nhsNoIdentifier.setExtension(Collections.singletonList(verificationStatus));

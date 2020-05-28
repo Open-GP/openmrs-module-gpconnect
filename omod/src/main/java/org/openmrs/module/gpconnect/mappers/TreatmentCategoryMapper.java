@@ -7,7 +7,7 @@ import org.hl7.fhir.dstu3.model.Patient;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.TreatmentCategory;
 import org.openmrs.module.gpconnect.util.CodeSystems;
-import org.openmrs.module.gpconnect.util.GPConnectExtensions;
+import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +26,7 @@ public class TreatmentCategoryMapper implements PatientFieldMapper {
         }
         CodeableConcept treatmentCategory = new CodeableConcept();
         treatmentCategory.addCoding(optionalTreatmentCategory.get().getCoding());
-        Extension treatmentCategoryExt = new Extension(GPConnectExtensions.TREATMENT_CATEGORY_URL, treatmentCategory);
+        Extension treatmentCategoryExt = new Extension(Extensions.TREATMENT_CATEGORY_URL, treatmentCategory);
         patient.addExtension(treatmentCategoryExt);
 
         return patient;
@@ -34,7 +34,7 @@ public class TreatmentCategoryMapper implements PatientFieldMapper {
 
     @Override
     public NhsPatient mapToNhsPatient(Patient patient, NhsPatient nhsPatient) {
-        List<Extension> treatmentCategoryExtensions = patient.getExtensionsByUrl(GPConnectExtensions.TREATMENT_CATEGORY_URL);
+        List<Extension> treatmentCategoryExtensions = patient.getExtensionsByUrl(Extensions.TREATMENT_CATEGORY_URL);
         if (treatmentCategoryExtensions.size() > 0) {
             Coding coding = ((CodeableConcept) treatmentCategoryExtensions.get(0).getValue()).getCoding().get(0);
 

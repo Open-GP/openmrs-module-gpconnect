@@ -7,7 +7,7 @@ import org.hl7.fhir.dstu3.model.Patient;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.ResidentialStatus;
 import org.openmrs.module.gpconnect.util.CodeSystems;
-import org.openmrs.module.gpconnect.util.GPConnectExtensions;
+import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public class ResidentialStatusMapper implements PatientFieldMapper {
             ResidentialStatus residentialStatusEnum = ResidentialStatus.valueOf(nhsPatient.residentialStatus);
             CodeableConcept residentialStatus = new CodeableConcept();
             residentialStatus.addCoding(residentialStatusEnum.getCoding());
-            Extension residentialStatusExt = new Extension(GPConnectExtensions.RESIDENTIAL_STATUS_URL, residentialStatus);
+            Extension residentialStatusExt = new Extension(Extensions.RESIDENTIAL_STATUS_URL, residentialStatus);
             patient.addExtension(residentialStatusExt);
         } catch (IllegalArgumentException e) {
             System.out.printf("The residential status: %s is not a known one\n", nhsPatient.residentialStatus);
@@ -33,7 +33,7 @@ public class ResidentialStatusMapper implements PatientFieldMapper {
 
     @Override
     public NhsPatient mapToNhsPatient(Patient patient, NhsPatient nhsPatient) {
-        List<Extension> residentialStatusExtensions = patient.getExtensionsByUrl(GPConnectExtensions.RESIDENTIAL_STATUS_URL);
+        List<Extension> residentialStatusExtensions = patient.getExtensionsByUrl(Extensions.RESIDENTIAL_STATUS_URL);
         if (residentialStatusExtensions.size() > 0) {
             Coding coding = ((CodeableConcept) residentialStatusExtensions.get(0).getValue()).getCoding().get(0);
 

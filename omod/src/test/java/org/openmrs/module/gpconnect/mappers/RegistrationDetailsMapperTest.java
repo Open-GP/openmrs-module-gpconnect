@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
 import org.openmrs.module.gpconnect.util.CodeSystems;
-import org.openmrs.module.gpconnect.util.GPConnectExtensions;
+import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.Date;
 
@@ -53,8 +53,8 @@ public class RegistrationDetailsMapperTest {
 
         Patient enhancedPatient = mapper.enhance(patient, nhsPatient);
 
-        Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(GPConnectExtensions.REGISTRATION_DETAILS_URL).get(0);
-        Extension registrationPeriodExt = registrationDetailsExt.getExtensionsByUrl(GPConnectExtensions.REGISTRATION_PERIOD).get(0);
+        Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(Extensions.REGISTRATION_DETAILS_URL).get(0);
+        Extension registrationPeriodExt = registrationDetailsExt.getExtensionsByUrl(Extensions.REGISTRATION_PERIOD).get(0);
 
         Date mappedStart = ((Period) registrationPeriodExt.getValue()).getStart();
         Date mappedEnd = ((Period) registrationPeriodExt.getValue()).getEnd();
@@ -70,8 +70,8 @@ public class RegistrationDetailsMapperTest {
 
         Patient enhancedPatient = mapper.enhance(patient, nhsPatient);
 
-        Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(GPConnectExtensions.REGISTRATION_DETAILS_URL).get(0);
-        Extension registrationTypeExt = registrationDetailsExt.getExtensionsByUrl(GPConnectExtensions.REGISTRATION_TYPE).get(0);
+        Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(Extensions.REGISTRATION_DETAILS_URL).get(0);
+        Extension registrationTypeExt = registrationDetailsExt.getExtensionsByUrl(Extensions.REGISTRATION_TYPE).get(0);
 
         Coding registrationType = ((CodeableConcept) registrationTypeExt.getValue()).getCoding().get(0);
         assertEquals("R", registrationType.getCode());
@@ -86,9 +86,9 @@ public class RegistrationDetailsMapperTest {
 
         Patient enhancedPatient = mapper.enhance(patient, nhsPatient);
 
-        Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(GPConnectExtensions.REGISTRATION_DETAILS_URL).get(0);
+        Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(Extensions.REGISTRATION_DETAILS_URL).get(0);
 
-        assertEquals(0, registrationDetailsExt.getExtensionsByUrl(GPConnectExtensions.REGISTRATION_TYPE).size());
+        assertEquals(0, registrationDetailsExt.getExtensionsByUrl(Extensions.REGISTRATION_TYPE).size());
     }
 
     @Test
@@ -97,11 +97,11 @@ public class RegistrationDetailsMapperTest {
 
         Patient enhancedPatient = mapper.enhance(patient, nhsPatient);
 
-        Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(GPConnectExtensions.REGISTRATION_DETAILS_URL).get(0);
+        Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(Extensions.REGISTRATION_DETAILS_URL).get(0);
 
-        assertEquals(0, registrationDetailsExt.getExtensionsByUrl(GPConnectExtensions.REGISTRATION_PERIOD).size());
-        assertEquals(0, registrationDetailsExt.getExtensionsByUrl(GPConnectExtensions.REGISTRATION_TYPE).size());
-        assertEquals(0, registrationDetailsExt.getExtensionsByUrl(GPConnectExtensions.PREFERRED_BRANCH).size());
+        assertEquals(0, registrationDetailsExt.getExtensionsByUrl(Extensions.REGISTRATION_PERIOD).size());
+        assertEquals(0, registrationDetailsExt.getExtensionsByUrl(Extensions.REGISTRATION_TYPE).size());
+        assertEquals(0, registrationDetailsExt.getExtensionsByUrl(Extensions.PREFERRED_BRANCH).size());
     }
 
     @Test
@@ -111,8 +111,8 @@ public class RegistrationDetailsMapperTest {
 
         Patient enhancedPatient = mapper.enhance(patient, nhsPatient);
 
-        Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(GPConnectExtensions.REGISTRATION_DETAILS_URL).get(0);
-        Extension preferredBranchExt = registrationDetailsExt.getExtensionsByUrl(GPConnectExtensions.PREFERRED_BRANCH).get(0);
+        Extension registrationDetailsExt = enhancedPatient.getExtensionsByUrl(Extensions.REGISTRATION_DETAILS_URL).get(0);
+        Extension preferredBranchExt = registrationDetailsExt.getExtensionsByUrl(Extensions.PREFERRED_BRANCH).get(0);
 
         assertEquals("some/organisation", ((Reference)preferredBranchExt.getValue()).getReference());
     }
@@ -121,14 +121,14 @@ public class RegistrationDetailsMapperTest {
     public void shouldMapPeriod() {
         Patient patient = new Patient();
 
-        Extension ext = new Extension(GPConnectExtensions.REGISTRATION_DETAILS_URL);
+        Extension ext = new Extension(Extensions.REGISTRATION_DETAILS_URL);
 
         Date start = new DateTime(2010, 1, 1, 12, 0).toDate();
         Date end = new DateTime(2015, 1, 1, 12, 0).toDate();
         Period period = new Period();
         period.setStart(start);
         period.setEnd(end);
-        Extension periodExt = new Extension(GPConnectExtensions.REGISTRATION_PERIOD, period);
+        Extension periodExt = new Extension(Extensions.REGISTRATION_PERIOD, period);
         ext.addExtension(periodExt);
 
         patient.addExtension(ext);
@@ -146,11 +146,11 @@ public class RegistrationDetailsMapperTest {
     public void shouldMapType() {
         Patient patient = new Patient();
 
-        Extension ext = new Extension(GPConnectExtensions.REGISTRATION_DETAILS_URL);
+        Extension ext = new Extension(Extensions.REGISTRATION_DETAILS_URL);
 
         CodeableConcept type = new CodeableConcept();
         type.addCoding(RegistrationType.T.getCoding());
-        Extension periodExt = new Extension(GPConnectExtensions.REGISTRATION_TYPE, type);
+        Extension periodExt = new Extension(Extensions.REGISTRATION_TYPE, type);
         ext.addExtension(periodExt);
 
         patient.addExtension(ext);
@@ -167,11 +167,11 @@ public class RegistrationDetailsMapperTest {
     public void shouldSkipMapTypeWhenSystemUnknown() {
         Patient patient = new Patient();
 
-        Extension ext = new Extension(GPConnectExtensions.REGISTRATION_DETAILS_URL);
+        Extension ext = new Extension(Extensions.REGISTRATION_DETAILS_URL);
 
         CodeableConcept type = new CodeableConcept();
         type.addCoding(new Coding("some system", "T", "display"));
-        Extension periodExt = new Extension(GPConnectExtensions.REGISTRATION_TYPE, type);
+        Extension periodExt = new Extension(Extensions.REGISTRATION_TYPE, type);
         ext.addExtension(periodExt);
 
         patient.addExtension(ext);
@@ -185,11 +185,11 @@ public class RegistrationDetailsMapperTest {
     public void shouldSkipMapTypeWhenCodeUnknown() {
         Patient patient = new Patient();
 
-        Extension ext = new Extension(GPConnectExtensions.REGISTRATION_DETAILS_URL);
+        Extension ext = new Extension(Extensions.REGISTRATION_DETAILS_URL);
 
         CodeableConcept type = new CodeableConcept();
         type.addCoding(new Coding(CodeSystems.REGISTRATION_TYPE, "something", "display"));
-        Extension periodExt = new Extension(GPConnectExtensions.REGISTRATION_TYPE, type);
+        Extension periodExt = new Extension(Extensions.REGISTRATION_TYPE, type);
         ext.addExtension(periodExt);
 
         patient.addExtension(ext);
@@ -202,9 +202,9 @@ public class RegistrationDetailsMapperTest {
     @Test
     public void shouldMapPreferredBranch() {
         Patient patient = new Patient();
-        Extension ext = new Extension(GPConnectExtensions.REGISTRATION_DETAILS_URL);
+        Extension ext = new Extension(Extensions.REGISTRATION_DETAILS_URL);
 
-        ext.addExtension(new Extension(GPConnectExtensions.PREFERRED_BRANCH, new Reference("organisation/1")));
+        ext.addExtension(new Extension(Extensions.PREFERRED_BRANCH, new Reference("organisation/1")));
         patient.addExtension(ext);
 
         NhsPatient actualNhsPatient = mapper.mapToNhsPatient(patient, new NhsPatient());
@@ -223,7 +223,7 @@ public class RegistrationDetailsMapperTest {
     @Test
     public void shouldSkipMappingWhenEmpty() {
         Patient patient = new Patient();
-        patient.addExtension(new Extension(GPConnectExtensions.REGISTRATION_DETAILS_URL));
+        patient.addExtension(new Extension(Extensions.REGISTRATION_DETAILS_URL));
 
         assertEquals(EMPTY_NHS_PATIENT, mapper.mapToNhsPatient(patient, new NhsPatient()));
     }
