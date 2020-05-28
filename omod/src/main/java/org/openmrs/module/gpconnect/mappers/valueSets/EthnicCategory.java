@@ -1,10 +1,11 @@
 package org.openmrs.module.gpconnect.mappers.valueSets;
 
+import lombok.Getter;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.openmrs.module.gpconnect.util.CodeSystems;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 //value from: https://fhir.nhs.uk/STU3/ValueSet/CareConnect-EthnicCategory-1
@@ -25,20 +26,23 @@ public enum EthnicCategory {
 	        "Any other Black background"), PA("Somali"), PB("Mixed Black"), PC("Nigerian"), PD("Black British"), PE(
 	        "Other Black, Black unspecified"), R("Chinese"), S("Any other ethnic group"), SA("Vietnamese"), SB("Japanese"), SC(
 	        "Filipino"), SD("Malaysian"), SE("Any Other Group"), Z("Not stated");
-	
+
+	@Getter
 	private final String display;
 	
 	EthnicCategory(String display) {
 		this.display = display;
 	}
-	
-	public Coding getCoding() {
-		return new Coding(CodeSystems.ETHNIC_CATEGORY, name(), display);
+
+	public static Map<String, String> dict(){
+		return Arrays.stream(values())
+				.collect(Collectors.toMap(
+						Enum::name,
+						EthnicCategory::getDisplay
+				));
 	}
 
-    public static List<String> names() {
-		return Arrays.stream(values())
-				.map(Enum::name)
-				.collect(Collectors.toList());
+	public Coding getCoding() {
+		return new Coding(CodeSystems.ETHNIC_CATEGORY, name(), display);
 	}
 }

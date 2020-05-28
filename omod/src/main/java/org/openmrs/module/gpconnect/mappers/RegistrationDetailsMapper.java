@@ -1,12 +1,10 @@
 package org.openmrs.module.gpconnect.mappers;
 
-import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.Period;
 import org.hl7.fhir.dstu3.model.Reference;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
-import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
 import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.List;
@@ -24,16 +22,7 @@ public class RegistrationDetailsMapper implements PatientFieldMapper {
             extension.addExtension(periodExtension);
         }
 
-        try {
-            RegistrationType typeEnum = RegistrationType.valueOf(nhsPatient.registrationType);
-            CodeableConcept registrationType = new CodeableConcept();
-            registrationType.addCoding(typeEnum.getCoding());
-            Extension typeExtension = new Extension(Extensions.REGISTRATION_TYPE, registrationType);
-            extension.addExtension(typeExtension);
-        } catch (IllegalArgumentException | NullPointerException e) {
-            System.err.printf("The registration type: %s is not a known one. Error: %s\n", nhsPatient.registrationType, e.getMessage());
-        }
-
+        CodeableConceptExtension.REGISTRATION_TYPE.createExtension(nhsPatient.registrationType).ifPresent(extension::addExtension);
 
         if (nhsPatient.preferredBranch != null) {
             Extension preferredBranchExt = new Extension(Extensions.PREFERRED_BRANCH, new Reference(nhsPatient.preferredBranch));
