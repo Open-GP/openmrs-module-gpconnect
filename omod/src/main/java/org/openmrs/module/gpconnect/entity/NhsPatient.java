@@ -7,6 +7,7 @@ import lombok.ToString;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import java.util.Date;
 
 @Entity(name = "nhs_patient")
 @EqualsAndHashCode
@@ -35,4 +36,16 @@ public class NhsPatient {
 
 	@Column(name = "treatment_category")
 	public String treatmentCategory;
+
+	@Column(name = "registration_start")
+	public Date registrationStart;
+
+	@Column(name = "registration_end")
+	public Date registrationEnd;
+
+	@Column(name = "registration_type")
+	public String registrationType;
+
+	@Column(name = "preferred_branch")
+	public String preferredBranch;
 }

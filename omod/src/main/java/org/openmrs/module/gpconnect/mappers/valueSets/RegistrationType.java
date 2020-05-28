@@ -1,0 +1,36 @@
+package org.openmrs.module.gpconnect.mappers.valueSets;
+
+import lombok.Getter;
+import org.hl7.fhir.dstu3.model.Coding;
+import org.openmrs.module.gpconnect.util.CodeSystems;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+public enum RegistrationType {
+    R("Regular"),
+    E("Emergency"),
+    IN("Immediately necessary"),
+    O("Other"),
+    T("Temporary"),
+    S("Synthetic Record"),
+    P("Private");
+
+    @Getter
+    private final String display;
+
+    RegistrationType(String display) {
+        this.display = display;
+    }
+
+    public Coding getCoding() {
+        return new Coding(CodeSystems.REGISTRATION_TYPE, name(), display);
+    }
+
+    public static boolean isValid(String code){
+        return Arrays.stream(values())
+                .map(Enum::name)
+                .collect(Collectors.toList())
+                .contains(code);
+    }
+}

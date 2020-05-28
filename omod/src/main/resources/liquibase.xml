@@ -63,4 +63,21 @@
       </addColumn>
    </changeSet>
 
+   <changeSet id="gpconnect-nhs-connect-4" author="OpenGP">
+      <preConditions>
+         <tableExists tableName="nhs_patient"/>
+      </preConditions>
+      <addColumn tableName="nhs_patient">
+         <column name="registration_start" type="datetime"/>
+      </addColumn>
+      <addColumn tableName="nhs_patient">
+         <column name="registration_end" type="datetime"/>
+      </addColumn>
+      <addColumn tableName="nhs_patient">
+         <column name="registration_type" type="varchar(100)"/>
+      </addColumn>
+      <addColumn tableName="nhs_patient">
+         <column name="preferred_branch" type="varchar(100)"/>
+      </addColumn>
+   </changeSet>
 </databaseChangeLog>

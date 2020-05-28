@@ -11,4 +11,8 @@ public final class GPConnectExtensions {
 	public static final String ETHNIC_CATEGORY_URL = "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-EthnicCategory-1";
 	public static final String RESIDENTIAL_STATUS_URL = "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-ResidentialStatus-1";
 	public static final String TREATMENT_CATEGORY_URL = " https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-TreatmentCategory-1";
+	public static final String REGISTRATION_DETAILS_URL = "https://fhir.nhs.uk/STU3/StructureDefinition/Extension-CareConnect-GPC-RegistrationDetails-1";
+	public static final String REGISTRATION_PERIOD = "registrationPeriod";
+	public static final String REGISTRATION_TYPE = "registrationType";
+	public static final String PREFERRED_BRANCH = "preferredBranchSurgery";
 }
