@@ -8,7 +8,11 @@ import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.StringType;
 import org.openmrs.api.PatientService;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
+import org.openmrs.module.gpconnect.mappers.valueSets.EthnicCategory;
+import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
+import org.openmrs.module.gpconnect.mappers.valueSets.ResidentialStatus;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
+import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -31,10 +35,10 @@ public class NhsPatientMapper {
 
 	public NhsPatientMapper() {
 		mappers = Arrays.asList(
-				new EthnicCategoryMapper(new CodeableConceptExtension(CodeableConceptExtension.CodeableConceptExtensionEnum.ETHNIC_CATEGORY)),
-				new ResidentialStatusMapper(new CodeableConceptExtension(CodeableConceptExtension.CodeableConceptExtensionEnum.RESIDENTIAL_STATUS)),
+				new EthnicCategoryMapper(new CodeableConceptExtension(Extensions.ETHNIC_CATEGORY_URL, CodeSystems.ETHNIC_CATEGORY, EthnicCategory.dict())),
+				new RegistrationDetailsMapper(new CodeableConceptExtension(Extensions.REGISTRATION_TYPE, CodeSystems.REGISTRATION_TYPE, RegistrationType.dict())),
 				new TreatmentCategoryMapper(),
-				new RegistrationDetailsMapper(new CodeableConceptExtension(CodeableConceptExtension.CodeableConceptExtensionEnum.RESIDENTIAL_STATUS))
+				new ResidentialStatusMapper(new CodeableConceptExtension(Extensions.RESIDENTIAL_STATUS_URL, CodeSystems.RESIDENTIAL_STATUS, ResidentialStatus.dict()))
 		);
 	}
 
