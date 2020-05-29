@@ -1,10 +1,7 @@
 package org.openmrs.module.gpconnect.mappers;
 
 import org.hl7.fhir.dstu3.model.ContactPoint;
-import org.hl7.fhir.dstu3.model.Extension;
-import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
-import org.hl7.fhir.dstu3.model.StringType;
 import org.openmrs.api.PatientService;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.DeathNotificationStatus;
@@ -19,9 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 public class NhsPatientMapper {
@@ -35,16 +30,22 @@ public class NhsPatientMapper {
 	List<PatientFieldMapper> mappers;
 	
 	public NhsPatientMapper() {
-		mappers = Arrays.asList(new CadavericDonorMapper(new BooleanExtension(Extensions.CADAVERIC_DONOR_URL)),
-		    new EthnicCategoryMapper(new CodeableConceptExtension(Extensions.ETHNIC_CATEGORY_URL,
-		            CodeSystems.ETHNIC_CATEGORY, EthnicCategory.dict())), new RegistrationDetailsMapper(
-		            new CodeableConceptExtension(Extensions.REGISTRATION_TYPE, CodeSystems.REGISTRATION_TYPE,
-		                    RegistrationType.dict())), new TreatmentCategoryMapper(new CodeableConceptExtension(
-		            Extensions.TREATMENT_CATEGORY_URL, CodeSystems.TREATMENT_CATEGORY, TreatmentCategory.dict())),
-		    new ResidentialStatusMapper(new CodeableConceptExtension(Extensions.RESIDENTIAL_STATUS_URL,
-		            CodeSystems.RESIDENTIAL_STATUS, ResidentialStatus.dict())), new DeathNotificationStatusMapper(
-		            new CodeableConceptExtension(Extensions.DEATH_NOTIFICATION_STATUS_URL,
-		                    CodeSystems.DEATH_NOTIFICATION_STATUS, DeathNotificationStatus.dict())));
+		CadavericDonorMapper cadavericDonor = new CadavericDonorMapper(new BooleanExtension(Extensions.CADAVERIC_DONOR_URL));
+		EthnicCategoryMapper ethnicCategory = new EthnicCategoryMapper(new CodeableConceptExtension(
+		        Extensions.ETHNIC_CATEGORY_URL, CodeSystems.ETHNIC_CATEGORY, EthnicCategory.dict()));
+		RegistrationDetailsMapper registrationDetails = new RegistrationDetailsMapper(new CodeableConceptExtension(
+		        Extensions.REGISTRATION_TYPE, CodeSystems.REGISTRATION_TYPE, RegistrationType.dict()));
+		TreatmentCategoryMapper treatmentCategory = new TreatmentCategoryMapper(new CodeableConceptExtension(
+		        Extensions.TREATMENT_CATEGORY_URL, CodeSystems.TREATMENT_CATEGORY, TreatmentCategory.dict()));
+		ResidentialStatusMapper residentialStatus = new ResidentialStatusMapper(new CodeableConceptExtension(
+		        Extensions.RESIDENTIAL_STATUS_URL, CodeSystems.RESIDENTIAL_STATUS, ResidentialStatus.dict()));
+		DeathNotificationStatusMapper deathNotificationStatus = new DeathNotificationStatusMapper(
+		        new CodeableConceptExtension(Extensions.DEATH_NOTIFICATION_STATUS_URL,
+		                CodeSystems.DEATH_NOTIFICATION_STATUS, DeathNotificationStatus.dict()));
+		
+		NhsNoMapper nhsNo = new NhsNoMapper();
+		mappers = Arrays.asList(nhsNo, cadavericDonor, ethnicCategory, registrationDetails, treatmentCategory,
+		    residentialStatus, deathNotificationStatus);
 	}
 	
 	public Patient enhance(Patient patient) {
@@ -70,15 +71,6 @@ public class NhsPatientMapper {
 			return patient;
 		}
 
-		Identifier nhsNoIdentifier = new Identifier();
-		nhsNoIdentifier.setSystem(Extensions.NHS_NUMBER_SYSTEM);
-		nhsNoIdentifier.setValue(nhsPatient.nhsNumber);
-		Extension verficationStatus = new Extension(Extensions.NHS_VERFICATION_STATUS_URL, new StringType(
-		        nhsPatient.nhsNumberVerificationStatus));
-		nhsNoIdentifier.setExtension(Collections.singletonList(verficationStatus));
-		
-		patient.addIdentifier(nhsNoIdentifier);
-
 		patient = mappers.stream()
 				.reduce(patient,
 						(currentPatient, patientFieldMapper) -> patientFieldMapper.enhance(currentPatient, nhsPatient),
@@ -90,19 +82,6 @@ public class NhsPatientMapper {
 	
 	public NhsPatient toNhsPatient(Patient patient, long patientId) {
 		NhsPatient nhsPatient = new NhsPatient();
-
-		Optional<Identifier> optionalNhsNo = patient.getIdentifier()
-				.stream()
-				.filter((identifier -> identifier.getSystem().equals(Extensions.NHS_NUMBER_SYSTEM)))
-				.findFirst();
-
-		if (optionalNhsNo.isPresent()) {
-			nhsPatient.setNhsNumber(optionalNhsNo.get().getValue());
-			nhsPatient.setNhsNumberVerificationStatus(
-					optionalNhsNo.get()
-							.getExtensionString(Extensions.NHS_VERFICATION_STATUS_URL));
-
-		}
 
 		nhsPatient = mappers.stream()
 				.reduce(nhsPatient,

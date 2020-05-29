@@ -2,9 +2,7 @@ package org.openmrs.module.gpconnect.mappers;
 
 import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.Extension;
-import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
-import org.hl7.fhir.dstu3.model.StringType;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -22,7 +20,6 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.openmrs.module.gpconnect.util.Extensions.NHS_VERFICATION_STATUS_URL;
 
 public class NhsPatientMapperTest {
 	
@@ -95,75 +92,6 @@ public class NhsPatientMapperTest {
 	
 	@Test
 	public void shouldSkipCadavericDonorWhenMissing() {
-		Patient patient = new Patient();
-		
-		NhsPatient expectedPatient = new NhsPatient();
-		expectedPatient.setId(3L);
-		
-		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
-	}
-	
-	@Test
-	public void shouldAddNhsNumber() {
-		String patientUuid = "test";
-		
-		setup(patientUuid);
-		
-		NhsPatient nhsPatient = new NhsPatient();
-		nhsPatient.nhsNumber = "123456";
-		
-		when(mockNhsPatientService.findById(any())).thenReturn(nhsPatient);
-		
-		Patient actualPatient = nhsPatientMapper.enhance(patient);
-		
-		Identifier identifier = actualPatient.getIdentifier().get(0);
-		
-		assertEquals(identifier.getSystem(), "https://fhir.nhs.uk/Id/nhs-number");
-		assertEquals(identifier.getValue(), "123456");
-	}
-	
-	@Test
-	public void shouldAddNhsNumberVerificationStatus() {
-		String patientUuid = "test";
-		
-		setup(patientUuid);
-		
-		NhsPatient nhsPatient = new NhsPatient();
-		nhsPatient.nhsNumber = "123456";
-		nhsPatient.nhsNumberVerificationStatus = "01";
-		
-		when(mockNhsPatientService.findById(any())).thenReturn(nhsPatient);
-		
-		Patient actualPatient = nhsPatientMapper.enhance(patient);
-		
-		Identifier identifier = actualPatient.getIdentifier().get(0);
-		
-		Extension extension = identifier.getExtensionsByUrl(NHS_VERFICATION_STATUS_URL).get(0);
-		assertEquals("01", ((StringType) extension.getValue()).getValue());
-	}
-	
-	@Test
-	public void shouldMapNhsNumber() {
-		Patient patient = new Patient();
-		
-		Identifier nhsNoIdentifier = new Identifier();
-		nhsNoIdentifier.setSystem(Extensions.NHS_NUMBER_SYSTEM);
-		nhsNoIdentifier.setValue("123");
-		Extension verificationStatus = new Extension(NHS_VERFICATION_STATUS_URL, new StringType("02"));
-		nhsNoIdentifier.setExtension(Collections.singletonList(verificationStatus));
-		
-		patient.addIdentifier(nhsNoIdentifier);
-		
-		NhsPatient expectedPatient = new NhsPatient();
-		expectedPatient.setId(3L);
-		expectedPatient.setNhsNumber("123");
-		expectedPatient.setNhsNumberVerificationStatus("02");
-		
-		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
-	}
-	
-	@Test
-	public void shouldSkipMappingNhsNumberWhenMissing() {
 		Patient patient = new Patient();
 		
 		NhsPatient expectedPatient = new NhsPatient();
