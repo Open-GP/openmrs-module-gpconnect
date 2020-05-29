@@ -10,14 +10,14 @@ import org.openmrs.module.gpconnect.util.Extensions;
 import java.util.List;
 
 public class RegistrationDetailsMapper implements PatientFieldMapper {
-
-    CodeableConceptExtension codeableConceptExtension;
-
-    public RegistrationDetailsMapper(CodeableConceptExtension codeableConceptExtension) {
-        this.codeableConceptExtension = codeableConceptExtension;
-    }
-
-    @Override
+	
+	CodeableConceptExtension codeableConceptExtension;
+	
+	public RegistrationDetailsMapper(CodeableConceptExtension codeableConceptExtension) {
+		this.codeableConceptExtension = codeableConceptExtension;
+	}
+	
+	@Override
     public Patient enhance(Patient patient, NhsPatient nhsPatient) {
         Extension extension = new Extension(Extensions.REGISTRATION_DETAILS_URL);
 
@@ -39,8 +39,8 @@ public class RegistrationDetailsMapper implements PatientFieldMapper {
         patient.addExtension(extension);
         return patient;
     }
-
-    @Override
+	
+	@Override
     public NhsPatient mapToNhsPatient(Patient patient, NhsPatient nhsPatient) {
 
         List<Extension> extensions = patient.getExtensionsByUrl(Extensions.REGISTRATION_DETAILS_URL);

@@ -24,14 +24,14 @@ public enum EthnicCategory {
 	        "Any other Black background"), PA("Somali"), PB("Mixed Black"), PC("Nigerian"), PD("Black British"), PE(
 	        "Other Black, Black unspecified"), R("Chinese"), S("Any other ethnic group"), SA("Vietnamese"), SB("Japanese"), SC(
 	        "Filipino"), SD("Malaysian"), SE("Any Other Group"), Z("Not stated");
-
+	
 	@Getter
 	private final String display;
 	
 	EthnicCategory(String display) {
 		this.display = display;
 	}
-
+	
 	public static Map<String, String> dict(){
 		return Arrays.stream(values())
 				.collect(Collectors.toMap(

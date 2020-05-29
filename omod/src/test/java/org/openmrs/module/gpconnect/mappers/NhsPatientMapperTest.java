@@ -84,8 +84,7 @@ public class NhsPatientMapperTest {
 	public void shouldMapNhsPatient() {
 		Patient patient = new Patient();
 		
-		patient.setExtension(Collections.singletonList(new Extension(Extensions.CADAVERIC_DONOR_URL,
-		        new BooleanType(true))));
+		patient.setExtension(Collections.singletonList(new Extension(Extensions.CADAVERIC_DONOR_URL, new BooleanType(true))));
 		
 		NhsPatient expectedPatient = new NhsPatient();
 		expectedPatient.setCadavericDonor(true);
