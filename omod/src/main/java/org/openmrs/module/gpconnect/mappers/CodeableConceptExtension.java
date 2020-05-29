@@ -3,6 +3,7 @@ package org.openmrs.module.gpconnect.mappers;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
+import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 
 import java.util.List;
@@ -58,5 +59,9 @@ public class CodeableConceptExtension implements PatientExtension<String> {
 			
 		}
 		return Optional.empty();
+	}
+	
+	public Optional<String> getValue(Identifier identifier) {
+		return getValue(identifier.getExtensionsByUrl(extensionUrl));
 	}
 }

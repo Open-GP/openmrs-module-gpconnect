@@ -3,6 +3,7 @@ package org.openmrs.module.gpconnect.mappers;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.Extension;
+import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +45,7 @@ public class CodeableConceptExtensionTest {
 	}
 	
 	@Test
-	public void shouldMapResidentialStatus() {
+	public void shouldMapForPatient() {
 		Patient patient = new Patient();
 		
 		CodeableConcept codeableConcept = new CodeableConcept();
@@ -53,6 +54,30 @@ public class CodeableConceptExtensionTest {
 		patient.setExtension(Collections.singletonList(extension));
 		
 		assertEquals("key", codeableConceptExtension.getValue(patient).get());
+	}
+	
+	@Test
+	public void shouldMapForExtension() {
+		Extension parentExtension = new Extension();
+		
+		CodeableConcept codeableConcept = new CodeableConcept();
+		codeableConcept.addCoding(new Coding("code-system", "key", "value"));
+		Extension extension = new Extension("extension-url", codeableConcept);
+		parentExtension.setExtension(Collections.singletonList(extension));
+		
+		assertEquals("key", codeableConceptExtension.getValue(parentExtension).get());
+	}
+	
+	@Test
+	public void shouldMapForIdentifier() {
+		Identifier identifier = new Identifier();
+		
+		CodeableConcept codeableConcept = new CodeableConcept();
+		codeableConcept.addCoding(new Coding("code-system", "key", "value"));
+		Extension extension = new Extension("extension-url", codeableConcept);
+		identifier.setExtension(Collections.singletonList(extension));
+		
+		assertEquals("key", codeableConceptExtension.getValue(identifier).get());
 	}
 	
 	@Test

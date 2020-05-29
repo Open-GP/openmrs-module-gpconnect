@@ -11,4 +11,6 @@ public class CodeSystems {
 	public static final String REGISTRATION_TYPE = "https://fhir.nhs.uk/STU3/ValueSet/CareConnect-RegistrationType-1";
 	
 	public static final String DEATH_NOTIFICATION_STATUS = "https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-DeathNotificationStatus-1";
+	
+	public static final String NHS_NO_VERIFICATION_STATUS = "https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-NHSNumberVerificationStatus-1";
 }

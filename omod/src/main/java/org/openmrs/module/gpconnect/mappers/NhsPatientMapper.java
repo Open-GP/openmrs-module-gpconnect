@@ -6,6 +6,7 @@ import org.openmrs.api.PatientService;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.valueSets.DeathNotificationStatus;
 import org.openmrs.module.gpconnect.mappers.valueSets.EthnicCategory;
+import org.openmrs.module.gpconnect.mappers.valueSets.NhsNoVerificationStatus;
 import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
 import org.openmrs.module.gpconnect.mappers.valueSets.ResidentialStatus;
 import org.openmrs.module.gpconnect.mappers.valueSets.TreatmentCategory;
@@ -43,7 +44,8 @@ public class NhsPatientMapper {
 		        new CodeableConceptExtension(Extensions.DEATH_NOTIFICATION_STATUS_URL,
 		                CodeSystems.DEATH_NOTIFICATION_STATUS, DeathNotificationStatus.dict()));
 		
-		NhsNoMapper nhsNo = new NhsNoMapper();
+		NhsNoMapper nhsNo = new NhsNoMapper(new CodeableConceptExtension(Extensions.NHS_VERFICATION_STATUS_URL,
+		        CodeSystems.NHS_NO_VERIFICATION_STATUS, NhsNoVerificationStatus.dict()));
 		mappers = Arrays.asList(nhsNo, cadavericDonor, ethnicCategory, registrationDetails, treatmentCategory,
 		    residentialStatus, deathNotificationStatus);
 	}
