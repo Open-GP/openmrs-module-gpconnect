@@ -5,6 +5,7 @@ import org.hl7.fhir.dstu3.model.Patient;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.util.Extensions;
 
+import java.util.Collections;
 import java.util.Optional;
 
 public class NhsNoMapper implements PatientFieldMapper {
@@ -17,13 +18,17 @@ public class NhsNoMapper implements PatientFieldMapper {
 	
 	@Override
 	public Patient enhance(Patient patient, NhsPatient nhsPatient) {
-		Identifier nhsNoIdentifier = new Identifier();
-		nhsNoIdentifier.setSystem(Extensions.NHS_NUMBER_SYSTEM);
-		nhsNoIdentifier.setValue(nhsPatient.nhsNumber);
 
+		Identifier oldNhsNoIdentifier = patient.getIdentifier()
+				.stream()
+				.filter(identifier -> identifier.getSystem().equals(Extensions.NHS_NUMBER_SYSTEM))
+				.findFirst()
+				.get();
+
+		Identifier nhsNoIdentifier = new Identifier().setSystem(Extensions.NHS_NUMBER_SYSTEM).setValue(oldNhsNoIdentifier.getValue());
 		extension.createExtension(nhsPatient.nhsNumberVerificationStatus).ifPresent(nhsNoIdentifier::addExtension);
 
-		patient.addIdentifier(nhsNoIdentifier);
+		patient.setIdentifier(Collections.singletonList(nhsNoIdentifier));
 
 		return patient;
 	}

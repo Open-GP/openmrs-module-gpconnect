@@ -3,6 +3,8 @@ package org.openmrs.module.gpconnect.mappers;
 import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.Period;
+import org.hl7.fhir.dstu3.model.Reference;
 import org.junit.Before;
 import org.junit.Test;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
@@ -12,6 +14,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -31,25 +34,32 @@ public class NhsNoMapperTest {
 	public void setUp() throws Exception {
 		when(nhsNoVerificationStatus.createExtension(any())).thenReturn(Optional.empty());
 		when(nhsNoVerificationStatus.getValue(any(Identifier.class))).thenReturn(Optional.empty());
+
+		Identifier simpleNhsNo = new Identifier();
+		simpleNhsNo.setSystem(Extensions.NHS_NUMBER_SYSTEM);
+		simpleNhsNo.setValue("123456");
+		simpleNhsNo.setUse(Identifier.IdentifierUse.USUAL);
+		simpleNhsNo.setPeriod(new Period());
+		simpleNhsNo.setAssigner(new Reference());
+		patient.addIdentifier(simpleNhsNo);
 	}
 	
 	@Test
-	public void shouldAddNhsNumber() {
+	public void shouldReplacePreviousNhsNoIdentifier() {
 		NhsPatient nhsPatient = new NhsPatient();
-		nhsPatient.nhsNumber = "123456";
-		
+
 		Patient actualPatient = mapper.enhance(patient, nhsPatient);
-		
+
+		assertEquals(1, actualPatient.getIdentifier().size());
 		Identifier identifier = actualPatient.getIdentifier().get(0);
-		
-		assertEquals(identifier.getSystem(), "https://fhir.nhs.uk/Id/nhs-number");
-		assertEquals(identifier.getValue(), "123456");
+		assertEquals(Extensions.NHS_NUMBER_SYSTEM, identifier.getSystem());
+		assertEquals("123456", identifier.getValue());
+		assertNull(identifier.getUse());
 	}
 	
 	@Test
 	public void shouldAddNhsNumberVerificationStatus() {
 		NhsPatient nhsPatient = new NhsPatient();
-		nhsPatient.nhsNumber = "123456";
 		nhsPatient.nhsNumberVerificationStatus = "01";
 		
 		Extension verificationStatusExt = new Extension(NHS_VERFICATION_STATUS_URL);
