@@ -79,5 +79,8 @@
       <addColumn tableName="nhs_patient">
          <column name="preferred_branch" type="varchar(100)"/>
       </addColumn>
+      <addColumn tableName="nhs_patient">
+         <column name="death_notification_status" type="varchar(100)"/>
+      </addColumn>
    </changeSet>
 </databaseChangeLog>
