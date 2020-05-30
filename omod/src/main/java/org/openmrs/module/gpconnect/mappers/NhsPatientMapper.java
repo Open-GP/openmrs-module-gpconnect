@@ -1,6 +1,6 @@
 package org.openmrs.module.gpconnect.mappers;
 
-import org.hl7.fhir.dstu3.model.ContactPoint;
+import org.hl7.fhir.dstu3.model.Meta;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.openmrs.api.PatientService;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
@@ -57,10 +57,6 @@ public class NhsPatientMapper {
 		
 		String uuid = patient.getId();
 		
-		ContactPoint email = new ContactPoint();
-		email.setSystem(ContactPoint.ContactPointSystem.EMAIL).setValue("test@mail.com");
-		patient.addTelecom(email);
-		
 		org.openmrs.Patient omrsPatient = patientService.getPatientByUuid(uuid);
 		
 		if (omrsPatient == null) {
@@ -68,7 +64,11 @@ public class NhsPatientMapper {
 		}
 		
 		NhsPatient nhsPatient = nhsPatientService.findById(omrsPatient.getPatientId().longValue());
-		
+
+		Meta meta = new Meta();
+		meta.addProfile("https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Patient-1");
+		patient.setMeta(meta);
+
 		if (nhsPatient == null) {
 			return patient;
 		}

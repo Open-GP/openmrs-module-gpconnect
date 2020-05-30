@@ -48,19 +48,6 @@ public class NhsPatientMapperTest {
 	Patient patient = new Patient();
 	
 	@Test
-	public void shouldMapFakeEmail() {
-		String patientUuid = "test";
-		
-		setup(patientUuid);
-		
-		when(mockNhsPatientService.findById(any())).thenReturn(null);
-		
-		Patient actualPatient = nhsPatientMapper.enhance(patient);
-		
-		assertEquals(actualPatient.getTelecom().get(0).getValue(), "test@mail.com");
-	}
-	
-	@Test
 	public void shouldSetTheCadavericDonorExtension() {
 		String patientUuid = "test";
 		
@@ -98,5 +85,21 @@ public class NhsPatientMapperTest {
 		expectedPatient.setId(3L);
 		
 		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
+	}
+	
+	@Test
+	public void shouldEnhanceWithMetada() {
+		String patientUuid = "test";
+		
+		setup(patientUuid);
+		
+		NhsPatient nhsPatient = new NhsPatient();
+		
+		when(mockNhsPatientService.findById(any())).thenReturn(nhsPatient);
+		
+		Patient actualPatient = nhsPatientMapper.enhance(patient);
+		
+		assertEquals("https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Patient-1", actualPatient.getMeta()
+		        .getProfile().get(0).asStringValue());
 	}
 }
