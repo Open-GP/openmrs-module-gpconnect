@@ -2,6 +2,7 @@ package org.openmrs.module.gpconnect.mappers;
 
 import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.Extension;
+import org.hl7.fhir.dstu3.model.HumanName;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Before;
@@ -16,10 +17,14 @@ import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
 import org.openmrs.module.gpconnect.util.Extensions;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -120,5 +125,30 @@ public class NhsPatientMapperTest {
 		Patient actualPatient = nhsPatientMapper.enhance(patient);
 		
 		assertNull(actualPatient.getDeceased());
+	}
+	
+	@Test
+	public void shouldReplaceUsualNameWithOfficial() {
+		String patientUuid = "test";
+
+		HumanName official = new HumanName().setFamily("Johnson").setUse(HumanName.NameUse.USUAL);
+		HumanName nickName = new HumanName().setFamily("Jonny").setUse(HumanName.NameUse.NICKNAME);
+
+		patient.setName(Arrays.asList(official, nickName));
+		setup(patientUuid);
+
+		NhsPatient nhsPatient = new NhsPatient();
+
+		when(mockNhsPatientService.findById(any())).thenReturn(nhsPatient);
+
+		Patient actualPatient = nhsPatientMapper.enhance(patient);
+
+		List<HumanName> names = actualPatient.getName();
+
+		assertEquals(2, names.size());
+
+		Optional<HumanName> officialName = names.stream().filter(name -> name.getUse().equals(HumanName.NameUse.OFFICIAL)).findFirst();
+		assertTrue(officialName.isPresent());
+		assertEquals("Johnson", officialName.get().getFamily());
 	}
 }

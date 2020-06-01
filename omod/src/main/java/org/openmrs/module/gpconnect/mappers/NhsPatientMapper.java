@@ -1,6 +1,7 @@
 package org.openmrs.module.gpconnect.mappers;
 
 import org.hl7.fhir.dstu3.model.BooleanType;
+import org.hl7.fhir.dstu3.model.HumanName;
 import org.hl7.fhir.dstu3.model.Meta;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.openmrs.api.PatientService;
@@ -73,6 +74,12 @@ public class NhsPatientMapper {
 		if ((patient.getDeceased() instanceof BooleanType) && !((BooleanType) patient.getDeceased()).booleanValue()) {
 			patient.setDeceased(null);
 		}
+
+		patient.getName().forEach(name -> {
+			if (name.getUse().equals(HumanName.NameUse.USUAL)) {
+				name.setUse(HumanName.NameUse.OFFICIAL);
+			}
+		});
 
 		if (nhsPatient == null) {
 			return patient;
