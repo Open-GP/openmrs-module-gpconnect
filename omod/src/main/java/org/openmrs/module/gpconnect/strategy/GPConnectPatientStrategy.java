@@ -1,15 +1,23 @@
 package org.openmrs.module.gpconnect.strategy;
 
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.hl7.fhir.dstu3.model.Bundle;
+import org.hl7.fhir.dstu3.model.CodeableConcept;
+import org.hl7.fhir.dstu3.model.Coding;
+import org.hl7.fhir.dstu3.model.Meta;
+import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.UriType;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.fhir.api.strategies.patient.PatientStrategy;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
+import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +33,26 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 	@Override
 	public Patient getPatient(String uuid) {
 		Patient patient = super.getPatient(uuid);
+		
+		if (patient == null) {
+			OperationOutcome patientNotFound = new OperationOutcome();
+			Meta meta = new Meta();
+			meta.setProfile(Collections.singletonList(new UriType(
+			        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1")));
+			
+			patientNotFound.setMeta(meta);
+			
+			OperationOutcome.OperationOutcomeIssueComponent issue = new OperationOutcome.OperationOutcomeIssueComponent();
+			issue.setSeverity(OperationOutcome.IssueSeverity.ERROR);
+			issue.setCode(OperationOutcome.IssueType.INVALID);
+			Coding coding = new Coding(CodeSystems.PATIENT_NOT_FOUND, "PATIENT_NOT_FOUND", "PATIENT_NOT_FOUND");
+			CodeableConcept details = new CodeableConcept().setCoding(Collections.singletonList(coding));
+			issue.setDetails(details);
+			String errorMessage = "No patient details found for patient ID: Patient/" + uuid;
+			issue.setDiagnostics(errorMessage);
+			patientNotFound.setIssue(Collections.singletonList(issue));
+			throw new ResourceNotFoundException(errorMessage, patientNotFound);
+		}
 		
 		return nhsPatientMapper.enhance(patient);
 	}

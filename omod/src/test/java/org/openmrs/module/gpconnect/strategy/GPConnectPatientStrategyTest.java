@@ -1,5 +1,6 @@
 package org.openmrs.module.gpconnect.strategy;
 
+import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Enumerations;
@@ -8,7 +9,9 @@ import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.StringType;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -32,7 +35,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class GPConnectPatientStrategyTest {
-	
+
+	@Rule
+	public ExpectedException exceptionRule = ExpectedException.none();
+
 	public static final String TEST_UUID = "test";
 	
 	@Mock
@@ -61,7 +67,15 @@ public class GPConnectPatientStrategyTest {
 		patientStrategy.getPatient(TEST_UUID);
 		verify(mockNhsPatientMapper).enhance(any());
 	}
-	
+
+	@Test
+	public void shouldThrowNotFoundExceptionWhenNoPatientFound() {
+		exceptionRule.expect(ResourceNotFoundException.class);
+		exceptionRule.expectMessage("No patient details found for patient ID: Patient/test");
+		when(mockPatientService.getPatientByUuid(TEST_UUID)).thenReturn(null);
+		patientStrategy.getPatient(TEST_UUID);
+	}
+
 	@Test
 	public void shouldEnhancePatientOnSearchById() {
 		when(mockPatientService.getPatientByUuid(TEST_UUID)).thenReturn(new org.openmrs.Patient(1));
