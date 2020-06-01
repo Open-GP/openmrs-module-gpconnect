@@ -1,5 +1,6 @@
 package org.openmrs.module.gpconnect.mappers;
 
+import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.Meta;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.openmrs.api.PatientService;
@@ -68,6 +69,10 @@ public class NhsPatientMapper {
 		Meta meta = new Meta();
 		meta.addProfile("https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Patient-1");
 		patient.setMeta(meta);
+
+		if ((patient.getDeceased() instanceof BooleanType) && !((BooleanType) patient.getDeceased()).booleanValue()) {
+			patient.setDeceased(null);
+		}
 
 		if (nhsPatient == null) {
 			return patient;

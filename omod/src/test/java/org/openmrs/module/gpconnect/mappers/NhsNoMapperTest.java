@@ -34,7 +34,7 @@ public class NhsNoMapperTest {
 	public void setUp() throws Exception {
 		when(nhsNoVerificationStatus.createExtension(any())).thenReturn(Optional.empty());
 		when(nhsNoVerificationStatus.getValue(any(Identifier.class))).thenReturn(Optional.empty());
-
+		
 		Identifier simpleNhsNo = new Identifier();
 		simpleNhsNo.setSystem(Extensions.NHS_NUMBER_SYSTEM);
 		simpleNhsNo.setValue("123456");
@@ -47,9 +47,9 @@ public class NhsNoMapperTest {
 	@Test
 	public void shouldReplacePreviousNhsNoIdentifier() {
 		NhsPatient nhsPatient = new NhsPatient();
-
+		
 		Patient actualPatient = mapper.enhance(patient, nhsPatient);
-
+		
 		assertEquals(1, actualPatient.getIdentifier().size());
 		Identifier identifier = actualPatient.getIdentifier().get(0);
 		assertEquals(Extensions.NHS_NUMBER_SYSTEM, identifier.getSystem());

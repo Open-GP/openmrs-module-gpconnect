@@ -2,6 +2,7 @@ package org.openmrs.module.gpconnect.mappers;
 
 import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.Extension;
+import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +19,7 @@ import org.openmrs.module.gpconnect.util.Extensions;
 import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +41,7 @@ public class NhsPatientMapperTest {
 	
 	private void setup(String patientUuid) {
 		patient.setId(patientUuid);
+		patient.addIdentifier(new Identifier().setSystem(Extensions.NHS_NUMBER_SYSTEM).setValue("123"));
 		ServiceContext serviceContext = ServiceContext.getInstance();
 		when(mockPatientService.getPatientByUuid(patientUuid)).thenReturn(new org.openmrs.Patient(1));
 		serviceContext.setPatientService(mockPatientService);
@@ -101,5 +104,21 @@ public class NhsPatientMapperTest {
 		
 		assertEquals("https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Patient-1", actualPatient.getMeta()
 		        .getProfile().get(0).asStringValue());
+	}
+	
+	@Test
+	public void shouldHandleTheDeceasedField() {
+		String patientUuid = "test";
+		
+		patient.setDeceased(new BooleanType(false));
+		setup(patientUuid);
+		
+		NhsPatient nhsPatient = new NhsPatient();
+		
+		when(mockNhsPatientService.findById(any())).thenReturn(nhsPatient);
+		
+		Patient actualPatient = nhsPatientMapper.enhance(patient);
+		
+		assertNull(actualPatient.getDeceased());
 	}
 }
