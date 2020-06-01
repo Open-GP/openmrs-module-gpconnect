@@ -1,5 +1,6 @@
 package org.openmrs.module.gpconnect.strategy;
 
+import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
@@ -8,6 +9,7 @@ import org.hl7.fhir.dstu3.model.Meta;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.UriType;
+import org.openmrs.api.PatientService;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.fhir.api.strategies.patient.PatientStrategy;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
@@ -35,22 +37,11 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 		Patient patient = super.getPatient(uuid);
 		
 		if (patient == null) {
-			OperationOutcome patientNotFound = new OperationOutcome();
-			Meta meta = new Meta();
-			meta.setProfile(Collections.singletonList(new UriType(
-			        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1")));
-			
-			patientNotFound.setMeta(meta);
-			
-			OperationOutcome.OperationOutcomeIssueComponent issue = new OperationOutcome.OperationOutcomeIssueComponent();
-			issue.setSeverity(OperationOutcome.IssueSeverity.ERROR);
-			issue.setCode(OperationOutcome.IssueType.INVALID);
-			Coding coding = new Coding(CodeSystems.PATIENT_NOT_FOUND, "PATIENT_NOT_FOUND", "PATIENT_NOT_FOUND");
-			CodeableConcept details = new CodeableConcept().setCoding(Collections.singletonList(coding));
-			issue.setDetails(details);
 			String errorMessage = "No patient details found for patient ID: Patient/" + uuid;
-			issue.setDiagnostics(errorMessage);
-			patientNotFound.setIssue(Collections.singletonList(issue));
+			Coding notFoundCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "PATIENT_NOT_FOUND",
+			        "PATIENT_NOT_FOUND");
+			OperationOutcome patientNotFound = createErrorOperationOutcome(errorMessage, notFoundCoding,
+			    OperationOutcome.IssueType.INVALID);
 			throw new ResourceNotFoundException(errorMessage, patientNotFound);
 		}
 		
@@ -68,6 +59,13 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 	
 	@Override
 	public List<Patient> searchPatientsByIdentifier(String identifierValue, String identifierTypeName) {
+		PatientService patientService = Context.getPatientService();
+		if (patientService.getPatientIdentifierTypeByName(identifierTypeName) == null){
+			String errorMessage = String.format("The given identifier system code (%s) is not an expected code", identifierTypeName);
+			Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "INVALID_IDENTIFIER_SYSTEM", "INVALID_IDENTIFIER_SYSTEM");
+			OperationOutcome invalidIdentifier = createErrorOperationOutcome(errorMessage, invalidIdentifierCoding, OperationOutcome.IssueType.INVALID);
+			throw new InvalidRequestException(errorMessage, invalidIdentifier);
+		}
 		return super.searchPatientsByIdentifier(identifierValue, identifierTypeName).stream()
 				.map(patient -> nhsPatientMapper.enhance(patient))
 				.collect(Collectors.toList());
@@ -160,4 +158,24 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 		nhsPatientService.saveOrUpdate(nhsPatient);
 		return nhsPatientMapper.enhance(fhirPatient);
 	}
+	
+	private OperationOutcome createErrorOperationOutcome(String errorMessage, Coding coding,
+	        OperationOutcome.IssueType issueType) {
+		OperationOutcome patientNotFound = new OperationOutcome();
+		Meta meta = new Meta();
+		meta.setProfile(Collections.singletonList(new UriType(
+		        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1")));
+		
+		patientNotFound.setMeta(meta);
+		
+		OperationOutcome.OperationOutcomeIssueComponent issue = new OperationOutcome.OperationOutcomeIssueComponent();
+		issue.setSeverity(OperationOutcome.IssueSeverity.ERROR);
+		issue.setCode(issueType);
+		CodeableConcept details = new CodeableConcept().setCoding(Collections.singletonList(coding));
+		issue.setDetails(details);
+		issue.setDiagnostics(errorMessage);
+		patientNotFound.setIssue(Collections.singletonList(issue));
+		return patientNotFound;
+	}
+	
 }

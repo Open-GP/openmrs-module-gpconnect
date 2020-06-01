@@ -14,5 +14,5 @@ public class CodeSystems {
 	
 	public static final String NHS_NO_VERIFICATION_STATUS = "https://fhir.nhs.uk/STU3/CodeSystem/CareConnect-NHSNumberVerificationStatus-1";
 	
-	public static final String PATIENT_NOT_FOUND = "https://fhir.nhs.uk/STU3/CodeSystem/Spine-ErrorOrWarningCode-1";
+	public static final String SPINE_ERROR_OR_WARNING_CODE = "https://fhir.nhs.uk/STU3/CodeSystem/Spine-ErrorOrWarningCode-1";
 }
