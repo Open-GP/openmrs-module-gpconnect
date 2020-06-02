@@ -109,6 +109,9 @@ public class NhsPatientMapperTest {
 		
 		assertEquals("https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Patient-1", actualPatient.getMeta()
 		        .getProfile().get(0).asStringValue());
+		
+		assertEquals("test-1", actualPatient.getMeta().getVersionId());
+		
 	}
 	
 	@Test

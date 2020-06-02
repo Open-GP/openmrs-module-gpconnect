@@ -68,6 +68,7 @@ public class NhsPatientMapper {
 		NhsPatient nhsPatient = nhsPatientService.findById(omrsPatient.getPatientId().longValue());
 
 		Meta meta = new Meta();
+		meta.setVersionId(String.format("%s-1", uuid));
 		meta.addProfile("https://fhir.nhs.uk/STU3/StructureDefinition/CareConnect-GPC-Patient-1");
 		patient.setMeta(meta);
 
