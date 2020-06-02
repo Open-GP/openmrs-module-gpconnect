@@ -2,6 +2,7 @@ package org.openmrs.module.gpconnect.strategy;
 
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Enumerations;
@@ -76,13 +77,21 @@ public class GPConnectPatientStrategyTest {
 		when(mockPatientService.getPatientByUuid(TEST_UUID)).thenReturn(null);
 		patientStrategy.getPatient(TEST_UUID);
 	}
-
+	
 	@Test
 	public void shouldThrowInvalidExceptionWhenNoPatientIdentifiersFound() {
 		exceptionRule.expect(InvalidRequestException.class);
 		exceptionRule.expectMessage("The given identifier system code (something) is not an expected code");
 		when(mockPatientService.getPatientIdentifierTypeByName("something")).thenReturn(null);
 		patientStrategy.searchPatientsByIdentifier("value", "something");
+	}
+	
+	@Test
+	public void shouldThrowInvalidParameterForWhenSystemIsMissing() {
+		exceptionRule.expect(UnprocessableEntityException.class);
+		exceptionRule
+		        .expectMessage("One or both of the identifier system and value are missing from given identifier : something");
+		patientStrategy.searchPatientsByIdentifier("something");
 	}
 	
 	@Test
@@ -96,26 +105,6 @@ public class GPConnectPatientStrategyTest {
 		
 		assertEquals(actualPatients.size(), 1);
 		assertEquals(actualPatients.get(0), enhancedPatient);
-	}
-	
-	@Test
-	public void shouldEnhancePatientOnSearchByIdentifier() {
-		List<PatientIdentifierType> patientIdentifierTypes = Arrays.asList(new PatientIdentifierType(),
-		    new PatientIdentifierType());
-		List<org.openmrs.Patient> patients = Arrays.asList(new org.openmrs.Patient(1), new org.openmrs.Patient(2));
-		
-		when(mockPatientService.getAllPatientIdentifierTypes()).thenReturn(patientIdentifierTypes);
-		when(mockPatientService.getPatients("some identifier", null, patientIdentifierTypes, true)).thenReturn(patients);
-		
-		Patient enhancedPatient = new Patient();
-		Patient secondEnhancedPatient = new Patient();
-		when(mockNhsPatientMapper.enhance(any())).thenReturn(enhancedPatient, secondEnhancedPatient);
-		
-		List<Patient> actualPatients = patientStrategy.searchPatientsByIdentifier("some identifier");
-		
-		assertEquals(actualPatients.size(), 2);
-		assertEquals(actualPatients.get(0), enhancedPatient);
-		assertEquals(actualPatients.get(1), secondEnhancedPatient);
 	}
 	
 	@Test

@@ -2,6 +2,7 @@ package org.openmrs.module.gpconnect.strategy;
 
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
@@ -73,10 +74,12 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 	
 	@Override
 	public List<Patient> searchPatientsByIdentifier(String identifier) {
-		return super.searchPatientsByIdentifier(identifier)
-				.stream()
-				.map(patient -> nhsPatientMapper.enhance(patient))
-				.collect(Collectors.toList());
+		String errorMessage = String.format(
+		    "One or both of the identifier system and value are missing from given identifier : %s", identifier);
+		Coding coding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "INVALID_PARAMETER", "INVALID_PARAMETER");
+		OperationOutcome operationOutcome = createErrorOperationOutcome(errorMessage, coding,
+		    OperationOutcome.IssueType.INVALID);
+		throw new UnprocessableEntityException(errorMessage, operationOutcome);
 	}
 	
 	@Override
