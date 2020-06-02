@@ -61,6 +61,11 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 	@Override
 	public List<Patient> searchPatientsByIdentifier(String identifierValue, String identifierTypeName) {
 		PatientService patientService = Context.getPatientService();
+
+		if (identifierValue.isEmpty()) {
+			throw createMissingIdentifierPartException(identifierTypeName + "|");
+		}
+
 		if (patientService.getPatientIdentifierTypeByName(identifierTypeName) == null){
 			String errorMessage = String.format("The given identifier system code (%s) is not an expected code", identifierTypeName);
 			Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "INVALID_IDENTIFIER_SYSTEM", "INVALID_IDENTIFIER_SYSTEM");
@@ -74,12 +79,7 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 	
 	@Override
 	public List<Patient> searchPatientsByIdentifier(String identifier) {
-		String errorMessage = String.format(
-		    "One or both of the identifier system and value are missing from given identifier : %s", identifier);
-		Coding coding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "INVALID_PARAMETER", "INVALID_PARAMETER");
-		OperationOutcome operationOutcome = createErrorOperationOutcome(errorMessage, coding,
-		    OperationOutcome.IssueType.INVALID);
-		throw new UnprocessableEntityException(errorMessage, operationOutcome);
+		throw createMissingIdentifierPartException(identifier);
 	}
 	
 	@Override
@@ -179,6 +179,15 @@ public class GPConnectPatientStrategy extends PatientStrategy {
 		issue.setDiagnostics(errorMessage);
 		patientNotFound.setIssue(Collections.singletonList(issue));
 		return patientNotFound;
+	}
+	
+	private UnprocessableEntityException createMissingIdentifierPartException(String identifier) {
+		String errorMessage = String.format(
+		    "One or both of the identifier system and value are missing from given identifier : %s", identifier);
+		Coding coding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "INVALID_PARAMETER", "INVALID_PARAMETER");
+		OperationOutcome operationOutcome = createErrorOperationOutcome(errorMessage, coding,
+		    OperationOutcome.IssueType.INVALID);
+		return new UnprocessableEntityException(errorMessage, operationOutcome);
 	}
 	
 }
