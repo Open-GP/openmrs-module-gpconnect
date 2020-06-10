@@ -124,13 +124,13 @@ public class GPConnectPatientStrategyTest {
 		assertEquals(actualPatients.size(), 1);
 		assertEquals(actualPatients.get(0), enhancedPatient);
 	}
-
+	
 	@Test
 	public void shouldThrowExceptionWhenValueEmpty() {
 		exceptionRule.expect(UnprocessableEntityException.class);
 		exceptionRule
-				.expectMessage("One or both of the identifier system and value are missing from given identifier : identifier type|");
-
+		        .expectMessage("One or both of the identifier system and value are missing from given identifier : identifier type|");
+		
 		patientStrategy.searchPatientsByIdentifier("", "identifier type");
 	}
 	
