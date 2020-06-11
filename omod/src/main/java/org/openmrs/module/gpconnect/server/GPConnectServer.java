@@ -1,6 +1,7 @@
 package org.openmrs.module.gpconnect.server;
 
 import ca.uhn.fhir.rest.server.IResourceProvider;
+import org.openmrs.api.impl.AdministrationServiceImpl;
 import org.openmrs.module.fhir.server.FHIRRESTServer;
 
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ public class GPConnectServer extends FHIRRESTServer {
 	 */
 	@Override
 	protected void initialize() {
+		new AdministrationServiceImpl().setGlobalProperty("fhir.patient.strategy", "GPConnectPatientStrategy");
+		
 		super.initialize();
 		
 		List<IResourceProvider> additionalResourceProviders = new ArrayList<IResourceProvider>();
