@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.openmrs.module</groupId>
     <artifactId>gpconnect</artifactId>
-    <version>0.0.5-SNAPSHOT</version>
+    <version>0.0.6-SNAPSHOT</version>
   </parent>
 
   <artifactId>gpconnect-omod</artifactId>
@@ -93,7 +93,7 @@
   </repositories>
 
   <build>
-    <finalName>gpconnect-0.0.5-SNAPSHOT</finalName>
+    <finalName>gpconnect-0.0.6-SNAPSHOT</finalName>
 
     <plugins>
       <plugin>
