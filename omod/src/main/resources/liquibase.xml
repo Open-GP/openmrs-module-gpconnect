@@ -5,6 +5,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
 
+   <property name="now" value="now()"/>
+
    <changeSet id="gpconnect-nhs-patient-1" author="mmoise">
       <preConditions onFail="MARK_RAN">
          <not><tableExists tableName="nhs_patient"/></not>
@@ -82,5 +84,22 @@
       <addColumn tableName="nhs_patient">
          <column name="death_notification_status" type="varchar(100)"/>
       </addColumn>
+   </changeSet>
+   
+   <changeSet id="gpconnect-nhs-connect-5" author="OpenGP">
+      <preConditions>
+         <tableExists tableName="patient_identifier_type"/>
+      </preConditions>
+      <insert tableName="patient_identifier_type">
+         <column name="name" value="OpenMRS ID"/>
+         <column name="description" value="OpenMRS patient identifier, with check-digit"/>
+         <column name="check_digit" valueNumeric="1"/>
+         <column name="creator" valueNumeric="2"/>
+         <column name="required" valueNumeric="0"/>
+         <column name="retired" valueNumeric="0"/>
+         <column name="validator" value="org.openmrs.module.idgen.validator.LuhnMod30IdentifierValidator"/>
+         <column name="uuid" value="05a29f94-c0ed-11e2-94be-8c13b969e334"/>
+         <column name="date_created" valueDate="${now}"/>
+      </insert>
    </changeSet>
 </databaseChangeLog>
