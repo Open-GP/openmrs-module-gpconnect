@@ -20,7 +20,7 @@
 	<require_version>2.3.0</require_version>
 
 	<require_modules>
-		<require_module version="1.21.0-SNAPSHOT">org.openmrs.module.fhir</require_module>
+		<require_module version="1.0.0-SNAPSHOT">org.openmrs.module.fhir2</require_module>
 	</require_modules>
 	<!-- Extensions -->
 	
@@ -86,7 +86,7 @@
 
 	<filter>
 		<filter-name>gpconnectAuthenticationFilter</filter-name>
-		<filter-class>org.openmrs.module.fhir.filter.AuthorizationFilter</filter-class>
+		<filter-class>org.openmrs.module.fhir2.web.filter.AuthenticationFilter</filter-class>
 	</filter>
 	<filter-mapping>
 		<filter-name>gpconnectAuthenticationFilter</filter-name>
