@@ -28,6 +28,7 @@ public class TelecomTranslator extends TelecomTranslatorImpl {
 		ContactPoint contactPoint = super.toFhirResource(attribute);
 		
 		contactPoint.setSystem(ContactPoint.ContactPointSystem.PHONE);
+		contactPoint.setUse(ContactPoint.ContactPointUse.HOME);
 		
 		return contactPoint;
 	}
