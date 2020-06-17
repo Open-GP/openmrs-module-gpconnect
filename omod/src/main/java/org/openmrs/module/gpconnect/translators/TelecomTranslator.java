@@ -22,4 +22,13 @@ public class TelecomTranslator extends TelecomTranslatorImpl {
 		
 		return attribute;
 	}
+	
+	@Override
+	public ContactPoint toFhirResource(Object attribute) {
+		ContactPoint contactPoint = super.toFhirResource(attribute);
+		
+		contactPoint.setSystem(ContactPoint.ContactPointSystem.PHONE);
+		
+		return contactPoint;
+	}
 }
