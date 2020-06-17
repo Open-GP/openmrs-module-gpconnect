@@ -48,19 +48,19 @@ import java.util.stream.Collectors;
 @Setter(AccessLevel.PACKAGE)
 @Primary
 public class GPConnectPatientProvider extends PatientFhirResourceProvider {
-	
+
 	@Autowired
 	private FhirPatientService patientService;
-	
+
 	@Autowired
 	NhsPatientMapper nhsPatientMapper;
-	
+
 	@Autowired
 	private FhirPatientDao patientDao;
-	
+
 	@Autowired
 	private NhsPatientService nhsPatientService;
-	
+
 	@Override
 	@Read
 	public Patient getPatientById(@IdParam @NotNull IdType id) {
@@ -69,35 +69,23 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			return nhsPatientMapper.enhance(patient);
 		}
 		catch (ResourceNotFoundException e) {
-			System.out.println("catching exception");
-			String errorMessage = "No patient details found for patient ID: Patient/" + id.getIdPart();
-			Coding notFoundCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "PATIENT_NOT_FOUND",
-			        "PATIENT_NOT_FOUND");
-			OperationOutcome patientNotFound = createErrorOperationOutcome(errorMessage, notFoundCoding,
-			    OperationOutcome.IssueType.INVALID);
-			throw new ResourceNotFoundException(errorMessage, patientNotFound);
+			throw patientNotFoundFhirException(id.getIdPart());
 		}
 	}
-	
+
 	@Operation(name = "$gpc.registerpatient")
 	public Bundle registerPatient(@OperationParam(name = "registerPatient", type = Patient.class) Patient patient) {
-		
-		try {
-			org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
-			patientService.create(receivedPatient);
-			
-			org.openmrs.Patient omrsPatient = patientDao.get(patient.getIdElement().getIdPart());
-			NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, omrsPatient.getPatientId());
-			nhsPatientService.saveOrUpdate(nhsPatient);
-			return new Bundle();
-		}
-		catch (Exception exception) {
-			exception.printStackTrace();
-			throw exception;
-		}
-		
+
+		org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
+		patientService.create(receivedPatient);
+
+		org.openmrs.Patient omrsPatient = patientDao.get(patient.getIdElement().getIdPart());
+		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, omrsPatient.getPatientId());
+		nhsPatientService.saveOrUpdate(nhsPatient);
+		return new Bundle();
+
 	}
-	
+
 	@Search
 	@SuppressWarnings("unused")
 	public IBundleProvider searchPatients(@OptionalParam(name = Patient.SP_NAME) StringAndListParam name,
@@ -112,7 +100,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 										  @OptionalParam(name = Patient.SP_ADDRESS_STATE) StringAndListParam state,
 										  @OptionalParam(name = Patient.SP_ADDRESS_POSTALCODE) StringAndListParam postalCode,
 										  @OptionalParam(name = Patient.SP_ADDRESS_COUNTRY) StringAndListParam country, @Sort SortSpec sort) {
-		IBundleProvider provider = patientService.searchForPatients(name, given, family, identifier, gender, birthDate,
+		IBundleProvider provider = super.searchPatients(name, given, family, identifier, gender, birthDate,
 				deathDate, deceased, city, state, postalCode, country, sort);
 
 		List<IBaseResource> resources = provider.getResources(0, 0);
@@ -123,16 +111,16 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 
 		return BundleProviders.newList(r3Patients);
 	}
-	
+
 	private OperationOutcome createErrorOperationOutcome(String errorMessage, Coding coding,
 	        OperationOutcome.IssueType issueType) {
 		OperationOutcome patientNotFound = new OperationOutcome();
 		Meta meta = new Meta();
 		meta.setProfile(Collections.singletonList(new UriType(
 		        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1")));
-		
+
 		patientNotFound.setMeta(meta);
-		
+
 		OperationOutcome.OperationOutcomeIssueComponent issue = new OperationOutcome.OperationOutcomeIssueComponent();
 		issue.setSeverity(OperationOutcome.IssueSeverity.ERROR);
 		issue.setCode(issueType);
@@ -142,5 +130,13 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		patientNotFound.setIssue(Collections.singletonList(issue));
 		return patientNotFound;
 	}
-	
+
+	private ResourceNotFoundException patientNotFoundFhirException(String id) {
+		String errorMessage = "No patient details found for patient ID: Patient/" + id;
+		Coding notFoundCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "PATIENT_NOT_FOUND",
+				"PATIENT_NOT_FOUND");
+		OperationOutcome patientNotFound = createErrorOperationOutcome(errorMessage, notFoundCoding,
+				OperationOutcome.IssueType.INVALID);
+		return new ResourceNotFoundException(errorMessage, patientNotFound);
+	}
 }
