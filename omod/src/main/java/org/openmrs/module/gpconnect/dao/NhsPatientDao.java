@@ -5,10 +5,12 @@ import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.hibernate.criterion.Restrictions.eq;
 
 @Component
+@Transactional
 public class NhsPatientDao {
 	
 	@Autowired

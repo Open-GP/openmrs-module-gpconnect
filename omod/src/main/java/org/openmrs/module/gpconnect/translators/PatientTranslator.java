@@ -16,6 +16,7 @@ public class PatientTranslator extends PatientTranslatorImpl {
 	@Override
 	public Patient toOpenmrsType(Patient currentPatient, org.hl7.fhir.r4.model.Patient patient) {
 		super.toOpenmrsType(currentPatient, patient);
+		currentPatient.setUuid(patient.getIdElement().getIdPart());
 		Set<PersonAttribute> oldAttributes = currentPatient.getAttributes();
 		currentPatient.setAttributes(new TreeSet<>());
 		for (PersonAttribute personAttribute : oldAttributes) {
