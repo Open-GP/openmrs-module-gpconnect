@@ -24,4 +24,12 @@ public class PatientTranslator extends PatientTranslatorImpl {
 		}
 		return currentPatient;
 	}
+	
+	@Override
+	public org.hl7.fhir.r4.model.Patient toFhirResource(Patient openmrsPatient) {
+		if (openmrsPatient == null) {
+			return null;
+		}
+		return super.toFhirResource(openmrsPatient);
+	}
 }

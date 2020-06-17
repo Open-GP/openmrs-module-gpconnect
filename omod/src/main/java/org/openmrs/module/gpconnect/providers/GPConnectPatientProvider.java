@@ -66,13 +66,9 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 	public Patient getPatientById(@IdParam @NotNull IdType id) {
 		try {
 			Patient patient = super.getPatientById(id);
-			if (patient.getId() == null) {
-				throw new ResourceNotFoundException(id);
-			}
-			
 			return nhsPatientMapper.enhance(patient);
 		}
-		catch (Exception e) {
+		catch (ResourceNotFoundException e) {
 			System.out.println("catching exception");
 			String errorMessage = "No patient details found for patient ID: Patient/" + id.getIdPart();
 			Coding notFoundCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "PATIENT_NOT_FOUND",
