@@ -18,6 +18,19 @@ public class PersonNameTranslator extends PersonNameTranslatorImpl {
 		if (personName.getUuid() == null) {
 			personName.setUuid(UUID.randomUUID().toString());
 		}
+		
+		if (name.getUse().equals(HumanName.NameUse.OFFICIAL)) {
+			personName.setPreferred(true);
+		}
 		return personName;
+	}
+	
+	@Override
+	public HumanName toFhirResource(PersonName name) {
+		HumanName humanName = super.toFhirResource(name);
+		if (name.getPreferred()) {
+			humanName.setUse(HumanName.NameUse.OFFICIAL);
+		}
+		return humanName;
 	}
 }
