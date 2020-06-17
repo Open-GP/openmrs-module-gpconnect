@@ -75,12 +75,6 @@ public class NhsPatientMapper {
 			patient.setDeceased(null);
 		}
 
-//		patient.getName().forEach(name -> {
-//			if (name.getUse().equals(HumanName.NameUse.USUAL)) {
-//				name.setUse(HumanName.NameUse.OFFICIAL);
-//			}
-//		});
-
 		if (nhsPatient == null) {
 			return patient;
 		}
