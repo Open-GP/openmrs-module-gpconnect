@@ -3,9 +3,11 @@ package org.openmrs.module.gpconnect.server;
 import ca.uhn.fhir.rest.server.IResourceProvider;
 import org.openmrs.module.fhir2.providers.r3.LocationFhirResourceProvider;
 import org.openmrs.module.fhir2.providers.r3.PatientFhirResourceProvider;
+import org.openmrs.module.fhir2.providers.r3.PractitionerFhirResourceProvider;
 import org.openmrs.module.fhir2.web.servlet.FhirR3RestServlet;
 import org.openmrs.module.gpconnect.providers.GPConnectLocationProvider;
 import org.openmrs.module.gpconnect.providers.GPConnectPatientProvider;
+import org.openmrs.module.gpconnect.providers.GPConnectPractitionerProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -27,6 +29,8 @@ public class GPConnectServer extends FhirR3RestServlet {
 								!(iResourceProvider instanceof PatientFhirResourceProvider) || iResourceProvider instanceof GPConnectPatientProvider)
 						.filter( iResourceProvider ->
 								!(iResourceProvider instanceof LocationFhirResourceProvider) || iResourceProvider instanceof GPConnectLocationProvider)
+						.filter( iResourceProvider ->
+								!(iResourceProvider instanceof PractitionerFhirResourceProvider) || iResourceProvider instanceof GPConnectPractitionerProvider)
 						.collect(Collectors.toList());
 
 		super.setResourceProviders(filteredProviders);
