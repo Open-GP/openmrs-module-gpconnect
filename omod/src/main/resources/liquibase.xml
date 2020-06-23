@@ -102,4 +102,23 @@
          <column name="date_created" valueDate="${now}"/>
       </insert>
    </changeSet>
+
+   <changeSet id="gpconnect-6" author="mmoise">
+      <preConditions onFail="MARK_RAN">
+         <not><tableExists tableName="organization"/></not>
+      </preConditions>
+      <comment>
+         Creating the organization table
+      </comment>
+      <createTable tableName="organization">
+         <column name="organization_id" type="int" autoIncrement="false">
+            <constraints primaryKey="true" nullable="false"/>
+         </column>
+         <column name="uuid" type="varchar(100)">
+         </column>
+         <column name="name" type="varchar(100)">
+         </column>
+      </createTable>
+   </changeSet>
+
 </databaseChangeLog>
