@@ -80,6 +80,9 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 	
 	@Operation(name = "$gpc.registerpatient")
 	public Bundle registerPatient(@OperationParam(name = "registerPatient", type = Patient.class) Patient patient) {
+		if (patient.getId() == null) {
+			throw createBadRequest("Patient is missing id", "INVALID_NHS_NUMBER");
+		}
 		
 		org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
 		patientService.create(receivedPatient);
@@ -108,13 +111,13 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 
 
 		if (identifier == null) {
-			throw createBadRequest("Missing identifier param");
+			throw createBadRequest("Missing identifier param", "BAD_REQUEST");
 		}
 
 		List<TokenOrListParam> identifierParams = identifier.getValuesAsQueryTokens();
 
 		if (identifierParams.size() > 1) {
-			throw createBadRequest("Too many indentifiers");
+			throw createBadRequest("Too many indentifiers", "BAD_REQUEST");
 		}
 
 		TokenParam tokenParam = identifierParams.get(0).getValuesAsQueryTokens().get(0);
@@ -149,8 +152,8 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		return BundleProviders.newList(r3Patients);
 	}
 	
-	private InvalidRequestException createBadRequest(String errorMessage) {
-		Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "BAD_REQUEST", "BAD_REQUEST");
+	private InvalidRequestException createBadRequest(String errorMessage, String errorCode) {
+		Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, errorCode, errorCode);
 		OperationOutcome badRequest = createErrorOperationOutcome(errorMessage, invalidIdentifierCoding,
 		    OperationOutcome.IssueType.INVALID);
 		return new InvalidRequestException(errorMessage, badRequest);
