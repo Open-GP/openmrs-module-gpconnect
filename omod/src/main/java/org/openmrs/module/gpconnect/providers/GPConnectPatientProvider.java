@@ -33,17 +33,20 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Identifier;
 import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
+import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
 import org.openmrs.module.fhir2.providers.r3.PatientFhirResourceProvider;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
 import org.openmrs.module.gpconnect.util.CodeSystems;
+import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotNull;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -84,14 +87,31 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			throw createBadRequest("Patient is missing id", "INVALID_NHS_NUMBER");
 		}
 		
+		if (patient.getBirthDate() == null) {
+			throw createBadRequest("Birth date is mandatory", "BAD_REQUEST");
+		}
+		
 		org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
 		patientService.create(receivedPatient);
 		
-		org.openmrs.Patient omrsPatient = patientDao.get(patient.getIdElement().getIdPart());
-		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, omrsPatient.getPatientId());
+		String nhsNumber = patient.getIdentifier().get(0).getValue();
+		org.openmrs.Patient newPatient = findByNhsNumber(nhsNumber);
+		
+		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, newPatient.getPatientId());
 		nhsPatientService.saveOrUpdate(nhsPatient);
 		return new Bundle();
 		
+	}
+	
+	private org.openmrs.Patient findByNhsNumber(String nhsNumber) {
+		TokenAndListParam identifier = new TokenAndListParam()
+		        .addAnd(new TokenParam(Extensions.NHS_NUMBER_SYSTEM, nhsNumber));
+		
+		SearchParameterMap params = (new SearchParameterMap()).addParameter("identifier.search.handler", identifier);
+		
+		List<String> resultUuids = patientDao.getResultUuids(params);
+		Collection<org.openmrs.Patient> patients = this.patientDao.search(params, resultUuids);
+		return (org.openmrs.Patient) patients.toArray()[0];
 	}
 	
 	@Search
