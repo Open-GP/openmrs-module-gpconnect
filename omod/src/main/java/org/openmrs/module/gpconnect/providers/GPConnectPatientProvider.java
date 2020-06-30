@@ -80,7 +80,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 	
 	@Operation(name = "$gpc.registerpatient")
 	public Bundle registerPatient(@OperationParam(name = "registerPatient", type = Patient.class) Patient patient) {
-		if (patient.getId() == null) {
+		if (patient.getIdentifier().isEmpty()) {
 			throw createBadRequest("Patient is missing id", "INVALID_NHS_NUMBER");
 		}
 		
