@@ -99,7 +99,11 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		
 		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, newPatient.getPatientId());
 		nhsPatientService.saveOrUpdate(nhsPatient);
-		return new Bundle();
+		
+		Patient createdPatient = this.getPatientById(new IdType(newPatient.getUuid()));
+		
+		return new Bundle().setType(Bundle.BundleType.SEARCHSET).setEntry(
+		    Collections.singletonList(new Bundle.BundleEntryComponent().setResource(createdPatient)));
 		
 	}
 	
