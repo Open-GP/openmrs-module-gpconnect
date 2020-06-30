@@ -17,6 +17,7 @@ import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.BundleProviders;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
+import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import lombok.AccessLevel;
 import lombok.Setter;
@@ -24,6 +25,7 @@ import org.hl7.fhir.convertors.conv30_40.Patient30_40;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.CodeableConcept;
 import org.hl7.fhir.dstu3.model.Coding;
+import org.hl7.fhir.dstu3.model.HumanName;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Meta;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
@@ -49,6 +51,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -91,20 +94,48 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			throw createBadRequest("Birth date is mandatory", "BAD_REQUEST");
 		}
 		
-		org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
-		patientService.create(receivedPatient);
+		if (!hasValidNames(patient)) {
+			throw createBadRequest("Patient must have an official name containing at least a family name", "BAD_REQUEST");
+		}
 		
-		String nhsNumber = patient.getIdentifier().get(0).getValue();
-		org.openmrs.Patient newPatient = findByNhsNumber(nhsNumber);
+		try {
+			org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
+			patientService.create(receivedPatient);
+			
+			String nhsNumber = patient.getIdentifier().get(0).getValue();
+			org.openmrs.Patient newPatient = findByNhsNumber(nhsNumber);
+			
+			NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, newPatient.getPatientId());
+			nhsPatientService.saveOrUpdate(nhsPatient);
+			
+			Patient createdPatient = this.getPatientById(new IdType(newPatient.getUuid()));
+			
+			return searchSetBundleWith(createdPatient);
+		}
+		catch (Exception exception) {
+			Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "DUPLICATE_REJECTED",
+			        "DUPLICATE_REJECTED");
+			
+			throw new ResourceVersionConflictException(exception.getMessage(), createErrorOperationOutcome(
+			    exception.getMessage(), invalidIdentifierCoding, OperationOutcome.IssueType.INVALID));
+		}
 		
-		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, newPatient.getPatientId());
-		nhsPatientService.saveOrUpdate(nhsPatient);
-		
-		Patient createdPatient = this.getPatientById(new IdType(newPatient.getUuid()));
-		
-		return new Bundle().setType(Bundle.BundleType.SEARCHSET).setEntry(
-		    Collections.singletonList(new Bundle.BundleEntryComponent().setResource(createdPatient)));
-		
+	}
+	
+	private Bundle searchSetBundleWith(Patient createdPatient) {
+		Bundle bundle = new Bundle();
+		Bundle.BundleEntryComponent entryComponent = new Bundle.BundleEntryComponent();
+		entryComponent.setResource(createdPatient);
+		bundle.addEntry(entryComponent);
+		bundle.setType(Bundle.BundleType.SEARCHSET);
+		bundle.setMeta(new Meta().setProfile(Collections.singletonList(new UriType(
+		        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-Searchset-Bundle-1"))));
+		return bundle;
+	}
+	
+	private boolean hasValidNames(Patient patient) {
+		Optional<HumanName> officialName = patient.getName().stream().filter(humanName -> humanName.getUse().equals(HumanName.NameUse.OFFICIAL)).findFirst();
+		return officialName.map(humanName -> (humanName.getFamily() != null) && (!humanName.getFamily().isEmpty())).orElse(false);
 	}
 	
 	private org.openmrs.Patient findByNhsNumber(String nhsNumber) {
