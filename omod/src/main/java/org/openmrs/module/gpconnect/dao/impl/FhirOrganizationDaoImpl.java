@@ -15,7 +15,7 @@ public class FhirOrganizationDaoImpl extends BaseFhirDao<OpenmrsOrganization> im
 		return (OpenmrsOrganization) this.getSessionFactory().getCurrentSession().createCriteria(OpenmrsOrganization.class)
 		        .add(Restrictions.eq("uuid", uuid)).uniqueResult();
 	}
-
+	
 	@Override
 	protected void setSessionFactory(SessionFactory sessionFactory) {
 		super.setSessionFactory(sessionFactory);

@@ -90,6 +90,12 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			throw createBadRequest("Patient is missing id", "INVALID_NHS_NUMBER");
 		}
 		
+		String nhsNumber = patient.getIdentifier().get(0).getValue();
+		
+		if (nhsNumber.length() != 10) {
+			throw createBadRequest("NHS Number is invalid", "INVALID_NHS_NUMBER");
+		}
+		
 		if (patient.getBirthDate() == null) {
 			throw createBadRequest("Birth date is mandatory", "BAD_REQUEST");
 		}
@@ -102,7 +108,6 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
 			patientService.create(receivedPatient);
 			
-			String nhsNumber = patient.getIdentifier().get(0).getValue();
 			org.openmrs.Patient newPatient = findByNhsNumber(nhsNumber);
 			
 			NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, newPatient.getPatientId());
