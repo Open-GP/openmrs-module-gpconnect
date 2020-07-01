@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.openmrs.maven.parents</groupId>
@@ -7,12 +8,12 @@
 	</parent>
 
 
-  <groupId>org.openmrs.module</groupId>
-  <artifactId>gpconnect</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
-  <packaging>pom</packaging>
-  <name>GPConnect</name>
-  <description>This module implements GPConnect API as defined by NHS Digital</description>
+	<groupId>org.openmrs.module</groupId>
+	<artifactId>gpconnect</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<name>GPConnect</name>
+	<description>This module implements GPConnect API as defined by NHS Digital</description>
 
 	<url>https://wiki.openmrs.org/x/FQ4z</url>
 
@@ -24,6 +25,7 @@
 	</scm>
 
 	<modules>
+		<module>api</module>
 		<module>omod</module>
 	</modules>
 
@@ -70,8 +72,39 @@
 		</snapshotRepository>
 	</distributionManagement>
 
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+				</plugin>
+				<plugin>
+					<groupId>org.openmrs.maven.plugins</groupId>
+					<artifactId>maven-openmrs-plugin</artifactId>
+				</plugin>
+				<plugin>
+					<groupId>org.openmrs.maven.plugins</groupId>
+					<artifactId>maven-openmrs-plugin</artifactId>
+					<version>1.0.1</version>
+					<extensions>true</extensions>
+					<executions>
+						<execution>
+							<id>pack</id>
+							<phase>package</phase>
+							<goals>
+								<goal>package-module</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
 	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 		<openmrsPlatformVersion>2.0.5</openmrsPlatformVersion>
 	</properties>
-
 </project>
