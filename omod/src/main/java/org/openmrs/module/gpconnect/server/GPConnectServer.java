@@ -1,10 +1,12 @@
 package org.openmrs.module.gpconnect.server;
 
 import ca.uhn.fhir.rest.server.IResourceProvider;
+import ca.uhn.fhir.rest.server.interceptor.ExceptionHandlingInterceptor;
 import org.openmrs.module.fhir2.providers.r3.LocationFhirResourceProvider;
 import org.openmrs.module.fhir2.providers.r3.PatientFhirResourceProvider;
 import org.openmrs.module.fhir2.providers.r3.PractitionerFhirResourceProvider;
 import org.openmrs.module.fhir2.web.servlet.FhirR3RestServlet;
+import org.openmrs.module.gpconnect.interceptors.GPConnectExceptionHandlingInterceptor;
 import org.openmrs.module.gpconnect.providers.GPConnectLocationProvider;
 import org.openmrs.module.gpconnect.providers.GPConnectPatientProvider;
 import org.openmrs.module.gpconnect.providers.GPConnectPractitionerProvider;
@@ -18,6 +20,14 @@ import java.util.stream.Collectors;
 
 @Component
 public class GPConnectServer extends FhirR3RestServlet {
+	
+	@Override
+	protected void initialize() {
+		super.initialize();
+		
+		GPConnectExceptionHandlingInterceptor interceptor = new GPConnectExceptionHandlingInterceptor();
+		registerInterceptor(interceptor);
+	}
 	
 	@Autowired
 	@Qualifier("fhirR3Resources")
