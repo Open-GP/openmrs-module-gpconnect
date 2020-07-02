@@ -15,6 +15,8 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -46,6 +48,8 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         when(nhsPatientMapper.enhance(Matchers.any())).thenReturn(r3Patient);
 
         MockHttpServletResponse response = get("/Patient/" + PATIENT_UUID).accept(FhirMediaTypes.JSON).go();
+
+        verify(nhsPatientMapper, atLeastOnce()).enhance(Matchers.any());
 
         assertThat(response, isOk());
         assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));

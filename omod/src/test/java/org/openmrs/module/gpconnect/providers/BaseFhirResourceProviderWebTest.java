@@ -70,7 +70,6 @@ public abstract class BaseFhirResourceProviderWebTest<T extends IResourceProvide
 		servletConfig = new MockServletConfig(servletContext, getServletName());
 		
 		setupFhirServlet();
-		System.out.println("something");
 	}
 	
 	// These are expected to be implemented by version-specific sub-classes
