@@ -95,6 +95,15 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		if (nhsNumber.length() != 10) {
 			throw createBadRequest("NHS Number is invalid", "INVALID_NHS_NUMBER");
 		}
+
+		if (findByNhsNumber(nhsNumber).size() > 0) {
+			Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "DUPLICATE_REJECTED",
+					"DUPLICATE_REJECTED");
+
+			String message = "Nhs Number already in use";
+			throw new ResourceVersionConflictException(message, createErrorOperationOutcome(
+					message, invalidIdentifierCoding, OperationOutcome.IssueType.INVALID));
+		}
 		
 		if (patient.getBirthDate() == null) {
 			throw createBadRequest("Birth date is mandatory", "BAD_REQUEST");
@@ -104,27 +113,17 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			throw createBadRequest("Patient must have an official name containing at least a family name", "BAD_REQUEST");
 		}
 		
-		try {
-			org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
-			patientService.create(receivedPatient);
-			
-			org.openmrs.Patient newPatient = findByNhsNumber(nhsNumber);
-			
-			NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, newPatient.getPatientId());
-			nhsPatientService.saveOrUpdate(nhsPatient);
-			
-			Patient createdPatient = this.getPatientById(new IdType(newPatient.getUuid()));
-			
-			return searchSetBundleWith(createdPatient);
-		}
-		catch (Exception exception) {
-			Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "DUPLICATE_REJECTED",
-			        "DUPLICATE_REJECTED");
-			
-			throw new ResourceVersionConflictException(exception.getMessage(), createErrorOperationOutcome(
-			    exception.getMessage(), invalidIdentifierCoding, OperationOutcome.IssueType.INVALID));
-		}
-		
+		org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
+		patientService.create(receivedPatient);
+
+		org.openmrs.Patient newPatient = findByNhsNumber(nhsNumber).iterator().next();
+
+		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, newPatient.getPatientId());
+		nhsPatientService.saveOrUpdate(nhsPatient);
+
+		Patient createdPatient = this.getPatientById(new IdType(newPatient.getUuid()));
+
+		return searchSetBundleWith(createdPatient);
 	}
 	
 	private Bundle searchSetBundleWith(Patient createdPatient) {
@@ -143,15 +142,15 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		return officialName.map(humanName -> (humanName.getFamily() != null) && (!humanName.getFamily().isEmpty())).orElse(false);
 	}
 	
-	private org.openmrs.Patient findByNhsNumber(String nhsNumber) {
+	private Collection<org.openmrs.Patient> findByNhsNumber(String nhsNumber) {
 		TokenAndListParam identifier = new TokenAndListParam()
 		        .addAnd(new TokenParam(Extensions.NHS_NUMBER_SYSTEM, nhsNumber));
 		
 		SearchParameterMap params = (new SearchParameterMap()).addParameter("identifier.search.handler", identifier);
 		
 		List<String> resultUuids = patientDao.getResultUuids(params);
-		Collection<org.openmrs.Patient> patients = this.patientDao.search(params, resultUuids);
-		return (org.openmrs.Patient) patients.toArray()[0];
+		Collection<org.openmrs.Patient> patients = patientDao.search(params, resultUuids);
+		return patients;
 	}
 	
 	@Search
