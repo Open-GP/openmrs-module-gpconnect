@@ -5,3 +5,9 @@ target/
 gpconnect.iml
 omod/gpconnect-omod.iml
 api/gpconnect-api.iml
+
+.vscode/
+.project
+.settings/
+.classpath
+.factorypath
