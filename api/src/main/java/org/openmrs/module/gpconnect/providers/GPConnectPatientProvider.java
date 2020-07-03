@@ -96,7 +96,12 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			throw createBadRequest("NHS Number is invalid", "INVALID_NHS_NUMBER");
 		}
 
-		if (findByNhsNumber(nhsNumber).size() > 0) {
+		Collection<org.openmrs.Patient> patients = findByNhsNumber(nhsNumber);
+		if (patients.size() > 0) {
+			if(patients.iterator().next().getDead()){
+				throw createBadRequest("Nhs Number registed to dead patient", "BAD_REQUEST");
+			}
+
 			Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "DUPLICATE_REJECTED",
 					"DUPLICATE_REJECTED");
 
