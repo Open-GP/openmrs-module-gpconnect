@@ -73,30 +73,31 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 		}
 	}
 	
-	//	@Search
-	//	public IBundleProvider searchForPractitioners(@OptionalParam(name = "name") StringAndListParam name, @OptionalParam(name = "identifier") TokenAndListParam identifier) {
-	//		if (identifier == null || identifier.getValuesAsQueryTokens().size() != 1) {
-	//			throw createBadRequest("Exactly 1 identifier needs to be provided");
-	//		}
-	//
-	//		TokenParam tokenParam = identifier.getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
-	//		String identifierTypeName = tokenParam.getSystem();
-	//		String identifierValue = tokenParam.getValue();
-	//
-	//		if (identifierValue.isEmpty() || identifierTypeName == null || identifierTypeName.isEmpty()) {
-	//			throw createMissingIdentifierPartException(String.format("%s|%s",identifierTypeName , identifierValue));
-	//		}
-	//
-	//		IBundleProvider provider = super.searchForPractitioners(name, identifier);
-	//		List<IBaseResource> resources = provider.getResources(0, 0);
-	//
-	//		List<IBaseResource> r3Practitioners = resources.stream()
-	//				.map(iBaseResource -> Practitioner30_40.convertPractitioner((org.hl7.fhir.r4.model.Practitioner) iBaseResource))
-	//				.map(this::addMeta)
-	//				.collect(Collectors.toList());
-	//
-	//		return BundleProviders.newList(r3Practitioners);
-	//	}
+		@Search
+		@Override
+		public IBundleProvider searchForPractitioners(@OptionalParam(name = "name") StringAndListParam name, @OptionalParam(name = "identifier") TokenAndListParam identifier, @OptionalParam(name = "given") StringAndListParam given, @OptionalParam(name = "family") StringAndListParam family, @OptionalParam(name = "address-city") StringAndListParam city, @OptionalParam(name = "address-state") StringAndListParam state, @OptionalParam(name = "address-postalcode") StringAndListParam postalCode, @OptionalParam(name = "address-country") StringAndListParam country) {
+			if (identifier == null || identifier.getValuesAsQueryTokens().size() != 1) {
+				throw createBadRequest("Exactly 1 identifier needs to be provided");
+			}
+
+			TokenParam tokenParam = identifier.getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
+			String identifierTypeName = tokenParam.getSystem();
+			String identifierValue = tokenParam.getValue();
+
+			if (identifierValue.isEmpty() || identifierTypeName == null || identifierTypeName.isEmpty()) {
+				throw createMissingIdentifierPartException(String.format("%s|%s",identifierTypeName , identifierValue));
+			}
+
+			IBundleProvider provider = super.searchForPractitioners(name, identifier, null, null, null, null, null, null);
+			List<IBaseResource> resources = provider.getResources(0, 0);
+
+			List<IBaseResource> r3Practitioners = resources.stream()
+					.map(iBaseResource -> Practitioner30_40.convertPractitioner((org.hl7.fhir.r4.model.Practitioner) iBaseResource))
+					.map(this::addMeta)
+					.collect(Collectors.toList());
+
+			return BundleProviders.newList(r3Practitioners);
+		}
 	
 	private Practitioner addMeta(Practitioner practitioner) {
 		Meta meta = new Meta().setProfile(

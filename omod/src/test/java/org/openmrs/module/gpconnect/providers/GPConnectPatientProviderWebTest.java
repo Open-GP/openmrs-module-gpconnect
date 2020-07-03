@@ -38,10 +38,6 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderWebTest<GPConnectPatientProvider, Patient> {
-    @Override
-    public String getServletName() {
-        return "gpconnect/gpconnectServlet";
-    }
 
     private static final String PATIENT_UUID = "0b42f99b-776e-4388-8f6f-84357ae2a8fb";
 
