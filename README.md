@@ -1,5 +1,5 @@
 GPConnect module
-==========
+================
 
 The aim of this module is to enhance the existing FHIR OpenMRS module to be GPConnect compatible - see more details about what GPConnect is [here](https://digital.nhs.uk/services/gp-connect). 
 
@@ -22,4 +22,33 @@ As part of this modules we would implement the extension of FHIR resources neede
 
 For each of the resources above there is an associated GPConnect FHIR profile found here: https://fhir.nhs.uk/StructureDefinition 
 
- 
+Setup
+=====
+
+* Check Java version installed - it should be Java 8 or higher:
+    ```
+    $ java --version
+    ```
+    If you need to install Java, then you will need to install [OpenJDK](http://jdk.java.net/).
+
+
+* Check that you have the latest version of Apache Maven installed:
+    ```
+    $ mvn --version
+    ```
+    [Download Apache Maven](https://maven.apache.org/download.cgi)
+    
+    [Install Apache Maven](https://maven.apache.org/install.html)
+       
+
+* Install [Postman](https://www.postman.com/downloads/) for testing the endpoints of this API.
+
+* To build the Maven project:
+    ```
+    $ mvn clean install
+    ```
+  
+* To run the tests of the Maven project:
+    ```
+    $ mvn test
+    ```

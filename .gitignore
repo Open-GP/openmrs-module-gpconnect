@@ -4,3 +4,4 @@ target/
 
 gpconnect.iml
 omod/gpconnect-omod.iml
+api/gpconnect-api.iml
