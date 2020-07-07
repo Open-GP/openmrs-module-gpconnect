@@ -1,11 +1,15 @@
 package org.openmrs.module.gpconnect.providers;
 
+import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
+import ca.uhn.fhir.rest.server.BundleProviders;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.apache.commons.io.IOUtils;
+import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.r4.model.DateTimeType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -14,6 +18,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openmrs.PatientIdentifier;
+import org.openmrs.PatientIdentifierType;
 import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
 import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
@@ -35,6 +41,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderWebTest<GPConnectPatientProvider, Patient> {
@@ -127,6 +134,39 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         TokenParam tokenParam = ((TokenAndListParam) searchParameterMapArgumentCaptor.getValue().getParameters("identifier.search.handler").get(0).getParam()).getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
         assertThat(tokenParam.getSystem(), equalTo(Extensions.NHS_NUMBER_SYSTEM));
         assertThat(tokenParam.getValue(), equalTo(nhsNumber));
+
+    }
+
+    @Test
+    public void shouldSkipDeadPatientsInSearch() throws IOException, ServletException {
+        String nhsNumber = "1234567890";
+
+        org.hl7.fhir.r4.model.Patient inactivePatient = new org.hl7.fhir.r4.model.Patient();
+        inactivePatient.setDeceased(new DateTimeType());
+
+        when(nhsPatientMapper.enhance(Matchers.any())).thenReturn(new Patient());
+        
+        when(patientService.getPatientIdentifierTypeByIdentifier(Matchers.any()))
+            .thenReturn(new PatientIdentifierType());
+        
+        IBundleProvider provider = mock(IBundleProvider.class);
+        when(provider.getResources(0, 0)).thenReturn(Collections.singletonList(inactivePatient));
+
+        when(patientService.searchForPatients(Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),
+            Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),
+            Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any()
+        )).thenReturn(provider);
+
+        MockHttpServletResponse response = get("/Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
+
+        assertThat(response, statusEquals(200));
+        Bundle resource = readBundleResponse(response);
+
+        assertThat(resource.getEntry().size(), equalTo(0));
+        //verify(patientDao, times(1)).search(searchParameterMapArgumentCaptor.capture(), any());
+        //TokenParam tokenParam = ((TokenAndListParam) searchParameterMapArgumentCaptor.getValue().getParameters("identifier.search.handler").get(0).getParam()).getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
+        //assertThat(tokenParam.getSystem(), equalTo(Extensions.NHS_NUMBER_SYSTEM));
+        //assertThat(tokenParam.getValue(), equalTo(nhsNumber));
 
     }
 }
