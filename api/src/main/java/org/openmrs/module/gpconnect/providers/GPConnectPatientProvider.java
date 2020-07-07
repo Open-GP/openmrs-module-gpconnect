@@ -214,6 +214,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		List<IBaseResource> r3Patients = resources.stream()
 				.map(iBaseResource -> Patient30_40.convertPatient((org.hl7.fhir.r4.model.Patient) iBaseResource))
 				.map(patient -> nhsPatientMapper.enhance(patient))
+				.filter(patient -> patient.getDeceasedDateTimeType() == null)
 				.collect(Collectors.toList());
 
 		return BundleProviders.newList(r3Patients);

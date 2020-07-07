@@ -9,7 +9,7 @@ import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Patient;
-import org.hl7.fhir.r4.model.DateTimeType;
+import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -142,9 +142,12 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         String nhsNumber = "1234567890";
 
         org.hl7.fhir.r4.model.Patient inactivePatient = new org.hl7.fhir.r4.model.Patient();
-        inactivePatient.setDeceased(new DateTimeType());
 
-        when(nhsPatientMapper.enhance(Matchers.any())).thenReturn(new Patient());
+        Patient r3Patient = new Patient();
+        r3Patient.setId(PATIENT_UUID);
+        r3Patient.setDeceased(new DateTimeType());
+
+        when(nhsPatientMapper.enhance(Matchers.any())).thenReturn(r3Patient);
         
         when(patientService.getPatientIdentifierTypeByIdentifier(Matchers.any()))
             .thenReturn(new PatientIdentifierType());
