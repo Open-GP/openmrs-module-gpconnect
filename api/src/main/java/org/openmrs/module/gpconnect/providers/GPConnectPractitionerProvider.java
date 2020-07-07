@@ -8,6 +8,7 @@ import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.annotation.Search;
 import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
+import ca.uhn.fhir.rest.param.DateRangeParam;
 import ca.uhn.fhir.rest.param.StringAndListParam;
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
@@ -75,7 +76,7 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 	
 		@Search
 		@Override
-		public IBundleProvider searchForPractitioners(@OptionalParam(name = "name") StringAndListParam name, @OptionalParam(name = "identifier") TokenAndListParam identifier, @OptionalParam(name = "given") StringAndListParam given, @OptionalParam(name = "family") StringAndListParam family, @OptionalParam(name = "address-city") StringAndListParam city, @OptionalParam(name = "address-state") StringAndListParam state, @OptionalParam(name = "address-postalcode") StringAndListParam postalCode, @OptionalParam(name = "address-country") StringAndListParam country) {
+		public IBundleProvider searchForPractitioners(@OptionalParam(name = "name") StringAndListParam name, @OptionalParam(name = "identifier") TokenAndListParam identifier, @OptionalParam(name = "given") StringAndListParam given, @OptionalParam(name = "family") StringAndListParam family, @OptionalParam(name = "address-city") StringAndListParam city, @OptionalParam(name = "address-state") StringAndListParam state, @OptionalParam(name = "address-postalcode") StringAndListParam postalCode, @OptionalParam(name = "address-country") StringAndListParam country, @OptionalParam(name = "_id") TokenAndListParam id, @OptionalParam(name = "_lastUpdated") DateRangeParam lastUpdated) {
 			if (identifier == null || identifier.getValuesAsQueryTokens().size() != 1) {
 				throw createBadRequest("Exactly 1 identifier needs to be provided");
 			}
@@ -88,7 +89,7 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 				throw createMissingIdentifierPartException(String.format("%s|%s",identifierTypeName , identifierValue));
 			}
 
-			IBundleProvider provider = super.searchForPractitioners(name, identifier, null, null, null, null, null, null);
+			IBundleProvider provider = super.searchForPractitioners(name, identifier, null, null, null, null, null, null, null, null);
 			List<IBaseResource> resources = provider.getResources(0, 0);
 
 			List<IBaseResource> r3Practitioners = resources.stream()

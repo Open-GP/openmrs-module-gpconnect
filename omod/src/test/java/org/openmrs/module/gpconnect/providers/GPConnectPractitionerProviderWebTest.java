@@ -35,7 +35,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         String identifier = "G11111111";
 
         IBundleProvider provider = BundleProviders.newList(new org.hl7.fhir.r4.model.Practitioner());
-        when(practitionerService.searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(provider);
+        when(practitionerService.searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(provider);
 
         MockHttpServletResponse response = get("/Practitioner?identifier=https://fhir.nhs.uk/Id/sds-user-id|" + identifier).accept(FhirMediaTypes.JSON).go();
 

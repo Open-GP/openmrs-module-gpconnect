@@ -59,19 +59,19 @@ import java.util.stream.Collectors;
 @Setter(AccessLevel.PACKAGE)
 @Primary
 public class GPConnectPatientProvider extends PatientFhirResourceProvider {
-	
+
 	@Autowired
 	private FhirPatientService patientService;
-	
+
 	@Autowired
 	NhsPatientMapper nhsPatientMapper;
-	
+
 	@Autowired
 	private FhirPatientDao patientDao;
-	
+
 	@Autowired
 	private NhsPatientService nhsPatientService;
-	
+
 	@Override
 	@Read
 	public Patient getPatientById(@IdParam @NotNull IdType id) {
@@ -83,15 +83,15 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			throw patientNotFoundFhirException(id.getIdPart());
 		}
 	}
-	
+
 	@Operation(name = "$gpc.registerpatient")
 	public Bundle registerPatient(@OperationParam(name = "registerPatient", type = Patient.class) Patient patient) {
 		if (patient.getIdentifier().isEmpty()) {
 			throw createBadRequest("Patient is missing id", "INVALID_NHS_NUMBER");
 		}
-		
+
 		String nhsNumber = patient.getIdentifier().get(0).getValue();
-		
+
 		if (nhsNumber.length() != 10) {
 			throw createBadRequest("NHS Number is invalid", "INVALID_NHS_NUMBER");
 		}
@@ -109,15 +109,15 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			throw new ResourceVersionConflictException(message, createErrorOperationOutcome(
 					message, invalidIdentifierCoding, OperationOutcome.IssueType.INVALID));
 		}
-		
+
 		if (patient.getBirthDate() == null) {
 			throw createBadRequest("Birth date is mandatory", "BAD_REQUEST");
 		}
-		
+
 		if (!hasValidNames(patient)) {
 			throw createBadRequest("Patient must have an official name containing at least a family name", "BAD_REQUEST");
 		}
-		
+
 		org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
 		patientService.create(receivedPatient);
 
@@ -130,7 +130,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 
 		return searchSetBundleWith(createdPatient);
 	}
-	
+
 	private Bundle searchSetBundleWith(Patient createdPatient) {
 		Bundle bundle = new Bundle();
 		Bundle.BundleEntryComponent entryComponent = new Bundle.BundleEntryComponent();
@@ -141,37 +141,40 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-Searchset-Bundle-1"))));
 		return bundle;
 	}
-	
+
 	private boolean hasValidNames(Patient patient) {
 		Optional<HumanName> officialName = patient.getName().stream().filter(humanName -> humanName.getUse().equals(HumanName.NameUse.OFFICIAL)).findFirst();
 		return officialName.map(humanName -> (humanName.getFamily() != null) && (!humanName.getFamily().isEmpty())).orElse(false);
 	}
-	
+
 	private Collection<org.openmrs.Patient> findByNhsNumber(String nhsNumber) {
 		TokenAndListParam identifier = new TokenAndListParam()
 		        .addAnd(new TokenParam(Extensions.NHS_NUMBER_SYSTEM, nhsNumber));
-		
+
 		SearchParameterMap params = (new SearchParameterMap()).addParameter("identifier.search.handler", identifier);
-		
+
 		List<String> resultUuids = patientDao.getResultUuids(params);
 		Collection<org.openmrs.Patient> patients = patientDao.search(params, resultUuids);
 		return patients;
 	}
-	
+
 	@Search
 	@SuppressWarnings("unused")
-	public IBundleProvider searchPatients(@OptionalParam(name = Patient.SP_NAME) StringAndListParam name,
-										  @OptionalParam(name = Patient.SP_GIVEN) StringAndListParam given,
-										  @OptionalParam(name = Patient.SP_FAMILY) StringAndListParam family,
-										  @OptionalParam(name = Patient.SP_IDENTIFIER) TokenAndListParam identifier,
-										  @OptionalParam(name = Patient.SP_GENDER) TokenAndListParam gender,
-										  @OptionalParam(name = Patient.SP_BIRTHDATE) DateRangeParam birthDate,
-										  @OptionalParam(name = Patient.SP_DEATH_DATE) DateRangeParam deathDate,
-										  @OptionalParam(name = Patient.SP_DECEASED) TokenAndListParam deceased,
-										  @OptionalParam(name = Patient.SP_ADDRESS_CITY) StringAndListParam city,
-										  @OptionalParam(name = Patient.SP_ADDRESS_STATE) StringAndListParam state,
-										  @OptionalParam(name = Patient.SP_ADDRESS_POSTALCODE) StringAndListParam postalCode,
-										  @OptionalParam(name = Patient.SP_ADDRESS_COUNTRY) StringAndListParam country, @Sort SortSpec sort) {
+	public IBundleProvider searchPatients(@OptionalParam(name = "name") StringAndListParam name,
+										  @OptionalParam(name = "given") StringAndListParam given,
+                                          @OptionalParam(name = "family") StringAndListParam family,
+                                          @OptionalParam(name = "identifier") TokenAndListParam identifier,
+                                          @OptionalParam(name = "gender") TokenAndListParam gender,
+                                          @OptionalParam(name = "birthdate") DateRangeParam birthDate,
+                                          @OptionalParam(name = "death-date") DateRangeParam deathDate,
+                                          @OptionalParam(name = "deceased") TokenAndListParam deceased,
+                                          @OptionalParam(name = "address-city") StringAndListParam city,
+                                          @OptionalParam(name = "address-state") StringAndListParam state,
+                                          @OptionalParam(name = "address-postalcode") StringAndListParam postalCode,
+                                          @OptionalParam(name = "address-country") StringAndListParam country,
+                                          @OptionalParam(name = "_id") TokenAndListParam id,
+                                          @OptionalParam(name = "_lastUpdated") DateRangeParam lastUpdated,
+                                          @Sort SortSpec sort) {
 
 
 		if (identifier == null) {
@@ -204,7 +207,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		}
 
 		IBundleProvider provider = super.searchPatients(name, given, family, identifier, gender, birthDate,
-				deathDate, deceased, city, state, postalCode, country, sort);
+				deathDate, deceased, city, state, postalCode, country, id, lastUpdated, sort);
 
 		List<IBaseResource> resources = provider.getResources(0, 0);
 
@@ -215,23 +218,23 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 
 		return BundleProviders.newList(r3Patients);
 	}
-	
+
 	private InvalidRequestException createBadRequest(String errorMessage, String errorCode) {
 		Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, errorCode, errorCode);
 		OperationOutcome badRequest = createErrorOperationOutcome(errorMessage, invalidIdentifierCoding,
 		    OperationOutcome.IssueType.INVALID);
 		return new InvalidRequestException(errorMessage, badRequest);
 	}
-	
+
 	private OperationOutcome createErrorOperationOutcome(String errorMessage, Coding coding,
 	        OperationOutcome.IssueType issueType) {
 		OperationOutcome patientNotFound = new OperationOutcome();
 		Meta meta = new Meta();
 		meta.setProfile(Collections.singletonList(new UriType(
 		        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1")));
-		
+
 		patientNotFound.setMeta(meta);
-		
+
 		OperationOutcome.OperationOutcomeIssueComponent issue = new OperationOutcome.OperationOutcomeIssueComponent();
 		issue.setSeverity(OperationOutcome.IssueSeverity.ERROR);
 		issue.setCode(issueType);
@@ -241,7 +244,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		patientNotFound.setIssue(Collections.singletonList(issue));
 		return patientNotFound;
 	}
-	
+
 	private ResourceNotFoundException patientNotFoundFhirException(String id) {
 		String errorMessage = "No patient details found for patient ID: Patient/" + id;
 		Coding notFoundCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "PATIENT_NOT_FOUND", "PATIENT_NOT_FOUND");
@@ -249,7 +252,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		    OperationOutcome.IssueType.INVALID);
 		return new ResourceNotFoundException(errorMessage, patientNotFound);
 	}
-	
+
 	private UnprocessableEntityException createMissingIdentifierPartException(String identifier) {
 		String errorMessage = String.format(
 		    "One or both of the identifier system and value are missing from given identifier : %s", identifier);
