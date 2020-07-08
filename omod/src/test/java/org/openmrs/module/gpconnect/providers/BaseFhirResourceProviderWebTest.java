@@ -157,6 +157,10 @@ public abstract class BaseFhirResourceProviderWebTest<T extends IResourceProvide
 	public IBaseBundle readBundleResponse(MockHttpServletResponse response) throws UnsupportedEncodingException {
 		return (IBaseBundle) parser.parseResource(response.getContentAsString());
 	}
+
+	public IBaseOperationOutcome readOperationOutcomeResponse(MockHttpServletResponse response) throws UnsupportedEncodingException {
+		return (IBaseOperationOutcome) parser.parseResource(response.getContentAsString());
+	}
 	
 	public static class FhirMediaTypes {
 		
