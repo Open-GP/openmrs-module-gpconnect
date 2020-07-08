@@ -19,9 +19,6 @@ public class NhsPatient {
 	@Column(name = "patient_id")
 	Long id;
 	
-	@Column(name = "cadaveric_donor")
-	public boolean cadavericDonor;
-	
 	@Column(name = "nhs_number")
 	public String nhsNumber;
 	

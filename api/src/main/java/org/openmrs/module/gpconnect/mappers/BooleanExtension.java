@@ -17,8 +17,8 @@ public class BooleanExtension implements PatientExtension<Boolean> {
 	
 	@Override
 	public Optional<Extension> createExtension(Boolean value) {
-		Extension cadavericDonor = new Extension(extensionUrl, new BooleanType(value));
-		return Optional.of(cadavericDonor);
+		Extension extension = new Extension(extensionUrl, new BooleanType(value));
+		return Optional.of(extension);
 	}
 	
 	@Override

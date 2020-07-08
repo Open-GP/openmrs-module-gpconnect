@@ -1,7 +1,11 @@
 package org.openmrs.module.gpconnect.mappers;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
+
 import org.hl7.fhir.dstu3.model.BooleanType;
-import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Before;
@@ -15,13 +19,6 @@ import org.openmrs.api.context.ServiceContext;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
 import org.openmrs.module.gpconnect.util.Extensions;
-
-import java.util.Collections;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.when;
 
 public class NhsPatientMapperTest {
 	
@@ -51,37 +48,7 @@ public class NhsPatientMapperTest {
 	Patient patient = new Patient();
 	
 	@Test
-	public void shouldSetTheCadavericDonorExtension() {
-		String patientUuid = "test";
-		
-		setup(patientUuid);
-		
-		NhsPatient nhsPatient = new NhsPatient();
-		nhsPatient.cadavericDonor = true;
-		
-		when(mockNhsPatientService.findById(any())).thenReturn(nhsPatient);
-		
-		Patient actualPatient = nhsPatientMapper.enhance(patient);
-		
-		Extension extension = actualPatient.getExtensionsByUrl(Extensions.CADAVERIC_DONOR_URL).get(0);
-		assertEquals(((BooleanType) extension.getValue()).booleanValue(), true);
-	}
-	
-	@Test
 	public void shouldMapNhsPatient() {
-		Patient patient = new Patient();
-		
-		patient.setExtension(Collections.singletonList(new Extension(Extensions.CADAVERIC_DONOR_URL, new BooleanType(true))));
-		
-		NhsPatient expectedPatient = new NhsPatient();
-		expectedPatient.setCadavericDonor(true);
-		expectedPatient.setId(3L);
-		
-		assertEquals(expectedPatient, nhsPatientMapper.toNhsPatient(patient, 3));
-	}
-	
-	@Test
-	public void shouldSkipCadavericDonorWhenMissing() {
 		Patient patient = new Patient();
 		
 		NhsPatient expectedPatient = new NhsPatient();

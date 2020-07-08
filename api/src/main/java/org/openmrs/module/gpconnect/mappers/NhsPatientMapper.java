@@ -32,7 +32,6 @@ public class NhsPatientMapper {
 	List<PatientFieldMapper> mappers;
 	
 	public NhsPatientMapper() {
-		CadavericDonorMapper cadavericDonor = new CadavericDonorMapper(new BooleanExtension(Extensions.CADAVERIC_DONOR_URL));
 		EthnicCategoryMapper ethnicCategory = new EthnicCategoryMapper(new CodeableConceptExtension(
 		        Extensions.ETHNIC_CATEGORY_URL, CodeSystems.ETHNIC_CATEGORY, EthnicCategory.dict()));
 		RegistrationDetailsMapper registrationDetails = new RegistrationDetailsMapper(new CodeableConceptExtension(
@@ -47,7 +46,7 @@ public class NhsPatientMapper {
 		
 		NhsNoMapper nhsNo = new NhsNoMapper(new CodeableConceptExtension(Extensions.NHS_VERFICATION_STATUS_URL,
 		        CodeSystems.NHS_NO_VERIFICATION_STATUS, NhsNoVerificationStatus.dict()));
-		mappers = Arrays.asList(nhsNo, cadavericDonor, ethnicCategory, registrationDetails, treatmentCategory,
+		mappers = Arrays.asList(nhsNo, ethnicCategory, registrationDetails, treatmentCategory,
 		    residentialStatus, deathNotificationStatus);
 	}
 	
