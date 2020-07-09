@@ -13,14 +13,17 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import ca.uhn.fhir.rest.api.server.IBundleProvider;
+import ca.uhn.fhir.rest.param.TokenAndListParam;
+import ca.uhn.fhir.rest.param.TokenParam;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
-
 import javax.servlet.ServletException;
-
+import lombok.AccessLevel;
+import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.Coding;
@@ -45,16 +48,11 @@ import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.mock.web.MockHttpServletResponse;
 
-import ca.uhn.fhir.rest.api.server.IBundleProvider;
-import ca.uhn.fhir.rest.param.TokenAndListParam;
-import ca.uhn.fhir.rest.param.TokenParam;
-import lombok.AccessLevel;
-import lombok.Getter;
-
 @RunWith(MockitoJUnitRunner.class)
 public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderWebTest<GPConnectPatientProvider, Patient> {
 
-    private static final String PATIENT_UUID = "0b42f99b-776e-4388-8f6f-84357ae2a8fb";
+    private static final String VALID_PATIENT_UUID = "0b42f99b-776e-4388-8f6f-84357ae2a8fb";
+    private static final String INVALID_PATIENT_UUID = "lklkjsdfasd";
 
     @Mock
     FhirPatientService patientService;
@@ -75,13 +73,13 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     @Test
     public void shouldGetPatientByUuid() throws Exception {
         org.hl7.fhir.r4.model.Patient patient = new org.hl7.fhir.r4.model.Patient();
-        when(patientService.get(PATIENT_UUID)).thenReturn(patient);
+        when(patientService.get(VALID_PATIENT_UUID)).thenReturn(patient);
 
         Patient r3Patient = new Patient();
-        r3Patient.setId(PATIENT_UUID);
+        r3Patient.setId(VALID_PATIENT_UUID);
         when(nhsPatientMapper.enhance(Matchers.any())).thenReturn(r3Patient);
 
-        MockHttpServletResponse response = get("/Patient/" + PATIENT_UUID).accept(FhirMediaTypes.JSON).go();
+        MockHttpServletResponse response = get("/Patient/" + VALID_PATIENT_UUID).accept(FhirMediaTypes.JSON).go();
 
         verify(nhsPatientMapper, atLeastOnce()).enhance(Matchers.any());
 
@@ -89,7 +87,22 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));
 
         Patient resource = readResponse(response);
-        assertThat(resource.getIdElement().getIdPart(), equalTo(PATIENT_UUID));
+        assertThat(resource.getIdElement().getIdPart(), equalTo(VALID_PATIENT_UUID));
+    }
+
+    @Test
+    public void shouldGetPatientNotFoundGivenInvalidUuid() throws IOException, ServletException {
+        when(patientService.get(INVALID_PATIENT_UUID)).thenReturn(null);
+
+        MockHttpServletResponse response = get("/Patient/" + INVALID_PATIENT_UUID).accept(FhirMediaTypes.JSON).go();
+
+        verify(nhsPatientMapper, never()).enhance(Matchers.any());
+
+        assertThat(response, isNotFound());
+        assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));
+
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("No patient details found for patient ID: Patient/" + INVALID_PATIENT_UUID));
     }
 
     @Test
@@ -151,7 +164,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         org.hl7.fhir.r4.model.Patient inactivePatient = new org.hl7.fhir.r4.model.Patient();
 
         Patient r3Patient = new Patient();
-        r3Patient.setId(PATIENT_UUID);
+        r3Patient.setId(VALID_PATIENT_UUID);
         r3Patient.setDeceased(new DateTimeType());
 
         when(nhsPatientMapper.enhance(Matchers.any())).thenReturn(r3Patient);
@@ -180,10 +193,10 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     public void shouldThrowAppropreateExceptionForInvalidUrlParmiters() throws Exception {
 
         MockHttpServletResponse response = get("/Patient?Identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
-        
+
         OperationOutcome resource = (OperationOutcome) readOperationOutcomeResponse(response);
         List<OperationOutcomeIssueComponent> issues = resource.getIssue();
-        
+
         assertThat(response, statusEquals(400));
         assertTrue(resource.hasMeta());
         assertThat(issues.size(), greaterThanOrEqualTo(1));
