@@ -191,12 +191,12 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		String identifierTypeName = tokenParam.getSystem();
 		String identifierValue = tokenParam.getValue();
 
-		if (identifierValue.isEmpty()) {
-			throw createMissingIdentifierPartException(identifierTypeName + "|");
-		}
-
 		if (identifierTypeName == null || identifierTypeName.isEmpty()) {
 			throw createMissingIdentifierPartException(identifierValue);
+		}
+
+		if (identifierValue.isEmpty()) {
+			throw createMissingIdentifierPartException(identifierTypeName + "|");
 		}
 
 		if (patientService.getPatientIdentifierTypeByIdentifier(new Identifier().setSystem(identifierTypeName)) == null){

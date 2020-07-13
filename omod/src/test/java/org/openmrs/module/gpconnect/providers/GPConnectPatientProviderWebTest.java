@@ -159,6 +159,35 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     }
 
     @Test
+    public void shouldReturnVaildPatientInSearch() throws IOException, ServletException {
+
+        org.hl7.fhir.r4.model.Patient r4Patient = new org.hl7.fhir.r4.model.Patient();
+
+        Patient r3Patient = new Patient();
+        r3Patient.setId(VALID_PATIENT_UUID);
+
+        when(nhsPatientMapper.enhance(Matchers.any())).thenReturn(r3Patient);
+        
+        when(patientService.getPatientIdentifierTypeByIdentifier(Matchers.any()))
+            .thenReturn(new PatientIdentifierType());
+        
+        IBundleProvider provider = mock(IBundleProvider.class);
+        when(provider.getResources(0, 0)).thenReturn(Collections.singletonList(r4Patient));
+
+        when(patientService.searchForPatients(Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),
+            Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),
+            Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any()
+        )).thenReturn(provider);
+
+        MockHttpServletResponse response = get("/Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
+
+        assertThat(response, statusEquals(200));
+        Bundle resource = readBundleResponse(response);
+
+        assertThat(resource.getEntry().size(), equalTo(1));
+    }
+
+    @Test
     public void shouldSkipDeadPatientsInSearch() throws IOException, ServletException {
 
         org.hl7.fhir.r4.model.Patient inactivePatient = new org.hl7.fhir.r4.model.Patient();
@@ -193,6 +222,31 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     public void shouldThrowAppropreateExceptionForInvalidUrlParmiters() throws Exception {
 
         MockHttpServletResponse response = get("/Patient?Identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
+
+        OperationOutcome resource = (OperationOutcome) readOperationOutcomeResponse(response);
+        List<OperationOutcomeIssueComponent> issues = resource.getIssue();
+
+        assertThat(response, statusEquals(400));
+        assertTrue(resource.hasMeta());
+        assertThat(issues.size(), greaterThanOrEqualTo(1));
+
+        for (OperationOutcomeIssueComponent issue : issues) {
+            Coding expectedCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "BAD_REQUEST", "BAD_REQUEST");
+            List<Coding> coding = issue.getDetails().getCoding();
+
+            assertEquals(issue.getSeverity(), OperationOutcome.IssueSeverity.ERROR);
+            assertTrue(issue.hasCode());
+            assertThat(coding.size(), equalTo(1));
+            assertTrue(coding.get(0).hasCode());
+            assertTrue(coding.get(0).hasDisplay());
+            assertEquals(expectedCoding.getCode(), coding.get(0).getCode());
+        }
+    }
+
+    @Test
+    public void shouldThrowAppropreateExceptionForMultipleIdentifierParmiters() throws Exception {
+
+        MockHttpServletResponse response = get("/Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890&identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
 
         OperationOutcome resource = (OperationOutcome) readOperationOutcomeResponse(response);
         List<OperationOutcomeIssueComponent> issues = resource.getIssue();
