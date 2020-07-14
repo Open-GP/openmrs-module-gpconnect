@@ -36,10 +36,16 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
     public void shouldSearchByIdentifier() throws IOException, ServletException {
         String identifier = "G11111111";
 
-        IBundleProvider provider = BundleProviders.newList(new org.hl7.fhir.r4.model.Practitioner());
-        when(practitionerService.searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any())).thenReturn(provider);
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
 
-        MockHttpServletResponse response = get("/Practitioner?identifier=https://fhir.nhs.uk/Id/sds-user-id|" + identifier).accept(FhirMediaTypes.JSON).go();
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=https://fhir.nhs.uk/Id/sds-user-id|" + identifier)
+            .accept(FhirMediaTypes.JSON).go();
 
         assertThat(response, isOk());
     }
@@ -56,5 +62,33 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
         assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("No interaction id present in the request"));
+    }
+
+    @Test
+    public void shouldThrow400IfInteractionIdStructureDoesNotMatchOneForReadingAPractitioner() throws IOException, ServletException {
+        when(practitionerService.get(Matchers.any())).thenReturn(new org.hl7.fhir.r4.model.Practitioner());
+
+        MockHttpServletResponse response = get("/Practitioner/" + VALID_PRACTITIONER_UUID)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
+            .go();
+
+        assertThat(response, isBadRequest());
+
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
+            equalTo("Interaction id does not match resource: Practitioner, action: READ"));
+    }
+
+    @Test
+    public void shouldReturn200IfInteractionIdStructureMatchesOneForReadingAPractitioner() throws IOException, ServletException {
+        when(practitionerService.get(Matchers.any())).thenReturn(new org.hl7.fhir.r4.model.Practitioner());
+
+        MockHttpServletResponse response = get("/Practitioner/" + VALID_PRACTITIONER_UUID)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:practitioner-1")
+            .go();
+
+        assertThat(response, isOk());
     }
 }

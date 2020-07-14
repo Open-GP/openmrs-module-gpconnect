@@ -19,8 +19,6 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import lombok.AccessLevel;
 import lombok.Setter;
 import org.hl7.fhir.convertors.conv30_40.Practitioner30_40;
-import org.hl7.fhir.dstu3.model.CodeableConcept;
-import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Meta;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
@@ -29,7 +27,7 @@ import org.hl7.fhir.dstu3.model.UriType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.openmrs.module.fhir2.api.FhirPractitionerService;
 import org.openmrs.module.fhir2.providers.r3.PractitionerFhirResourceProvider;
-import org.openmrs.module.gpconnect.util.CodeSystems;
+import org.openmrs.module.gpconnect.exceptions.OperationOutcomeCreator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
@@ -66,11 +64,8 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 		}
 		catch (ResourceNotFoundException e) {
 			String errorMessage = "No practitioner details found for practitioner ID: Practitioner/" + id.getIdPart();
-			Coding notFoundCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "PRACTITIONER_NOT_FOUND",
-			        "PRACTITIONER_NOT_FOUND");
-			OperationOutcome practitionerNotFound = createErrorOperationOutcome(errorMessage, notFoundCoding,
-			    OperationOutcome.IssueType.INVALID);
-			throw new ResourceNotFoundException(errorMessage, practitionerNotFound);
+			OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "PRACTITIONER_NOT_FOUND", OperationOutcome.IssueType.INVALID);
+			throw new ResourceNotFoundException(errorMessage, operationOutcome);
 		}
 	}
 	
@@ -111,37 +106,13 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 	}
 	
 	private InvalidRequestException createBadRequest(String errorMessage) {
-		Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "BAD_REQUEST", "BAD_REQUEST");
-		OperationOutcome badRequest = createErrorOperationOutcome(errorMessage, invalidIdentifierCoding,
-		    OperationOutcome.IssueType.INVALID);
-		return new InvalidRequestException(errorMessage, badRequest);
-	}
-	
-	private OperationOutcome createErrorOperationOutcome(String errorMessage, Coding coding,
-	        OperationOutcome.IssueType issueType) {
-		OperationOutcome operationOutcome = new OperationOutcome();
-		Meta meta = new Meta();
-		meta.setProfile(Collections.singletonList(new UriType(
-		        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1")));
-		
-		operationOutcome.setMeta(meta);
-		
-		OperationOutcome.OperationOutcomeIssueComponent issue = new OperationOutcome.OperationOutcomeIssueComponent();
-		issue.setSeverity(OperationOutcome.IssueSeverity.ERROR);
-		issue.setCode(issueType);
-		CodeableConcept details = new CodeableConcept().setCoding(Collections.singletonList(coding));
-		issue.setDetails(details);
-		issue.setDiagnostics(errorMessage);
-		operationOutcome.setIssue(Collections.singletonList(issue));
-		return operationOutcome;
+		OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "BAD_REQUEST", OperationOutcome.IssueType.INVALID);
+		return new InvalidRequestException(errorMessage, operationOutcome);
 	}
 	
 	private UnprocessableEntityException createMissingIdentifierPartException(String identifier) {
-		String errorMessage = String.format(
-		    "One or both of the identifier system and value are missing from given identifier : %s", identifier);
-		Coding coding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "INVALID_PARAMETER", "INVALID_PARAMETER");
-		OperationOutcome operationOutcome = createErrorOperationOutcome(errorMessage, coding,
-		    OperationOutcome.IssueType.INVALID);
+		String errorMessage = String.format("One or both of the identifier system and value are missing from given identifier : %s", identifier);
+		OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "INVALID_PARAMETER", OperationOutcome.IssueType.INVALID);
 		return new UnprocessableEntityException(errorMessage, operationOutcome);
 	}
 }

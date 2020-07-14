@@ -8,9 +8,8 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import ca.uhn.fhir.rest.server.interceptor.ExceptionHandlingInterceptor;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
-import org.openmrs.module.gpconnect.util.CodeSystems;
+import org.openmrs.module.gpconnect.exceptions.OperationOutcomeCreator;
 
 public class GPConnectExceptionHandlingInterceptor extends ExceptionHandlingInterceptor {
 	
@@ -26,9 +25,8 @@ public class GPConnectExceptionHandlingInterceptor extends ExceptionHandlingInte
 		if(theException instanceof InvalidRequestException 
 			&&  theRequestDetails.getParameters().size() > 0
 			&&  theRequestDetails.getRequestType() == RequestTypeEnum.GET){	
-				String errorMessage = "Invalid paramiter in request";
-				Coding coding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "BAD_REQUEST", "BAD_REQUEST");
-				OperationOutcome operationOutcome = OperationOutcomeCreator.createErrorOperationOutcome(errorMessage, coding, OperationOutcome.IssueType.INVALID);
+				String errorMessage = "Invalid parameter in request";
+				OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "BAD_REQUEST", OperationOutcome.IssueType.INVALID);
 				return new InvalidRequestException("BAD REQUEST", operationOutcome);
 			}
 

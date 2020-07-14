@@ -260,5 +260,10 @@ public abstract class BaseFhirResourceProviderWebTest<T extends IResourceProvide
 			servlet.service(request, response);
 			return response;
 		}
+
+		public FhirRequestBuilder setInteractionId(String interactionID) {
+			request.addHeader("Ssp-InteractionID", interactionID);
+			return this;
+		}
 	}
 }

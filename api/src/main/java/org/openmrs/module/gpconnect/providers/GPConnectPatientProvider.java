@@ -19,12 +19,16 @@ import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Setter;
 import org.hl7.fhir.convertors.conv30_40.Patient30_40;
 import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.CodeableConcept;
-import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.HumanName;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Meta;
@@ -38,21 +42,14 @@ import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
 import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
 import org.openmrs.module.fhir2.providers.r3.PatientFhirResourceProvider;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
+import org.openmrs.module.gpconnect.exceptions.OperationOutcomeCreator;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 import org.openmrs.module.gpconnect.services.NhsPatientService;
-import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-
-import javax.validation.constraints.NotNull;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Component
 @Qualifier("fhirR3Resources")
@@ -101,13 +98,11 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			if(patients.iterator().next().getDead()){
 				throw createBadRequest("Nhs Number registed to dead patient", "BAD_REQUEST");
 			}
+			String errorMessage = "Nhs Number already in use";
 
-			Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "DUPLICATE_REJECTED",
-					"DUPLICATE_REJECTED");
+			OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "DUPLICATE_REJECTED", OperationOutcome.IssueType.INVALID);
 
-			String message = "Nhs Number already in use";
-			throw new ResourceVersionConflictException(message, createErrorOperationOutcome(
-					message, invalidIdentifierCoding, OperationOutcome.IssueType.INVALID));
+			throw new ResourceVersionConflictException(errorMessage, operationOutcome);
 		}
 
 		if (patient.getBirthDate() == null) {
@@ -193,45 +188,19 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 	}
 
 	private InvalidRequestException createBadRequest(String errorMessage, String errorCode) {
-		Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, errorCode, errorCode);
-		OperationOutcome badRequest = createErrorOperationOutcome(errorMessage, invalidIdentifierCoding,
-		    OperationOutcome.IssueType.INVALID);
-		return new InvalidRequestException(errorMessage, badRequest);
-	}
-
-	private OperationOutcome createErrorOperationOutcome(String errorMessage, Coding coding,
-	        OperationOutcome.IssueType issueType) {
-		OperationOutcome patientNotFound = new OperationOutcome();
-		Meta meta = new Meta();
-		meta.setProfile(Collections.singletonList(new UriType(
-		        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-OperationOutcome-1")));
-
-		patientNotFound.setMeta(meta);
-
-		OperationOutcome.OperationOutcomeIssueComponent issue = new OperationOutcome.OperationOutcomeIssueComponent();
-		issue.setSeverity(OperationOutcome.IssueSeverity.ERROR);
-		issue.setCode(issueType);
-		CodeableConcept details = new CodeableConcept().setCoding(Collections.singletonList(coding));
-		issue.setDetails(details);
-		issue.setDiagnostics(errorMessage);
-		patientNotFound.setIssue(Collections.singletonList(issue));
-		return patientNotFound;
+		OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, errorCode, OperationOutcome.IssueType.INVALID);
+		return new InvalidRequestException(errorMessage, operationOutcome);
 	}
 
 	private ResourceNotFoundException patientNotFoundFhirException(String id) {
 		String errorMessage = "No patient details found for patient ID: Patient/" + id;
-		Coding notFoundCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "PATIENT_NOT_FOUND", "PATIENT_NOT_FOUND");
-		OperationOutcome patientNotFound = createErrorOperationOutcome(errorMessage, notFoundCoding,
-		    OperationOutcome.IssueType.INVALID);
-		return new ResourceNotFoundException(errorMessage, patientNotFound);
+		OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "PATIENT_NOT_FOUND", OperationOutcome.IssueType.INVALID);
+		return new ResourceNotFoundException(errorMessage, operationOutcome);
 	}
 
 	private UnprocessableEntityException createMissingIdentifierPartException(String identifier) {
-		String errorMessage = String.format(
-		    "One or both of the identifier system and value are missing from given identifier : %s", identifier);
-		Coding coding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "INVALID_PARAMETER", "INVALID_PARAMETER");
-		OperationOutcome operationOutcome = createErrorOperationOutcome(errorMessage, coding,
-		    OperationOutcome.IssueType.INVALID);
+		String errorMessage = String.format("One or both of the identifier system and value are missing from given identifier : %s", identifier);
+		OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "INVALID_PARAMETER", OperationOutcome.IssueType.INVALID);
 		return new UnprocessableEntityException(errorMessage, operationOutcome);
 	}
 
@@ -258,9 +227,8 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 
 			if (patientService.getPatientIdentifierTypeByIdentifier(new Identifier().setSystem(identifierTypeName)) == null){
 				String errorMessage = String.format("The given identifier system code (%s) is not an expected code", identifierTypeName);
-				Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "INVALID_IDENTIFIER_SYSTEM", "INVALID_IDENTIFIER_SYSTEM");
-				OperationOutcome invalidIdentifier = createErrorOperationOutcome(errorMessage, invalidIdentifierCoding, OperationOutcome.IssueType.INVALID);
-				throw new InvalidRequestException(errorMessage, invalidIdentifier);
+				OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "INVALID_IDENTIFIER_SYSTEM", OperationOutcome.IssueType.INVALID);
+				throw new InvalidRequestException(errorMessage, operationOutcome);
 			}
 		}
 	}
