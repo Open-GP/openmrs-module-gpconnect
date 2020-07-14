@@ -19,6 +19,7 @@ import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.r4.model.Identifier;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -78,23 +79,8 @@ public class GPConnectPatientProviderTest {
     }
 
     @Test
-    public void searchShouldGetBadRequestMissingIdentifierParam() {
-        try {
-            gpConnectPatientProvider.searchPatients(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
-            fail("BadRequest expected to be thrown but wasn't");
-        } catch (final InvalidRequestException invalidRequestException) {
-            final OperationOutcome operationOutcome = (OperationOutcome) invalidRequestException.getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("Missing identifier param")
-            );
-        }
-    }
-
-    @Test
     public void searchShouldGetBadRequestTooManyIdentifierParams() {
-        TokenAndListParam identifier = new TokenAndListParam();
-        identifier.addAnd(new TokenParam());
+        TokenAndListParam identifier = generateIdentifierWithTokenParam(null, null);
         identifier.addAnd(new TokenParam());
 
         try {
@@ -111,9 +97,7 @@ public class GPConnectPatientProviderTest {
 
     @Test
     public void searchShouldGetInvalidParamiterMissingIdentifierTypeName() {
-        TokenAndListParam identifier = new TokenAndListParam();
-        TokenParam tokenParam = new TokenParam();
-        identifier.addAnd(tokenParam);
+        TokenAndListParam identifier = generateIdentifierWithTokenParam(null, null);
 
         try {
             gpConnectPatientProvider.searchPatients(null, null, null, identifier, null, null, null, null, null, null, null, null, null, null, null);
@@ -129,12 +113,7 @@ public class GPConnectPatientProviderTest {
 
     @Test
     public void searchShouldGetInvalidParamiterEmptyIdentifierTypeName() {
-        TokenAndListParam identifier = new TokenAndListParam();
-        TokenParam tokenParam = new TokenParam();
-        tokenParam.setSystem("");
-        tokenParam.setValue("Test");
-        identifier.addAnd(tokenParam);
-
+        TokenAndListParam identifier = generateIdentifierWithTokenParam("", "Test");
         try {
             gpConnectPatientProvider.searchPatients(null, null, null, identifier, null, null, null, null, null, null, null, null, null, null, null);
             fail("Invalid Paramiter expected to be thrown but wasn't");
@@ -149,11 +128,7 @@ public class GPConnectPatientProviderTest {
 
     @Test
     public void searchShouldGetInvalidParamiterEmptyIdentifierValue() {
-        TokenAndListParam identifier = new TokenAndListParam();
-        TokenParam tokenParam = new TokenParam();
-        tokenParam.setSystem("Test");
-        tokenParam.setValue("");
-        identifier.addAnd(tokenParam);
+        TokenAndListParam identifier = generateIdentifierWithTokenParam("Test", "");
 
         try {
             gpConnectPatientProvider.searchPatients(null, null, null, identifier, null, null, null, null, null, null, null, null, null, null, null);
@@ -169,11 +144,7 @@ public class GPConnectPatientProviderTest {
 
     @Test
     public void searchShouldGetInvalidIdentifier() {
-        TokenAndListParam identifier = new TokenAndListParam();
-        TokenParam tokenParam = new TokenParam();
-        tokenParam.setSystem("Test");
-        tokenParam.setValue("Test");
-        identifier.addAnd(tokenParam);
+        TokenAndListParam identifier = generateIdentifierWithTokenParam("Test", "Test");
 
         Identifier r4Identifier = new Identifier();
         when(fhirPatientService.getPatientIdentifierTypeByIdentifier(r4Identifier)).thenReturn(null);
@@ -192,11 +163,7 @@ public class GPConnectPatientProviderTest {
 
     @Test
     public void shouldReturnOnePatientInSearch(){
-        TokenAndListParam identifier = new TokenAndListParam();
-        TokenParam tokenParam = new TokenParam();
-        tokenParam.setSystem("Test");
-        tokenParam.setValue("Test");
-        identifier.addAnd(tokenParam);
+        TokenAndListParam identifier = generateIdentifierWithTokenParam("Test", "Test");
 
         org.hl7.fhir.r4.model.Patient r4Patient = new org.hl7.fhir.r4.model.Patient();
 
@@ -225,11 +192,7 @@ public class GPConnectPatientProviderTest {
 
     @Test
     public void shouldNotReturnDeadPatientInSearch(){
-        TokenAndListParam identifier = new TokenAndListParam();
-        TokenParam tokenParam = new TokenParam();
-        tokenParam.setSystem("Test");
-        tokenParam.setValue("Test");
-        identifier.addAnd(tokenParam);
+        TokenAndListParam identifier = generateIdentifierWithTokenParam("Test", "Test");
         
         org.hl7.fhir.r4.model.Patient r4Patient = new org.hl7.fhir.r4.model.Patient();
 
@@ -255,5 +218,14 @@ public class GPConnectPatientProviderTest {
                 null, null, null, null, null, null, null, null);
 
         assertThat(resource.size(), equalTo(0));
+    }
+
+    private TokenAndListParam generateIdentifierWithTokenParam(String system, String value) {
+        TokenAndListParam identifier = new TokenAndListParam();
+        TokenParam tokenParam = new TokenParam();
+        tokenParam.setSystem(system);
+        tokenParam.setValue(value);
+        identifier.addAnd(tokenParam);
+        return identifier;
     }
 }

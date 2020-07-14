@@ -176,35 +176,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
                                           @OptionalParam(name = "_lastUpdated") DateRangeParam lastUpdated,
                                           @Sort SortSpec sort) {
 
-
-		if (identifier == null) {
-			throw createBadRequest("Missing identifier param", "BAD_REQUEST");
-		}
-
-		List<TokenOrListParam> identifierParams = identifier.getValuesAsQueryTokens();
-
-		if (identifierParams.size() > 1) {
-			throw createBadRequest("Too many indentifiers", "BAD_REQUEST");
-		}
-
-		TokenParam tokenParam = identifierParams.get(0).getValuesAsQueryTokens().get(0);
-		String identifierTypeName = tokenParam.getSystem();
-		String identifierValue = tokenParam.getValue();
-
-		if (identifierTypeName == null || identifierTypeName.isEmpty()) {
-			throw createMissingIdentifierPartException(identifierValue);
-		}
-
-		if (identifierValue.isEmpty()) {
-			throw createMissingIdentifierPartException(identifierTypeName + "|");
-		}
-
-		if (patientService.getPatientIdentifierTypeByIdentifier(new Identifier().setSystem(identifierTypeName)) == null){
-			String errorMessage = String.format("The given identifier system code (%s) is not an expected code", identifierTypeName);
-			Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "INVALID_IDENTIFIER_SYSTEM", "INVALID_IDENTIFIER_SYSTEM");
-			OperationOutcome invalidIdentifier = createErrorOperationOutcome(errorMessage, invalidIdentifierCoding, OperationOutcome.IssueType.INVALID);
-			throw new InvalidRequestException(errorMessage, invalidIdentifier);
-		}
+		validateIdentifierStructure(identifier);
 
 		IBundleProvider provider = super.searchPatients(name, given, family, identifier, gender, birthDate,
 				deathDate, deceased, city, state, postalCode, country, id, lastUpdated, sort);
@@ -261,5 +233,35 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		OperationOutcome operationOutcome = createErrorOperationOutcome(errorMessage, coding,
 		    OperationOutcome.IssueType.INVALID);
 		return new UnprocessableEntityException(errorMessage, operationOutcome);
+	}
+
+	private void validateIdentifierStructure(TokenAndListParam identifier) {
+		if (identifier != null) {
+
+			List<TokenOrListParam> identifierParams = identifier.getValuesAsQueryTokens();
+
+			if (identifierParams.size() > 1){
+				throw createBadRequest("Too many indentifiers", "BAD_REQUEST");
+			}
+
+			TokenParam tokenParam = identifierParams.get(0).getValuesAsQueryTokens().get(0);
+			String identifierTypeName = tokenParam.getSystem();
+			String identifierValue = tokenParam.getValue();
+
+			if (identifierTypeName == null || identifierTypeName.isEmpty()) {
+				throw createMissingIdentifierPartException(identifierValue);
+			}
+
+			if (identifierValue.isEmpty()) {
+				throw createMissingIdentifierPartException(identifierTypeName + "|");
+			}
+
+			if (patientService.getPatientIdentifierTypeByIdentifier(new Identifier().setSystem(identifierTypeName)) == null){
+				String errorMessage = String.format("The given identifier system code (%s) is not an expected code", identifierTypeName);
+				Coding invalidIdentifierCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "INVALID_IDENTIFIER_SYSTEM", "INVALID_IDENTIFIER_SYSTEM");
+				OperationOutcome invalidIdentifier = createErrorOperationOutcome(errorMessage, invalidIdentifierCoding, OperationOutcome.IssueType.INVALID);
+				throw new InvalidRequestException(errorMessage, invalidIdentifier);
+			}
+		}
 	}
 }

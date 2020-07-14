@@ -267,4 +267,29 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
             assertEquals(expectedCoding.getCode(), coding.get(0).getCode());
         }
     }
+
+    @Test
+    public void shouldThrowAppropreateExceptionNoParmiters() throws Exception {
+
+        MockHttpServletResponse response = get("/Patient").go();
+
+        OperationOutcome resource = (OperationOutcome) readOperationOutcomeResponse(response);
+        List<OperationOutcomeIssueComponent> issues = resource.getIssue();
+
+        assertThat(response, statusEquals(400));
+        assertTrue(resource.hasMeta());
+        assertThat(issues.size(), greaterThanOrEqualTo(1));
+
+        for (OperationOutcomeIssueComponent issue : issues) {
+            Coding expectedCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "BAD_REQUEST", "BAD_REQUEST");
+            List<Coding> coding = issue.getDetails().getCoding();
+
+            assertEquals(issue.getSeverity(), OperationOutcome.IssueSeverity.ERROR);
+            assertTrue(issue.hasCode());
+            assertThat(coding.size(), equalTo(1));
+            assertTrue(coding.get(0).hasCode());
+            assertTrue(coding.get(0).hasDisplay());
+            assertEquals(expectedCoding.getCode(), coding.get(0).getCode());
+        }
+    }
 }
