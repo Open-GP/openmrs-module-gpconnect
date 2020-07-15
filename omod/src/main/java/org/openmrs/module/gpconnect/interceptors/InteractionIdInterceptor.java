@@ -17,13 +17,20 @@ public class InteractionIdInterceptor {
     public void handleInteractionId(RequestDetails requestDetails, ServletRequestDetails servletRequestDetails, RestOperationTypeEnum operationType) {
         String requestDetailsResourceName = requestDetails.getResourceName();
         String interactionId = requestDetails.getHeader("Ssp-InteractionID");
-        if (interactionId == null && requestDetailsResourceName != null && isResourcePractitionerAndActionRead(requestDetails, operationType)) {
+        if (interactionId == null && requestDetailsResourceName.equals("Practitioner") && isResourcePractitionerAndActionRead(requestDetails, operationType)) {
             String errorMessage = "No interaction id present in the request";
             throw createBadRequest(errorMessage);
-        } else if (interactionId != null && requestDetailsResourceName != null && !interactionId.equals(InteractionIdTypes.PRACTITIONER_READ_ID.getId()) && isResourcePractitionerAndActionRead(requestDetails, operationType)) {
+        } else if (doesInteractionIdMatchResourceUrlForReadingAPractitioner(requestDetails, operationType, requestDetailsResourceName, interactionId)) {
             String errorMessage = "Interaction id does not match resource: " + requestDetails.getResourceName() + ", action: " + operationType.name();
             throw createBadRequest(errorMessage);
         }
+    }
+
+    private boolean doesInteractionIdMatchResourceUrlForReadingAPractitioner(RequestDetails requestDetails,
+        RestOperationTypeEnum operationType, String requestDetailsResourceName,
+        String interactionId) {
+        return interactionId != null && !interactionId.equals(InteractionIdTypes.PRACTITIONER_READ_ID.getId()) && isResourcePractitionerAndActionRead(requestDetails, operationType) ||
+            !requestDetailsResourceName.equals("Practitioner") && interactionId != null && !isResourcePractitionerAndActionRead(requestDetails, operationType);
     }
 
     private InvalidRequestException createBadRequest(String errorMessage) {

@@ -51,7 +51,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
     }
 
     @Test
-    public void shouldThrow400IfInteractionIdIsNotPresentInRequest() throws IOException, ServletException {
+    public void shouldReturn400IfInteractionIdIsNotPresentInRequest() throws IOException, ServletException {
         when(practitionerService.get(Matchers.any())).thenReturn(new org.hl7.fhir.r4.model.Practitioner());
 
         MockHttpServletResponse response = get("/Practitioner/" + VALID_PRACTITIONER_UUID)
@@ -65,7 +65,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
     }
 
     @Test
-    public void shouldThrow400IfInteractionIdStructureDoesNotMatchOneForReadingAPractitioner() throws IOException, ServletException {
+    public void shouldReturn400IfInteractionIdStructureDoesNotMatchOneForReadingAPractitioner() throws IOException, ServletException {
         when(practitionerService.get(Matchers.any())).thenReturn(new org.hl7.fhir.r4.model.Practitioner());
 
         MockHttpServletResponse response = get("/Practitioner/" + VALID_PRACTITIONER_UUID)
