@@ -159,7 +159,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     }
 
     @Test
-    public void shouldReturnVaildPatientInSearch() throws IOException, ServletException {
+    public void shouldReturnValidPatientInSearch() throws IOException, ServletException {
 
         org.hl7.fhir.r4.model.Patient r4Patient = new org.hl7.fhir.r4.model.Patient();
 
@@ -217,9 +217,8 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         assertThat(resource.getEntry().size(), equalTo(0));
     }
 
-
     @Test
-    public void shouldThrowAppropreateExceptionForInvalidUrlParmiters() throws Exception {
+    public void shouldThrowAppropriateExceptionForInvalidUrlParameters() throws Exception {
 
         MockHttpServletResponse response = get("/Patient?Identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
 
@@ -244,7 +243,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     }
 
     @Test
-    public void shouldThrowAppropreateExceptionForMultipleIdentifierParmiters() throws Exception {
+    public void shouldThrowAppropriateExceptionForMultipleIdentifierParameters() throws Exception {
 
         MockHttpServletResponse response = get("/Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890&identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
 
@@ -269,7 +268,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     }
 
     @Test
-    public void shouldThrowAppropreateExceptionNoParmiters() throws Exception {
+    public void shouldThrowAppropriateExceptionNoParameters() throws Exception {
 
         MockHttpServletResponse response = get("/Patient").go();
 
@@ -291,5 +290,26 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
             assertTrue(coding.get(0).hasDisplay());
             assertEquals(expectedCoding.getCode(), coding.get(0).getCode());
         }
+    }
+
+    @Test
+    public void shouldReturn400IfTheInteractionIdResourceDoesNotMatchThePatientResourceInTheUrl() throws IOException, ServletException {
+        org.hl7.fhir.r4.model.Patient patient = new org.hl7.fhir.r4.model.Patient();
+        when(patientService.get(VALID_PATIENT_UUID)).thenReturn(patient);
+
+        Patient r3Patient = new Patient();
+        r3Patient.setId(VALID_PATIENT_UUID);
+        when(nhsPatientMapper.enhance(Matchers.any())).thenReturn(r3Patient);
+
+        MockHttpServletResponse response = get("/Patient/")
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, isBadRequest());
+
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
+            equalTo("Interaction id does not match resource: Patient, action: SEARCH_TYPE"));
     }
 }
