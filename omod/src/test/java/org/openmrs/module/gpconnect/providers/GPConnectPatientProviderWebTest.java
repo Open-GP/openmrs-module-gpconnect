@@ -91,6 +91,24 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     }
 
     @Test
+    public void shouldGetPatientByUuidWithAnyInteractionId() throws Exception {
+        org.hl7.fhir.r4.model.Patient patient = new org.hl7.fhir.r4.model.Patient();
+        when(patientService.get(VALID_PATIENT_UUID)).thenReturn(patient);
+
+        Patient r3Patient = new Patient();
+        r3Patient.setId(VALID_PATIENT_UUID);
+        when(nhsPatientMapper.enhance(Matchers.any())).thenReturn(r3Patient);
+
+        MockHttpServletResponse response = get("/Patient/" + VALID_PATIENT_UUID)
+            .setInteractionId("SomeInteractionId")
+            .accept(FhirMediaTypes.JSON).go();
+
+        verify(nhsPatientMapper, atLeastOnce()).enhance(Matchers.any());
+
+        assertThat(response, isOk());
+    }
+
+    @Test
     public void shouldGetPatientNotFoundGivenInvalidUuid() throws IOException, ServletException {
         when(patientService.get(INVALID_PATIENT_UUID)).thenReturn(null);
 
@@ -303,13 +321,12 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
 
         MockHttpServletResponse response = get("/Patient/")
             .accept(FhirMediaTypes.JSON)
-            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
             .go();
 
         assertThat(response, isBadRequest());
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
         assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
-            equalTo("Interaction id does not match resource: Patient, action: SEARCH_TYPE"));
+            equalTo("Searching without any parameters is not possible"));
     }
 }

@@ -61,7 +61,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, isBadRequest());
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("No interaction id present in the request"));
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Interaction id does not match resource: Practitioner, action: READ"));
     }
 
     @Test
