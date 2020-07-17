@@ -48,7 +48,7 @@ public class GPConnectLocationProvider extends LocationFhirResourceProvider {
 			return addMeta(location);
 		}catch(ResourceNotFoundException resourceNotFoundException){
 			String errorMessage = "Could not find location with Id " + id.getIdPart();
-			OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "PRACTITIONER_NOT_FOUND", OperationOutcome.IssueType.INVALID);
+			OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "LOCATION_NOT_FOUND", OperationOutcome.IssueType.INVALID);
 			throw new ResourceNotFoundException(errorMessage, operationOutcome);
 		}
 	}

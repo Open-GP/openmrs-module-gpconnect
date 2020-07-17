@@ -48,7 +48,7 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 	
 	@Operation(name = "$setup")
 	public MethodOutcome setupPractitioner(
-	        @OperationParam(name = "practitioner", type = Practitioner.class) Practitioner practitioner) {
+			@OperationParam(name = "practitioner", type = Practitioner.class) Practitioner practitioner) {
 		practitionerService.create(Practitioner30_40.convertPractitioner(practitioner));
 		return new MethodOutcome();
 	}

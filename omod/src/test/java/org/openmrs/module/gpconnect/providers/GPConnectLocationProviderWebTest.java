@@ -9,11 +9,13 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.hamcrest.CoreMatchers;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Location;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.module.fhir2.api.FhirLocationService;
@@ -38,7 +40,9 @@ public class GPConnectLocationProviderWebTest extends BaseFhirR3ResourceProvider
         location.setId(VALID_LOCATION_UUID);
         when(locationService.get(VALID_LOCATION_UUID)).thenReturn(location);
 
-        MockHttpServletResponse response = get("/Location/" + VALID_LOCATION_UUID).accept(FhirMediaTypes.JSON).go();
+        MockHttpServletResponse response = get("/Location/" + VALID_LOCATION_UUID).accept(FhirMediaTypes.JSON)
+                .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
+                .go();
 
         assertThat(response, isOk());
         assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));
@@ -51,12 +55,42 @@ public class GPConnectLocationProviderWebTest extends BaseFhirR3ResourceProvider
     public void shouldGetLocationNotFoundGivenInvalidUuid() throws IOException, ServletException {
         when(locationService.get(INVALID_LOCATION_UUID)).thenReturn(null);
 
-        MockHttpServletResponse response = get("/Location/" + INVALID_LOCATION_UUID).accept(FhirMediaTypes.JSON).go();
+        MockHttpServletResponse response = get("/Location/" + INVALID_LOCATION_UUID).accept(FhirMediaTypes.JSON)
+                .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
+                .go();
 
         assertThat(response, isNotFound());
         assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
         assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Could not find location with Id " + INVALID_LOCATION_UUID));
+    }
+
+    @Test
+    public void shouldReturn400IfInteractionIdStructureDoesNotMatchOneForReadingALocation() throws IOException, ServletException {
+        when(locationService.get(Matchers.any())).thenReturn(new org.hl7.fhir.r4.model.Location());
+
+        MockHttpServletResponse response = get("/Location/" + VALID_LOCATION_UUID)
+                .accept(FhirMediaTypes.JSON)
+                .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:practitioner-1")
+                .go();
+
+        assertThat(response, isBadRequest());
+
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
+                CoreMatchers.equalTo("Interaction id does not match resource: Location, action: READ"));
+    }
+
+    @Test
+    public void shouldReturn200IfInteractionIdStructureMatchesOneForReadingALocation() throws IOException, ServletException {
+        when(locationService.get(Matchers.any())).thenReturn(new org.hl7.fhir.r4.model.Location());
+
+        MockHttpServletResponse response = get("/Location/" + VALID_LOCATION_UUID)
+                .accept(FhirMediaTypes.JSON)
+                .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
+                .go();
+
+        assertThat(response, isOk());
     }
 }
