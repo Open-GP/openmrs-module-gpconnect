@@ -149,34 +149,6 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     }
 
     @Test
-    public void shouldReturn400WhenNhsNumberExistsAndInactive() throws IOException, ServletException {
-
-        InputStream is = this.getClass().getClassLoader().getResourceAsStream("patientRegister.json");
-         String patientRegisterTemplate =  IOUtils.toString(is, StandardCharsets.UTF_8.name());
-
-        String nhsNumber = "1234567890";
-
-        String patientRegister = patientRegisterTemplate.replace("$$nhsNumber$$", nhsNumber);
-
-        org.openmrs.Patient inactivePatient = new org.openmrs.Patient();
-        inactivePatient.setDead(true);
-
-        when(patientDao.search(Matchers.any(), Matchers.any()))
-                .thenReturn(Collections.singletonList(inactivePatient));
-
-        MockHttpServletResponse response = post("/Patient/$gpc.registerpatient").jsonContent(patientRegister).go();
-
-        assertThat(response, statusEquals(400));
-
-        verify(patientDao, times(1)).search(searchParameterMapArgumentCaptor.capture(), any());
-        verify(patientService, never()).create(any());
-        TokenParam tokenParam = ((TokenAndListParam) searchParameterMapArgumentCaptor.getValue().getParameters("identifier.search.handler").get(0).getParam()).getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
-        assertThat(tokenParam.getSystem(), equalTo(Extensions.NHS_NUMBER_SYSTEM));
-        assertThat(tokenParam.getValue(), equalTo(nhsNumber));
-
-    }
-
-    @Test
     public void shouldReturnValidPatientInSearch() throws IOException, ServletException {
 
         org.hl7.fhir.r4.model.Patient r4Patient = new org.hl7.fhir.r4.model.Patient();

@@ -95,9 +95,6 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 
 		Collection<org.openmrs.Patient> patients = findByNhsNumber(nhsNumber);
 		if (patients.size() > 0) {
-			if(patients.iterator().next().getDead()){
-				throw createBadRequest("Nhs Number registed to dead patient", "BAD_REQUEST");
-			}
 			String errorMessage = "Nhs Number already in use";
 
 			OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "DUPLICATE_REJECTED", OperationOutcome.IssueType.INVALID);
