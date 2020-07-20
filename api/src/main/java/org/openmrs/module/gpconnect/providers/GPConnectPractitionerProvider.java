@@ -52,13 +52,13 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 		practitionerService.create(Practitioner30_40.convertPractitioner(practitioner));
 		return new MethodOutcome();
 	}
-	
+
 	@Override
 	@Read
 	public Practitioner getPractitionerById(@IdParam @NotNull IdType id) {
 		try {
 			Practitioner practitioner = super.getPractitionerById(id);
-			
+
 			return addMeta(practitioner);
 		}
 		catch (ResourceNotFoundException e) {
@@ -67,9 +67,9 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 			throw new ResourceNotFoundException(errorMessage, operationOutcome);
 		}
 	}
-	
-	@Search
+
 	@Override
+	@Search
 	public IBundleProvider searchForPractitioners(@OptionalParam(name = "name") StringAndListParam name, @OptionalParam(name = "identifier") TokenAndListParam identifier, @OptionalParam(name = "given") StringAndListParam given, @OptionalParam(name = "family") StringAndListParam family, @OptionalParam(name = "address-city") StringAndListParam city, @OptionalParam(name = "address-state") StringAndListParam state, @OptionalParam(name = "address-postalcode") StringAndListParam postalCode, @OptionalParam(name = "address-country") StringAndListParam country, @OptionalParam(name = "_id") TokenAndListParam id, @OptionalParam(name = "_lastUpdated") DateRangeParam lastUpdated) {
 		if (identifier == null || identifier.getValuesAsQueryTokens().size() != 1) {
 			throw createBadRequest("Exactly 1 identifier needs to be provided");
