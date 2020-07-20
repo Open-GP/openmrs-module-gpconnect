@@ -17,14 +17,7 @@ import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.BundleProviders;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Setter;
 import org.hl7.fhir.convertors.conv30_40.Patient30_40;
@@ -41,15 +34,21 @@ import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
 import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
 import org.openmrs.module.fhir2.providers.r3.PatientFhirResourceProvider;
-import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.exceptions.OperationOutcomeCreator;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
-import org.openmrs.module.gpconnect.services.NhsPatientService;
+import org.openmrs.module.gpconnect.services.GPConnectPatientService;
 import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+
+import javax.validation.constraints.NotNull;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @Qualifier("fhirR3Resources")
@@ -67,7 +66,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 	private FhirPatientDao patientDao;
 
 	@Autowired
-	private NhsPatientService nhsPatientService;
+	private GPConnectPatientService gpConnectPatientService;
 
 	@Override
 	@Read
@@ -83,40 +82,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 
 	@Operation(name = "$gpc.registerpatient")
 	public Bundle registerPatient(@OperationParam(name = "registerPatient", type = Patient.class) Patient patient) {
-		if (patient.getIdentifier().isEmpty()) {
-			throw createBadRequest("Patient is missing id", "INVALID_NHS_NUMBER");
-		}
-
-		String nhsNumber = patient.getIdentifier().get(0).getValue();
-
-		if (nhsNumber.length() != 10) {
-			throw createBadRequest("NHS Number is invalid", "INVALID_NHS_NUMBER");
-		}
-
-		Collection<org.openmrs.Patient> patients = findByNhsNumber(nhsNumber);
-		if (patients.size() > 0) {
-			String errorMessage = "Nhs Number already in use";
-
-			OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "DUPLICATE_REJECTED", OperationOutcome.IssueType.INVALID);
-
-			throw new ResourceVersionConflictException(errorMessage, operationOutcome);
-		}
-
-		if (patient.getBirthDate() == null) {
-			throw createBadRequest("Birth date is mandatory", "BAD_REQUEST");
-		}
-
-		if (!hasValidNames(patient)) {
-			throw createBadRequest("Patient must have an official name containing at least a family name", "BAD_REQUEST");
-		}
-
-		org.hl7.fhir.r4.model.Patient receivedPatient = Patient30_40.convertPatient(patient);
-		patientService.create(receivedPatient);
-
-		org.openmrs.Patient newPatient = findByNhsNumber(nhsNumber).iterator().next();
-
-		NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(patient, newPatient.getPatientId());
-		nhsPatientService.saveOrUpdate(nhsPatient);
+		org.openmrs.Patient newPatient = gpConnectPatientService.save(patient);
 
 		Patient createdPatient = this.getPatientById(new IdType(newPatient.getUuid()));
 

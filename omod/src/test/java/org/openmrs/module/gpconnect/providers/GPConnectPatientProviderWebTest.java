@@ -1,27 +1,7 @@
 package org.openmrs.module.gpconnect.providers;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
-import ca.uhn.fhir.rest.param.TokenAndListParam;
-import ca.uhn.fhir.rest.param.TokenParam;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-import javax.servlet.ServletException;
+import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.apache.commons.io.IOUtils;
@@ -33,20 +13,34 @@ import org.hl7.fhir.dstu3.model.OperationOutcome.OperationOutcomeIssueComponent;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.module.fhir2.api.FhirPatientService;
-import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
-import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
+import org.openmrs.module.gpconnect.services.GPConnectPatientService;
 import org.openmrs.module.gpconnect.util.CodeSystems;
-import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.mock.web.MockHttpServletResponse;
+
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderWebTest<GPConnectPatientProvider, Patient> {
@@ -61,14 +55,11 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     NhsPatientMapper nhsPatientMapper;
 
     @Mock
-    FhirPatientDao patientDao;
+    GPConnectPatientService gpConnectPatientService;
 
     @Getter(AccessLevel.PUBLIC)
     @InjectMocks
     private GPConnectPatientProvider resourceProvider;
-
-    @Captor
-    private ArgumentCaptor<SearchParameterMap> searchParameterMapArgumentCaptor;
 
     @Test
     public void shouldGetPatientByUuid() throws Exception {
@@ -125,7 +116,6 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
 
     @Test
     public void shouldReturn409WhenNhsNumberExists() throws IOException, ServletException {
-
         InputStream is = this.getClass().getClassLoader().getResourceAsStream("patientRegister.json");
          String patientRegisterTemplate =  IOUtils.toString(is, StandardCharsets.UTF_8.name());
 
@@ -133,19 +123,11 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
 
         String patientRegister = patientRegisterTemplate.replace("$$nhsNumber$$", nhsNumber);
 
-        when(patientDao.search(Matchers.any(), Matchers.any()))
-                .thenReturn(Collections.singletonList(new org.openmrs.Patient()));
+        when(gpConnectPatientService.save(Matchers.any())).thenThrow(new ResourceVersionConflictException("Nhs number exists"));
 
         MockHttpServletResponse response = post("/Patient/$gpc.registerpatient").jsonContent(patientRegister).go();
 
         assertThat(response, statusEquals(409));
-
-        verify(patientDao, times(1)).search(searchParameterMapArgumentCaptor.capture(), any());
-        verify(patientService, never()).create(any());
-        TokenParam tokenParam = ((TokenAndListParam) searchParameterMapArgumentCaptor.getValue().getParameters("identifier.search.handler").get(0).getParam()).getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
-        assertThat(tokenParam.getSystem(), equalTo(Extensions.NHS_NUMBER_SYSTEM));
-        assertThat(tokenParam.getValue(), equalTo(nhsNumber));
-
     }
 
     @Test
