@@ -3,6 +3,7 @@ package org.openmrs.module.gpconnect.interceptors;
 public enum InteractionIdTypes {
 
     PRACTITIONER_READ_ID("urn:nhs:names:services:gpconnect:fhir:rest:read:practitioner-1"),
+    PRACTITIONER_SEARCH_ID("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1"),
     LOCATION_READ_ID("urn:nhs:names:services:gpconnect:fhir:rest:read:location-1");
 
     private final String id;

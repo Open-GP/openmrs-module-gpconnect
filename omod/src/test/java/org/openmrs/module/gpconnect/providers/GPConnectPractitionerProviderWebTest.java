@@ -33,25 +33,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
     GPConnectPractitionerProvider resourceProvider;
 
     @Test
-    public void shouldSearchByIdentifier() throws IOException, ServletException {
-        String identifier = "G11111111";
-
-        IBundleProvider provider = BundleProviders
-            .newList(new org.hl7.fhir.r4.model.Practitioner());
-        when(practitionerService
-            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
-                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
-                Matchers.any())).thenReturn(provider);
-
-        MockHttpServletResponse response = get(
-            "/Practitioner?identifier=https://fhir.nhs.uk/Id/sds-user-id|" + identifier)
-            .accept(FhirMediaTypes.JSON).go();
-
-        assertThat(response, isOk());
-    }
-
-    @Test
-    public void shouldReturn400IfInteractionIdIsNotPresentInRequest() throws IOException, ServletException {
+    public void shouldReturn400IfInteractionIdIsNotPresentInRequestForReadingAPractitioner() throws IOException, ServletException {
         when(practitionerService.get(Matchers.any())).thenReturn(new org.hl7.fhir.r4.model.Practitioner());
 
         MockHttpServletResponse response = get("/Practitioner/" + VALID_PRACTITIONER_UUID)
@@ -87,6 +69,95 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         MockHttpServletResponse response = get("/Practitioner/" + VALID_PRACTITIONER_UUID)
             .accept(FhirMediaTypes.JSON)
             .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:practitioner-1")
+            .go();
+
+        assertThat(response, isOk());
+    }
+
+    @Test
+    public void shouldReturn400IfInteractionIdIsNotPresentInRequestWhenSearchingForAPractitioner() throws IOException, ServletException {
+        String identifier = "G11111111";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=https://fhir.nhs.uk/Id/sds-user-id|" + identifier)
+            .accept(FhirMediaTypes.JSON)
+            .go();
+
+        assertThat(response, isBadRequest());
+
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Interaction id does not match resource: Practitioner, action: SEARCH_TYPE"));
+    }
+
+    @Test
+    public void shouldReturn400IfAnInvalidInteractionIdIsProvidedWhenSearchingForAPractitioner() throws IOException, ServletException {
+        String identifier = "G11111111";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=https://fhir.nhs.uk/Id/sds-user-id|" + identifier)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:practitioner-1")
+            .go();
+
+        assertThat(response, isBadRequest());
+
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Interaction id does not match resource: Practitioner, action: SEARCH_TYPE"));
+    }
+
+    @Test
+    public void shouldReturn400IfAnInvalidParameterIsProvidedWhenSearchingForAPractitioner() throws IOException, ServletException {
+        String identifier = "G11111111";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        String invalidCaseParameter = "Identifier";
+        MockHttpServletResponse response = get(
+            "/Practitioner?" + invalidCaseParameter + "=https://fhir.nhs.uk/Id/sds-user-id|" + identifier)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, isBadRequest());
+
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Invalid parameter in request"));
+    }
+
+    @Test
+    public void shouldReturn200IfValidInteractionIdIsProvidedWhenSearchingForAPractitioner() throws IOException, ServletException {
+        String identifier = "G11111111";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=https://fhir.nhs.uk/Id/sds-user-id|" + identifier)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
             .go();
 
         assertThat(response, isOk());

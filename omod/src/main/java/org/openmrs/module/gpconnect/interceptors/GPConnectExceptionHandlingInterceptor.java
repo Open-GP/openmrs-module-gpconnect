@@ -14,17 +14,17 @@ import org.openmrs.module.gpconnect.exceptions.OperationOutcomeCreator;
 public class GPConnectExceptionHandlingInterceptor extends ExceptionHandlingInterceptor {
 	
 	@Override
-	public BaseServerResponseException preProcessOutgoingException(RequestDetails theRequestDetails, Throwable theException,
-	        HttpServletRequest theServletRequest) throws ServletException {
+	public BaseServerResponseException preProcessOutgoingException(RequestDetails theRequestDetails, Throwable theException, HttpServletRequest theServletRequest) throws ServletException {
 		if (theException instanceof InvalidRequestException
 		        && theRequestDetails.getCompleteUrl().endsWith("$gpc.registerpatient")
 		        && theRequestDetails.getResource() == null) {
 			return new UnprocessableEntityException("Unknown resource type");
 		}
 
-		if(theException instanceof InvalidRequestException 
+		if(theException instanceof InvalidRequestException
 			&&  theRequestDetails.getParameters().size() > 0
-			&&  theRequestDetails.getRequestType() == RequestTypeEnum.GET){	
+			&&  theRequestDetails.getParameters().get("identifier") == null
+			&&  theRequestDetails.getRequestType() == RequestTypeEnum.GET) {
 				String errorMessage = "Invalid parameter in request";
 				OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "BAD_REQUEST", OperationOutcome.IssueType.INVALID);
 				return new InvalidRequestException("BAD REQUEST", operationOutcome);

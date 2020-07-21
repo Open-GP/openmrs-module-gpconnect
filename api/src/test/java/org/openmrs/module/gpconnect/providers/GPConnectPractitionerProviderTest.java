@@ -11,14 +11,11 @@ import static org.mockito.Mockito.when;
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
-import ca.uhn.fhir.rest.server.SimpleBundleProvider;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import java.util.Collections;
-import java.util.List;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Practitioner;
-import org.hl7.fhir.r4.model.Identifier;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -87,23 +84,23 @@ public class GPConnectPractitionerProviderTest {
     @Test
     public void shouldReturnAPractitionerWhenSearchingWithValidPractitionerId() {
 
-        TokenParam identifierSystemAndValue = new TokenParam("https://fhir.nhs.uk/Id/sds-user-id", VALID_PRACTITIONER_SDS_USER_ID);
-        TokenAndListParam identifier =  new TokenAndListParam().addAnd(identifierSystemAndValue);
+        TokenParam identifierSystemAndValue = new TokenParam("https://fhir.nhs.uk/Id/sds-user-id",
+            VALID_PRACTITIONER_SDS_USER_ID);
+        TokenAndListParam identifier = new TokenAndListParam().addAnd(identifierSystemAndValue);
 
         org.hl7.fhir.r4.model.Practitioner r4Practitioner = new org.hl7.fhir.r4.model.Practitioner();
-        r4Practitioner.setIdentifier(Collections.singletonList(
-            new Identifier()
-                .setSystem(identifierSystemAndValue.getSystem())
-                .setValue(identifierSystemAndValue.getValue())
-            )
-        );
 
         IBundleProvider bundleProvider = mock(IBundleProvider.class);
 
-        when(bundleProvider.getResources(0,0)).thenReturn(Collections.singletonList(r4Practitioner));
-        when(practitionerService.searchForPractitioners(any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(bundleProvider);
+        when(bundleProvider.getResources(0, 0))
+            .thenReturn(Collections.singletonList(r4Practitioner));
+        when(practitionerService
+            .searchForPractitioners(any(), any(), any(), any(), any(), any(), any(), any(), any(),
+                any())).thenReturn(bundleProvider);
 
-        IBundleProvider resources = practitionerProvider.searchForPractitioners(null, identifier, null, null, null, null, null, null, null, null);
+        IBundleProvider resources = practitionerProvider
+            .searchForPractitioners(null, identifier, null, null, null, null, null, null, null,
+                null);
 
         assertThat(resources.size(), equalTo(1));
     }
