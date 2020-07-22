@@ -70,18 +70,17 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 
 	@Override
 	@Search
-	public IBundleProvider searchForPractitioners(@OptionalParam(name = "name") StringAndListParam name, @OptionalParam(name = "identifier") TokenAndListParam identifier, @OptionalParam(name = "given") StringAndListParam given, @OptionalParam(name = "family") StringAndListParam family, @OptionalParam(name = "address-city") StringAndListParam city, @OptionalParam(name = "address-state") StringAndListParam state, @OptionalParam(name = "address-postalcode") StringAndListParam postalCode, @OptionalParam(name = "address-country") StringAndListParam country, @OptionalParam(name = "_id") TokenAndListParam id, @OptionalParam(name = "_lastUpdated") DateRangeParam lastUpdated) {
-		if (identifier == null || identifier.getValuesAsQueryTokens().size() != 1) {
-			throw createBadRequest("Exactly 1 identifier needs to be provided");
-		}
-
-		TokenParam tokenParam = identifier.getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
-		String identifierTypeName = tokenParam.getSystem();
-		String identifierValue = tokenParam.getValue();
-
-		if (identifierValue.isEmpty() || identifierTypeName == null || identifierTypeName.isEmpty()) {
-			throw createMissingIdentifierPartException(String.format("%s|%s",identifierTypeName , identifierValue));
-		}
+	public IBundleProvider searchForPractitioners(@OptionalParam(name = "name") StringAndListParam name,
+		                                          @OptionalParam(name = "identifier") TokenAndListParam identifier,
+												  @OptionalParam(name = "given") StringAndListParam given,
+												  @OptionalParam(name = "family") StringAndListParam family,
+												  @OptionalParam(name = "address-city") StringAndListParam city,
+											      @OptionalParam(name = "address-state") StringAndListParam state,
+											      @OptionalParam(name = "address-postalcode") StringAndListParam postalCode,
+												  @OptionalParam(name = "address-country") StringAndListParam country,
+												  @OptionalParam(name = "_id") TokenAndListParam id,
+												  @OptionalParam(name = "_lastUpdated") DateRangeParam lastUpdated) {
+		validateIdentifierStructure(identifier);
 
 		IBundleProvider provider = super.searchForPractitioners(name, identifier, null, null, null, null, null, null, null, null);
 		List<IBaseResource> resources = provider.getResources(0, 0);
@@ -92,6 +91,33 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 				.collect(Collectors.toList());
 
 		return BundleProviders.newList(r3Practitioners);
+	}
+
+	private void validateIdentifierStructure(TokenAndListParam identifier) {
+		if (identifier == null || identifier.getValuesAsQueryTokens().size() != 1) {
+			throw createBadRequest("Exactly 1 identifier needs to be provided");
+		}
+
+		TokenParam tokenParam = identifier.getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
+		String identifierSystem = tokenParam.getSystem();
+		String identifierValue = tokenParam.getValue();
+
+		if (identifierValue == null || identifierValue.isEmpty() || identifierSystem == null || identifierSystem.isEmpty()) {
+			throw createMissingIdentifierPartException(String.format("%s|%s",identifierSystem , identifierValue));
+		}
+
+		if (!identifierSystem.equals("https://fhir.nhs.uk/Id/sds-user-id")) {
+			throw createBadRequest("The given identifier system code (" + identifierSystem + ") is not an expected code");
+		}
+
+		if (identifierValue.split(",").length == 2) {
+			throw createBadRequest("Multiple values detected for non-repeatable parameter 'identifier'."
+				+ "This server is not configured to allow multiple (AND/OR) values for this param.");
+		}
+
+		if (identifierValue.split("\\|").length == 2) {
+			throw createBadRequest("One or both of the identifier system and value are missing from given identifier : " + identifierSystem + identifierValue);
+		}
 	}
 
 	private Practitioner addMeta(Practitioner practitioner) {

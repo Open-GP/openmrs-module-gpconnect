@@ -38,13 +38,13 @@ public class GPConnectPatientProviderTest {
     private static final String INVALID_PATIENT_UUID = "lklkjsdfasd";
 
     @Mock
-    FhirPatientService fhirPatientService;
+    private FhirPatientService fhirPatientService;
 
     @Mock
-    NhsPatientMapper nhsPatientMapper;
+    private NhsPatientMapper nhsPatientMapper;
 
     @Mock
-    GPConnectPatientService gpConnectPatientService;
+    private GPConnectPatientService gpConnectPatientService;
 
     @InjectMocks
     private GPConnectPatientProvider gpConnectPatientProvider;
@@ -95,7 +95,7 @@ public class GPConnectPatientProviderTest {
     }
 
     @Test
-    public void searchShouldGetInvalidParamiterMissingIdentifierTypeName() {
+    public void searchShouldGetInvalidParameterMissingIdentifierTypeName() {
         TokenAndListParam identifier = generateIdentifierWithTokenParam(null, null);
 
         try {
@@ -111,7 +111,7 @@ public class GPConnectPatientProviderTest {
     }
 
     @Test
-    public void searchShouldGetInvalidParamiterEmptyIdentifierTypeName() {
+    public void searchShouldGetInvalidParameterEmptyIdentifierTypeName() {
         TokenAndListParam identifier = generateIdentifierWithTokenParam("", "Test");
         try {
             gpConnectPatientProvider.searchPatients(null, null, null, identifier, null, null, null, null, null, null,
@@ -126,7 +126,7 @@ public class GPConnectPatientProviderTest {
     }
 
     @Test
-    public void searchShouldGetInvalidParamiterEmptyIdentifierValue() {
+    public void searchShouldGetInvalidParameterEmptyIdentifierValue() {
         TokenAndListParam identifier = generateIdentifierWithTokenParam("Test", "");
 
         try {
