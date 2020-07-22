@@ -9,6 +9,7 @@ import org.openmrs.module.fhir2.providers.r3.PatientFhirResourceProvider;
 import org.openmrs.module.fhir2.providers.r3.PractitionerFhirResourceProvider;
 import org.openmrs.module.fhir2.web.servlet.FhirR3RestServlet;
 import org.openmrs.module.gpconnect.interceptors.GPConnectExceptionHandlingInterceptor;
+import org.openmrs.module.gpconnect.interceptors.IdentifierInterceptor;
 import org.openmrs.module.gpconnect.interceptors.InteractionIdInterceptor;
 import org.openmrs.module.gpconnect.interceptors.PatientSearchRequestInterceptor;
 import org.openmrs.module.gpconnect.providers.GPConnectLocationProvider;
@@ -33,6 +34,9 @@ public class GPConnectServer extends FhirR3RestServlet {
 
 		PatientSearchRequestInterceptor patientSearchRequestInterceptor = new PatientSearchRequestInterceptor();
 		registerInterceptor(patientSearchRequestInterceptor);
+
+		IdentifierInterceptor identifierInterceptor = new IdentifierInterceptor();
+		registerInterceptor(identifierInterceptor);
 	}
 	
 	@Autowired

@@ -144,6 +144,55 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
     }
 
     @Test
+    public void shouldReturn400IfMultipleIdentifierValuesSeparatedByACommaAreGivenWhenSearchingForAPractitioner() throws IOException, ServletException {
+        String identifierSystemAndValue = "https://fhir.nhs.uk/Id/sds-user-id|G11111111,G22345655";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=" + identifierSystemAndValue)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, isBadRequest());
+
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
+            equalTo("Multiple values detected for non-repeatable parameter 'identifier'."
+                + "This server is not configured to allow multiple (AND/OR) values for this param."));
+    }
+
+    @Test
+    public void shouldReturn422IfMultipleIdentifierValuesSeparatedByAPipeAreGivenWhenSearchingForAPractitioner() throws IOException, ServletException {
+        String identifierSystemAndValue = "https://fhir.nhs.uk/Id/sds-user-id|G11111111|G22345655";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=" + identifierSystemAndValue)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, statusEquals(422));
+
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
+            equalTo("One or both of the identifier system and value are missing from given identifier : " + identifierSystemAndValue));
+    }
+
+    @Test
     public void shouldReturn200IfValidInteractionIdIsProvidedWhenSearchingForAPractitioner() throws IOException, ServletException {
         String identifier = "G11111111";
 
