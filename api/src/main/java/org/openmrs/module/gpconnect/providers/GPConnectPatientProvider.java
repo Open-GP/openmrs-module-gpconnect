@@ -22,7 +22,6 @@ import lombok.AccessLevel;
 import lombok.Setter;
 import org.hl7.fhir.convertors.conv30_40.Patient30_40;
 import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.HumanName;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Meta;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
@@ -32,22 +31,18 @@ import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Identifier;
 import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
-import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
 import org.openmrs.module.fhir2.providers.r3.PatientFhirResourceProvider;
 import org.openmrs.module.gpconnect.exceptions.OperationOutcomeCreator;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 import org.openmrs.module.gpconnect.services.GPConnectPatientService;
-import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotNull;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -98,22 +93,6 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		bundle.setMeta(new Meta().setProfile(Collections.singletonList(new UriType(
 		        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-Searchset-Bundle-1"))));
 		return bundle;
-	}
-
-	private boolean hasValidNames(Patient patient) {
-		Optional<HumanName> officialName = patient.getName().stream().filter(humanName -> humanName.getUse().equals(HumanName.NameUse.OFFICIAL)).findFirst();
-		return officialName.map(humanName -> (humanName.getFamily() != null) && (!humanName.getFamily().isEmpty())).orElse(false);
-	}
-
-	private Collection<org.openmrs.Patient> findByNhsNumber(String nhsNumber) {
-		TokenAndListParam identifier = new TokenAndListParam()
-		        .addAnd(new TokenParam(Extensions.NHS_NUMBER_SYSTEM, nhsNumber));
-
-		SearchParameterMap params = (new SearchParameterMap()).addParameter("identifier.search.handler", identifier);
-
-		List<String> resultUuids = patientDao.getResultUuids(params);
-		Collection<org.openmrs.Patient> patients = patientDao.search(params, resultUuids);
-		return patients;
 	}
 
 	@Search

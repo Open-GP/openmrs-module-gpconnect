@@ -2,8 +2,15 @@ package org.openmrs.module.gpconnect.services;
 
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
+import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
+import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
+
+import org.hl7.fhir.dstu3.model.Patient.AnimalComponent;
+import org.hl7.fhir.dstu3.model.Patient.PatientCommunicationComponent;
+import org.hl7.fhir.dstu3.model.Attachment;
+import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.HumanName;
 import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
@@ -26,10 +33,10 @@ import org.openmrs.module.gpconnect.util.Extensions;
 
 import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,8 +70,7 @@ public class GPConnectPatientServiceTest {
         org.openmrs.Patient createdPatient = new org.openmrs.Patient();
         createdPatient.setPatientId(patientId);
 
-        when(fhirPatientDao.search(Matchers.any(), Matchers.any()))
-                .thenReturn(Collections.emptyList())
+        when(fhirPatientDao.search(Matchers.any(), Matchers.any())).thenReturn(Collections.emptyList())
                 .thenReturn(Collections.singletonList(createdPatient));
 
         NhsPatient expectedNhsPatient = new NhsPatient();
@@ -74,10 +80,12 @@ public class GPConnectPatientServiceTest {
 
         verify(fhirPatientService).create(Matchers.any());
 
-        ArgumentCaptor<SearchParameterMap> searchParameterMapArgumentCaptor = ArgumentCaptor.forClass(SearchParameterMap.class);
+        ArgumentCaptor<SearchParameterMap> searchParameterMapArgumentCaptor = ArgumentCaptor
+                .forClass(SearchParameterMap.class);
         verify(fhirPatientDao, Mockito.times(2)).search(searchParameterMapArgumentCaptor.capture(), Matchers.any());
         SearchParameterMap value = searchParameterMapArgumentCaptor.getValue();
-        TokenAndListParam tokenAndListParam = (TokenAndListParam) value.getParameters("identifier.search.handler").get(0).getParam();
+        TokenAndListParam tokenAndListParam = (TokenAndListParam) value.getParameters("identifier.search.handler")
+                .get(0).getParam();
         assertNhsNumber(tokenAndListParam, VALID_NHS_NUMBER);
 
         verify(nhsPatientMapper).toNhsPatient(patient, patientId);
@@ -91,14 +99,78 @@ public class GPConnectPatientServiceTest {
         Patient patient = getValidGPConnectPatient("");
         patient.setIdentifier(Collections.emptyList());
 
-        assertInvalidRequest(() -> gpConnectPatientService.save(patient), "Patient is missing id", "INVALID_NHS_NUMBER");
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+                "Patient is missing id", "INVALID_NHS_NUMBER");
     }
 
     @Test
     public void shouldThrowExceptionWhenRegisteringInvalidNhsNumber() {
         Patient patient = getValidGPConnectPatient(INVALID_NHS_NUMBER);
 
-        assertInvalidRequest(() -> gpConnectPatientService.save(patient), "NHS Number is invalid", "INVALID_NHS_NUMBER");
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+                "NHS Number is invalid", "INVALID_NHS_NUMBER");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringIdentifierWithoutSystem() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+        patient.getIdentifier().get(0).setSystem(null);
+
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+                "Identifier is missing System", "BAD_REQUEST");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringMultipleIdentifiersWithoutSystem() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+        Identifier identifier = new Identifier();
+        identifier.setValue("No system");
+        patient.addIdentifier(identifier);
+
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+                "Identifier is missing System", "BAD_REQUEST");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithAnimal() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+        AnimalComponent animal = new AnimalComponent();
+        animal.setId("dog");
+        patient.setAnimal(animal);
+
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
+                "Not allowed field: Animal", "INVALID_RESOURCE");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithCommunication() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+        PatientCommunicationComponent communication = new Patient.PatientCommunicationComponent();
+        communication.setId("some communication");
+        patient.setCommunication(Collections.singletonList(communication));
+
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
+        "Not allowed field: Communication", "INVALID_RESOURCE");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithPhoto() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+        Attachment attachment = new Attachment();
+        attachment.setId("Some photo");
+        patient.setPhoto(Collections.singletonList(attachment));
+
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
+        "Not allowed field: Photo", "INVALID_RESOURCE");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithDeceased() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+        patient.setDeceased(new BooleanType(true));
+
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
+        "Not allowed field: Deceased", "INVALID_RESOURCE");
     }
 
     @Test
@@ -106,7 +178,8 @@ public class GPConnectPatientServiceTest {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
         patient.setBirthDate(null);
 
-        assertInvalidRequest(() -> gpConnectPatientService.save(patient), "Birth date is mandatory", "BAD_REQUEST");
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+                "Birth date is mandatory", "BAD_REQUEST");
     }
 
     @Test
@@ -114,21 +187,21 @@ public class GPConnectPatientServiceTest {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
         patient.setName(Collections.emptyList());
 
-        assertInvalidRequest(() -> gpConnectPatientService.save(patient),
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
                 "Patient must have an official name containing at least a family name", "BAD_REQUEST");
     }
 
     @Test
     public void shouldThrowExceptionWhenRegisteringWithoutFamilyName() {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
-        HumanName homer = new HumanName()
-                .setUse(HumanName.NameUse.OFFICIAL)
+        HumanName homer = new HumanName().setUse(HumanName.NameUse.OFFICIAL)
                 .setGiven(Collections.singletonList(new StringType("Homer")));
         patient.setName(Collections.singletonList(homer));
 
-        assertInvalidRequest(() -> gpConnectPatientService.save(patient),
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
                 "Patient must have an official name containing at least a family name", "BAD_REQUEST");
     }
+
     @Test
     public void shouldThrowExceptionWhenRegisteringDuplicatePatient() {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
@@ -136,12 +209,15 @@ public class GPConnectPatientServiceTest {
         when(fhirPatientDao.search(Matchers.any(), Matchers.any()))
                 .thenReturn(Collections.singletonList(new org.openmrs.Patient()));
 
-        assertResourceVersionConflict(() -> gpConnectPatientService.save(patient), "Nhs Number already in use", "DUPLICATE_REJECTED");
+        assertGPConnectException(() -> gpConnectPatientService.save(patient), ResourceVersionConflictException.class,
+                "Nhs Number already in use", "DUPLICATE_REJECTED");
 
-        ArgumentCaptor<SearchParameterMap> searchParameterMapArgumentCaptor = ArgumentCaptor.forClass(SearchParameterMap.class);
+        ArgumentCaptor<SearchParameterMap> searchParameterMapArgumentCaptor = ArgumentCaptor
+                .forClass(SearchParameterMap.class);
         verify(fhirPatientDao).search(searchParameterMapArgumentCaptor.capture(), Matchers.any());
         SearchParameterMap value = searchParameterMapArgumentCaptor.getValue();
-        TokenAndListParam tokenAndListParam = (TokenAndListParam) value.getParameters("identifier.search.handler").get(0).getParam();
+        TokenAndListParam tokenAndListParam = (TokenAndListParam) value.getParameters("identifier.search.handler")
+                .get(0).getParam();
         assertNhsNumber(tokenAndListParam, VALID_NHS_NUMBER);
     }
 
@@ -157,21 +233,13 @@ public class GPConnectPatientServiceTest {
         assertThat(issue.getDetails().getCoding().get(0).getDisplay(), equalTo(detailsDisplay));
     }
 
-    private void assertInvalidRequest(Runnable action, String diagnostics, String detailsDisplay) {
+    private void assertGPConnectException(Runnable action, Class exceptionClass, String diagnostics,
+            String detailsDisplay) {
         try {
             action.run();
             fail("Invalid Identifier expected to be thrown but wasn't");
-        } catch (final InvalidRequestException invalidRequestException) {
-            final OperationOutcome operationOutcome = (OperationOutcome) invalidRequestException.getOperationOutcome();
-            assertOperationOutcome(operationOutcome, diagnostics, detailsDisplay);
-        }
-    }
-
-    private void assertResourceVersionConflict(Runnable action, String diagnostics, String detailsDisplay) {
-        try {
-            action.run();
-            fail("Invalid Identifier expected to be thrown but wasn't");
-        } catch (final ResourceVersionConflictException exception) {
+        } catch (final BaseServerResponseException exception) {
+            assertTrue(exceptionClass.isInstance(exception));
             final OperationOutcome operationOutcome = (OperationOutcome) exception.getOperationOutcome();
             assertOperationOutcome(operationOutcome, diagnostics, detailsDisplay);
         }
@@ -190,8 +258,7 @@ public class GPConnectPatientServiceTest {
         Identifier identifier = new Identifier();
         identifier.setValue(nhsNumber);
         identifier.setSystem(Extensions.NHS_NUMBER_SYSTEM);
-        List<Identifier> identifiers = Collections.singletonList(identifier);
-        patient.setIdentifier(identifiers);
+        patient.addIdentifier(identifier);
         return patient;
     }
 }

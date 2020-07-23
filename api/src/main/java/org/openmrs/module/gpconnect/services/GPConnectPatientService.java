@@ -45,6 +45,11 @@ public class GPConnectPatientService {
             throw GPConnectExceptions.badRequest("NHS Number is invalid", "INVALID_NHS_NUMBER");
         }
 
+        dstu3Patient.getIdentifier().stream().forEach(identifier ->{
+            if(!identifier.hasSystem())
+                throw GPConnectExceptions.badRequest("Identifier is missing System", "BAD_REQUEST");
+        });
+
         if (dstu3Patient.getBirthDate() == null) {
             throw GPConnectExceptions.badRequest("Birth date is mandatory", "BAD_REQUEST");
         }
@@ -53,6 +58,21 @@ public class GPConnectPatientService {
             throw GPConnectExceptions.badRequest("Patient must have an official name containing at least a family name", "BAD_REQUEST");
         }
 
+        if(dstu3Patient.hasAnimal()){
+            throw GPConnectExceptions.unprocessableEntry("Not allowed field: Animal", "INVALID_RESOURCE");
+        }
+
+        if(dstu3Patient.hasCommunication()){
+            throw GPConnectExceptions.unprocessableEntry("Not allowed field: Communication", "INVALID_RESOURCE");
+        }
+
+        if(dstu3Patient.hasPhoto()){
+            throw GPConnectExceptions.unprocessableEntry("Not allowed field: Photo", "INVALID_RESOURCE");
+        }
+
+        if(dstu3Patient.hasDeceasedBooleanType()){
+            throw GPConnectExceptions.unprocessableEntry("Not allowed field: Deceased", "INVALID_RESOURCE");
+        }
 
         Collection<org.openmrs.Patient> patients = findByNhsNumber(nhsNumber);
         if (patients.size() > 0) {
