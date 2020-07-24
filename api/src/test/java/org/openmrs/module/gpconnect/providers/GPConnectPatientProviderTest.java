@@ -90,7 +90,7 @@ public class GPConnectPatientProviderTest {
             fail("BadRequest expected to be thrown but wasn't");
         } catch (final InvalidRequestException invalidRequestException) {
             final OperationOutcome operationOutcome = (OperationOutcome) invalidRequestException.getOperationOutcome();
-            assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Too many indentifiers"));
+            assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Too many identifiers"));
         }
     }
 

@@ -96,7 +96,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
 
         verify(nhsPatientMapper, atLeastOnce()).enhance(Matchers.any());
 
-        assertThat(response, isOk());
+        assertThat(response, statusEquals(200));
     }
 
     @Test
@@ -107,7 +107,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
 
         verify(nhsPatientMapper, never()).enhance(Matchers.any());
 
-        assertThat(response, isNotFound());
+        assertThat(response, statusEquals(404));
         assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
@@ -202,7 +202,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         assertThat(issues.size(), greaterThanOrEqualTo(1));
 
         for (OperationOutcomeIssueComponent issue : issues) {
-            Coding expectedCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "BAD_REQUEST", "BAD_REQUEST");
+            Coding expectedCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "BAD_REQUEST", "Bad request");
             List<Coding> coding = issue.getDetails().getCoding();
 
             assertEquals(issue.getSeverity(), OperationOutcome.IssueSeverity.ERROR);

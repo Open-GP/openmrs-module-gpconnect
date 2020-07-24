@@ -2,15 +2,20 @@ package org.openmrs.module.gpconnect.providers;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.server.BundleProviders;
 import java.io.IOException;
+import java.util.List;
 import javax.servlet.ServletException;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
+import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
+import org.hl7.fhir.dstu3.model.OperationOutcome.OperationOutcomeIssueComponent;
 import org.hl7.fhir.dstu3.model.Practitioner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,6 +24,7 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.module.fhir2.api.FhirPractitionerService;
+import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -40,10 +46,13 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
             .accept(FhirMediaTypes.JSON)
             .go();
 
-        assertThat(response, isBadRequest());
+        assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Interaction id does not match resource: Practitioner, action: READ"));
+
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST","Bad request", IssueType.INVALID, "Interaction id does not match resource: Practitioner, action: READ"
+        );
     }
 
     @Test
@@ -55,11 +64,12 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
             .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
             .go();
 
-        assertThat(response, isBadRequest());
+        assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
-            equalTo("Interaction id does not match resource: Practitioner, action: READ"));
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Interaction id does not match resource: Practitioner, action: READ"
+        );
     }
 
     @Test
@@ -71,7 +81,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
             .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:practitioner-1")
             .go();
 
-        assertThat(response, isOk());
+        assertThat(response, statusEquals(200));
     }
 
     @Test
@@ -90,10 +100,12 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
             .accept(FhirMediaTypes.JSON)
             .go();
 
-        assertThat(response, isBadRequest());
+        assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Interaction id does not match resource: Practitioner, action: SEARCH_TYPE"));
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Interaction id does not match resource: Practitioner, action: SEARCH_TYPE"
+        );
     }
 
     @Test
@@ -113,14 +125,36 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
             .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:practitioner-1")
             .go();
 
-        assertThat(response, isBadRequest());
+        assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Interaction id does not match resource: Practitioner, action: SEARCH_TYPE"));
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Interaction id does not match resource: Practitioner, action: SEARCH_TYPE"
+        );
     }
 
     @Test
-    public void shouldReturn400IfAnInvalidParameterIsProvidedWhenSearchingForAPractitioner() throws IOException, ServletException {
+    public void shouldReturn200IfValidInteractionIdIsProvidedWhenSearchingForAPractitioner() throws IOException, ServletException {
+        String identifier = "G11111111";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=https://fhir.nhs.uk/Id/sds-user-id|" + identifier)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, statusEquals(200));
+    }
+
+    @Test
+    public void shouldReturn422IfAnInvalidParameterIsProvidedWhenSearchingForAPractitioner() throws IOException, ServletException {
         String identifier = "G11111111";
 
         IBundleProvider provider = BundleProviders
@@ -137,10 +171,12 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
             .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
             .go();
 
-        assertThat(response, isBadRequest());
+        assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Invalid parameter in request"));
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Invalid parameter in request"
+        );
     }
 
     @Test
@@ -160,12 +196,13 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
             .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
             .go();
 
-        assertThat(response, isBadRequest());
+        assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
-            equalTo("Multiple values detected for non-repeatable parameter 'identifier'."
-                + "This server is not configured to allow multiple (AND/OR) values for this param."));
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "INVALID_IDENTIFIER_VALUE", "Invalid identifier value", IssueType.VALUE,
+            "Multiple values detected for non-repeatable parameter 'identifier'."
+            + "This server is not configured to allow multiple (AND/OR) values for this param.");
     }
 
     @Test
@@ -188,13 +225,36 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(422));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
-            equalTo("One or both of the identifier system and value are missing from given identifier : " + identifierSystemAndValue));
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "INVALID_IDENTIFIER_VALUE", "Invalid identifier value", IssueType.VALUE,
+            "One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id|G11111111|G22345655");
     }
 
     @Test
-    public void shouldReturn200IfValidInteractionIdIsProvidedWhenSearchingForAPractitioner() throws IOException, ServletException {
-        String identifier = "G11111111";
+    public void shouldReturn400WhenSearchingWithNoIdentifierParameter() throws IOException, ServletException {
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner/")
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, statusEquals(400));
+
+        final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Exactly 1 identifier needs to be provided");
+    }
+
+    @Test
+    public void shouldReturn400WhenSearchingWithMoreThanOneIdentifierParameter() throws IOException, ServletException {
+        String identifierSystemAndValue = "https://fhir.nhs.uk/Id/sds-user-id|G11111111";
 
         IBundleProvider provider = BundleProviders
             .newList(new org.hl7.fhir.r4.model.Practitioner());
@@ -204,11 +264,171 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
                 Matchers.any())).thenReturn(provider);
 
         MockHttpServletResponse response = get(
-            "/Practitioner?identifier=https://fhir.nhs.uk/Id/sds-user-id|" + identifier)
+            "/Practitioner?identifier=" + identifierSystemAndValue + "&identifier=")
             .accept(FhirMediaTypes.JSON)
             .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
             .go();
 
-        assertThat(response, isOk());
+        assertThat(response, statusEquals(400));
+
+        final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Exactly 1 identifier needs to be provided");
+    }
+
+    @Test
+    public void shouldReturn422WhenSearchingGivenIdentifierSystemAndValueAreEmpty() throws IOException, ServletException {
+        String identifierSystemAndValue = "|";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=" + identifierSystemAndValue)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, statusEquals(422));
+
+        final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
+            "One or both of the identifier system and value are missing from given identifier : |");
+    }
+
+    @Test
+    public void shouldReturn422WhenSearchingGivenIdentifierSystemIsEmpty() throws IOException, ServletException {
+        String identifierSystemAndValue = "";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=" + identifierSystemAndValue)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, statusEquals(422));
+
+        final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
+            "One or both of the identifier system and value are missing from given identifier : ");
+    }
+
+    @Test
+    public void shouldReturn422WhenSearchingGivenIdentifierValueIsMissing() throws IOException, ServletException {
+        String identifierSystemAndValue = "https://fhir.nhs.uk/Id/sds-user-id";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=" + identifierSystemAndValue)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, statusEquals(422));
+
+        final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
+            "One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id");
+    }
+
+    @Test
+    public void shouldReturn422WhenSearchingGivenIdentifierValueIsEmpty() throws IOException, ServletException {
+        String identifierSystemAndValue = "https://fhir.nhs.uk/Id/sds-user-id|";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=" + identifierSystemAndValue)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, statusEquals(422));
+
+        final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
+            "One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id|");
+    }
+
+    @Test
+    public void shouldReturn400WhenSearchingGivenIdentifierSystemIsInvalidAndValueIsNotEmpty() throws IOException, ServletException {
+        String identifierSystemAndValue = "Test|Test";
+
+        IBundleProvider provider = BundleProviders
+            .newList(new org.hl7.fhir.r4.model.Practitioner());
+        when(practitionerService
+            .searchForPractitioners(Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(), Matchers.any(),
+                Matchers.any())).thenReturn(provider);
+
+        MockHttpServletResponse response = get(
+            "/Practitioner?identifier=" + identifierSystemAndValue)
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:practitioner-1")
+            .go();
+
+        assertThat(response, statusEquals(400));
+
+        final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "INVALID_IDENTIFIER_SYSTEM", "Invalid identifier system", IssueType.VALUE,
+            "The given identifier system code (Test) is not an expected code");
+    }
+
+    @Test
+    public void shouldReturn200WhenReadingTheCapabilityStatement() throws IOException, ServletException {
+        MockHttpServletResponse response = get(
+            "/metadata")
+            .accept(FhirMediaTypes.JSON)
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:metadata-1")
+            .go();
+
+        assertThat(response, statusEquals(200));
+    }
+
+    private void assertThatOperationOutcomeHasCorrectStructureAndContent(OperationOutcome operationOutcome, String theCode, String theDisplay, IssueType issueType, String errorMessage) {
+        assertTrue(operationOutcome.hasMeta());
+
+        List<OperationOutcomeIssueComponent> issues = operationOutcome.getIssue();
+        assertThat(issues.size(), equalTo(1));
+
+        OperationOutcomeIssueComponent issue = operationOutcome.getIssue().get(0);
+
+        assertThat(issue.getSeverity(), equalTo(OperationOutcome.IssueSeverity.ERROR));
+        assertThat(issue.getCode(), equalTo(issueType));
+
+        Coding expectedCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, theCode, theDisplay);
+        List<Coding> coding = issue.getDetails().getCoding();
+        assertThat(coding.size(), equalTo(1));
+        assertThat(expectedCoding.getCode(), equalTo(coding.get(0).getCode()));
+        assertThat(expectedCoding.getDisplay(), equalTo(coding.get(0).getDisplay()));
+
+        assertThat(issue.getDiagnostics(), equalTo(errorMessage));
     }
 }

@@ -37,7 +37,7 @@ public class InteractionIdInterceptor {
     }
 
     private InvalidRequestException createBadRequest(String errorMessage) {
-        OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "BAD_REQUEST", OperationOutcome.IssueType.INVALID);
+        OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "BAD_REQUEST", "Bad request", OperationOutcome.IssueType.INVALID);
         return new InvalidRequestException("BAD REQUEST", operationOutcome);
     }
 }

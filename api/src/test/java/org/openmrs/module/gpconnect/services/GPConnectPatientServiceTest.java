@@ -227,21 +227,21 @@ public class GPConnectPatientServiceTest {
         assertThat(tokenParam.getValue(), equalTo(nhsNumber));
     }
 
-    private void assertOperationOutcome(OperationOutcome operationOutcome, String diagnostics, String detailsDisplay) {
+    private void assertOperationOutcome(OperationOutcome operationOutcome, String diagnostics, String detailsCodingCode) {
         OperationOutcome.OperationOutcomeIssueComponent issue = operationOutcome.getIssue().get(0);
         assertThat(issue.getDiagnostics(), equalTo(diagnostics));
-        assertThat(issue.getDetails().getCoding().get(0).getDisplay(), equalTo(detailsDisplay));
+        assertThat(issue.getDetails().getCoding().get(0).getCode(), equalTo(detailsCodingCode));
     }
 
     private void assertGPConnectException(Runnable action, Class exceptionClass, String diagnostics,
-            String detailsDisplay) {
+            String detailsCodingCode) {
         try {
             action.run();
             fail("Invalid Identifier expected to be thrown but wasn't");
         } catch (final BaseServerResponseException exception) {
             assertTrue(exceptionClass.isInstance(exception));
             final OperationOutcome operationOutcome = (OperationOutcome) exception.getOperationOutcome();
-            assertOperationOutcome(operationOutcome, diagnostics, detailsDisplay);
+            assertOperationOutcome(operationOutcome, diagnostics, detailsCodingCode);
         }
     }
 

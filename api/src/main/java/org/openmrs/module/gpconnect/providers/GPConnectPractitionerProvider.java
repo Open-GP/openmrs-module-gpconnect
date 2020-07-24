@@ -1,5 +1,10 @@
 package org.openmrs.module.gpconnect.providers;
 
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.BAD_REQUEST;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_IDENTIFIER_SYSTEM;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_PARAMETER;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.PRACTITIONER_NOT_FOUND;
+
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
@@ -13,9 +18,7 @@ import ca.uhn.fhir.rest.param.StringAndListParam;
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.BundleProviders;
-import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,13 +28,12 @@ import lombok.Setter;
 import org.hl7.fhir.convertors.conv30_40.Practitioner30_40;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Meta;
-import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Practitioner;
 import org.hl7.fhir.dstu3.model.UriType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.openmrs.module.fhir2.api.FhirPractitionerService;
 import org.openmrs.module.fhir2.providers.r3.PractitionerFhirResourceProvider;
-import org.openmrs.module.gpconnect.exceptions.OperationOutcomeCreator;
+import org.openmrs.module.gpconnect.exceptions.GPConnectExceptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
@@ -58,13 +60,11 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 	public Practitioner getPractitionerById(@IdParam @NotNull IdType id) {
 		try {
 			Practitioner practitioner = super.getPractitionerById(id);
-
 			return addMeta(practitioner);
 		}
 		catch (ResourceNotFoundException e) {
-			String errorMessage = "No practitioner details found for practitioner ID: Practitioner/" + id.getIdPart();
-			OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "PRACTITIONER_NOT_FOUND", OperationOutcome.IssueType.INVALID);
-			throw new ResourceNotFoundException(errorMessage, operationOutcome);
+			throw GPConnectExceptions.resourceNotFoundException(
+				"No practitioner details found for practitioner ID: Practitioner/" + id.getIdPart(), PRACTITIONER_NOT_FOUND);
 		}
 	}
 
@@ -95,28 +95,25 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 
 	private void validateIdentifierStructure(TokenAndListParam identifier) {
 		if (identifier == null || identifier.getValuesAsQueryTokens().size() != 1) {
-			throw createBadRequest("Exactly 1 identifier needs to be provided");
+			throw GPConnectExceptions.invalidRequestException("Exactly 1 identifier needs to be provided", BAD_REQUEST);
 		}
 
 		TokenParam tokenParam = identifier.getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
 		String identifierSystem = tokenParam.getSystem();
 		String identifierValue = tokenParam.getValue();
 
-		if (identifierValue == null || identifierValue.isEmpty() || identifierSystem == null || identifierSystem.isEmpty()) {
-			throw createMissingIdentifierPartException(String.format("%s|%s",identifierSystem , identifierValue));
+		if (identifierValue == null || identifierValue.isEmpty() || identifierSystem == null || identifierSystem.isEmpty() || identifierValue.split("\\|").length == 2) {
+			throw GPConnectExceptions.unprocessableEntityException(
+				String.format("One or both of the identifier system and value are missing from given identifier : %s|%s", identifierSystem, identifierValue), INVALID_PARAMETER);
 		}
 
 		if (!identifierSystem.equals("https://fhir.nhs.uk/Id/sds-user-id")) {
-			throw createBadRequest("The given identifier system code (" + identifierSystem + ") is not an expected code");
+			throw GPConnectExceptions.invalidRequestException("The given identifier system code (" + identifierSystem + ") is not an expected code", INVALID_IDENTIFIER_SYSTEM);
 		}
 
 		if (identifierValue.split(",").length == 2) {
-			throw createBadRequest("Multiple values detected for non-repeatable parameter 'identifier'."
-				+ "This server is not configured to allow multiple (AND/OR) values for this param.");
-		}
-
-		if (identifierValue.split("\\|").length == 2) {
-			throw createBadRequest("One or both of the identifier system and value are missing from given identifier : " + identifierSystem + identifierValue);
+			throw GPConnectExceptions.invalidRequestException("Multiple values detected for non-repeatable parameter 'identifier'."
+				+ "This server is not configured to allow multiple (AND/OR) values for this param.", BAD_REQUEST);
 		}
 	}
 
@@ -128,16 +125,5 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 		
 		practitioner.setMeta(meta);
 		return practitioner;
-	}
-	
-	private InvalidRequestException createBadRequest(String errorMessage) {
-		OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "BAD_REQUEST", OperationOutcome.IssueType.INVALID);
-		return new InvalidRequestException(errorMessage, operationOutcome);
-	}
-	
-	private UnprocessableEntityException createMissingIdentifierPartException(String identifier) {
-		String errorMessage = String.format("One or both of the identifier system and value are missing from given identifier : %s", identifier);
-		OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "INVALID_PARAMETER", OperationOutcome.IssueType.INVALID);
-		return new UnprocessableEntityException(errorMessage, operationOutcome);
 	}
 }

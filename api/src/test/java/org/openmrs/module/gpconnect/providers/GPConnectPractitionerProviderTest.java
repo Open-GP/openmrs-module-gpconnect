@@ -142,19 +142,19 @@ public class GPConnectPractitionerProviderTest {
     }
 
     @Test
-    public void shouldReturn400WhenSearchingWithMultipleIdentifierValuesSeparatedByAPipe() {
+    public void shouldReturn422WhenSearchingWithMultipleIdentifierValuesSeparatedByAPipe() {
         TokenParam tokenParam = new TokenParam(VALID_IDENTIFIER_SYSTEM, VALID_PRACTITIONER_SDS_USER_ID + "|" + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID);
         TokenAndListParam identifier =  new TokenAndListParam().addAnd(tokenParam);
 
         try {
             practitionerProvider.searchForPractitioners(null, identifier, null, null, null, null, null, null, null, null);
-            fail("InvalidRequestException expected to be thrown but wasn't");
-        } catch (final InvalidRequestException invalidRequestException) {
-            final OperationOutcome operationOutcome = (OperationOutcome) invalidRequestException.getOperationOutcome();
+            fail("UnprocessableEntityException expected to be thrown but wasn't");
+        } catch (final UnprocessableEntityException unprocessableEntityException) {
+            final OperationOutcome operationOutcome = (OperationOutcome) unprocessableEntityException.getOperationOutcome();
             assertThat(
                 operationOutcome.getIssue().get(0).getDiagnostics(),
                 equalTo("One or both of the identifier system and value are missing from given identifier : "
-                    + VALID_IDENTIFIER_SYSTEM + VALID_PRACTITIONER_SDS_USER_ID + "|" + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID));
+                    + VALID_IDENTIFIER_SYSTEM + "|" + VALID_PRACTITIONER_SDS_USER_ID + "|" + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID));
         }
     }
 
@@ -252,8 +252,7 @@ public class GPConnectPractitionerProviderTest {
             practitionerProvider.searchForPractitioners(null, identifier, null, null, null, null, null, null, null, null);
             fail("UnprocessableEntityException expected to be thrown but wasn't");
         } catch (final UnprocessableEntityException unprocessableEntityException) {
-            final OperationOutcome operationOutcome = (OperationOutcome) unprocessableEntityException
-                .getOperationOutcome();
+            final OperationOutcome operationOutcome = (OperationOutcome) unprocessableEntityException.getOperationOutcome();
             assertThat(
                 operationOutcome.getIssue().get(0).getDiagnostics(),
                 equalTo("One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id|"));

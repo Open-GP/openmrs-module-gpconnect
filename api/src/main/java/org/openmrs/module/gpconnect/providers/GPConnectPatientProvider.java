@@ -1,5 +1,10 @@
 package org.openmrs.module.gpconnect.providers;
 
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.BAD_REQUEST;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_IDENTIFIER_SYSTEM;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_PARAMETER;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.PATIENT_NOT_FOUND;
+
 import ca.uhn.fhir.rest.annotation.IdParam;
 import ca.uhn.fhir.rest.annotation.Operation;
 import ca.uhn.fhir.rest.annotation.OperationParam;
@@ -15,24 +20,24 @@ import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenOrListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.BundleProviders;
-import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
-import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Setter;
 import org.hl7.fhir.convertors.conv30_40.Patient30_40;
 import org.hl7.fhir.dstu3.model.Bundle;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.Meta;
-import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.UriType;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Identifier;
 import org.openmrs.module.fhir2.api.FhirPatientService;
-import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
 import org.openmrs.module.fhir2.providers.r3.PatientFhirResourceProvider;
-import org.openmrs.module.gpconnect.exceptions.OperationOutcomeCreator;
+import org.openmrs.module.gpconnect.exceptions.GPConnectExceptions;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 import org.openmrs.module.gpconnect.services.GPConnectPatientService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,25 +45,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-import javax.validation.constraints.NotNull;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Component
 @Qualifier("fhirR3Resources")
 @Setter(AccessLevel.PACKAGE)
 @Primary
 public class GPConnectPatientProvider extends PatientFhirResourceProvider {
-
 	@Autowired
 	private FhirPatientService patientService;
 
 	@Autowired
 	NhsPatientMapper nhsPatientMapper;
-
-	@Autowired
-	private FhirPatientDao patientDao;
 
 	@Autowired
 	private GPConnectPatientService gpConnectPatientService;
@@ -71,7 +67,8 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			return nhsPatientMapper.enhance(patient);
 		}
 		catch (ResourceNotFoundException e) {
-			throw patientNotFoundFhirException(id.getIdPart());
+			throw GPConnectExceptions.resourceNotFoundException(
+				"No patient details found for patient ID: Patient/" + id.getIdPart(), PATIENT_NOT_FOUND);
 		}
 	}
 
@@ -82,17 +79,6 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		Patient createdPatient = this.getPatientById(new IdType(newPatient.getUuid()));
 
 		return searchSetBundleWith(createdPatient);
-	}
-
-	private Bundle searchSetBundleWith(Patient createdPatient) {
-		Bundle bundle = new Bundle();
-		Bundle.BundleEntryComponent entryComponent = new Bundle.BundleEntryComponent();
-		entryComponent.setResource(createdPatient);
-		bundle.addEntry(entryComponent);
-		bundle.setType(Bundle.BundleType.SEARCHSET);
-		bundle.setMeta(new Meta().setProfile(Collections.singletonList(new UriType(
-		        "https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-Searchset-Bundle-1"))));
-		return bundle;
 	}
 
 	@Search
@@ -129,21 +115,15 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 		return BundleProviders.newList(r3Patients);
 	}
 
-	private InvalidRequestException createBadRequest(String errorMessage, String errorCode) {
-		OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, errorCode, OperationOutcome.IssueType.INVALID);
-		return new InvalidRequestException(errorMessage, operationOutcome);
-	}
-
-	private ResourceNotFoundException patientNotFoundFhirException(String id) {
-		String errorMessage = "No patient details found for patient ID: Patient/" + id;
-		OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "PATIENT_NOT_FOUND", OperationOutcome.IssueType.INVALID);
-		return new ResourceNotFoundException(errorMessage, operationOutcome);
-	}
-
-	private UnprocessableEntityException createMissingIdentifierPartException(String identifier) {
-		String errorMessage = String.format("One or both of the identifier system and value are missing from given identifier : %s", identifier);
-		OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "INVALID_PARAMETER", OperationOutcome.IssueType.INVALID);
-		return new UnprocessableEntityException(errorMessage, operationOutcome);
+	private Bundle searchSetBundleWith(Patient createdPatient) {
+		Bundle bundle = new Bundle();
+		Bundle.BundleEntryComponent entryComponent = new Bundle.BundleEntryComponent();
+		entryComponent.setResource(createdPatient);
+		bundle.addEntry(entryComponent);
+		bundle.setType(Bundle.BundleType.SEARCHSET);
+		bundle.setMeta(new Meta().setProfile(Collections.singletonList(new UriType(
+			"https://fhir.nhs.uk/STU3/StructureDefinition/GPConnect-Searchset-Bundle-1"))));
+		return bundle;
 	}
 
 	private void validateIdentifierStructure(TokenAndListParam identifier) {
@@ -151,8 +131,8 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 
 			List<TokenOrListParam> identifierParams = identifier.getValuesAsQueryTokens();
 
-			if (identifierParams.size() > 1){
-				throw createBadRequest("Too many indentifiers", "BAD_REQUEST");
+			if (identifierParams.size() > 1) {
+				throw GPConnectExceptions.invalidRequestException("Too many identifiers", BAD_REQUEST);
 			}
 
 			TokenParam tokenParam = identifierParams.get(0).getValuesAsQueryTokens().get(0);
@@ -160,17 +140,18 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 			String identifierValue = tokenParam.getValue();
 
 			if (identifierTypeName == null || identifierTypeName.isEmpty()) {
-				throw createMissingIdentifierPartException(identifierValue);
+				throw GPConnectExceptions.unprocessableEntityException(
+					String.format("One or both of the identifier system and value are missing from given identifier : %s", identifierValue), INVALID_PARAMETER);
 			}
 
 			if (identifierValue.isEmpty()) {
-				throw createMissingIdentifierPartException(identifierTypeName + "|");
+				throw GPConnectExceptions.unprocessableEntityException(
+					String.format("One or both of the identifier system and value are missing from given identifier : %s", identifierTypeName + "|"), INVALID_PARAMETER);
 			}
 
 			if (patientService.getPatientIdentifierTypeByIdentifier(new Identifier().setSystem(identifierTypeName)) == null){
-				String errorMessage = String.format("The given identifier system code (%s) is not an expected code", identifierTypeName);
-				OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "INVALID_IDENTIFIER_SYSTEM", OperationOutcome.IssueType.INVALID);
-				throw new InvalidRequestException(errorMessage, operationOutcome);
+				throw GPConnectExceptions.invalidRequestException(
+					String.format("The given identifier system code (%s) is not an expected code", identifierTypeName), INVALID_IDENTIFIER_SYSTEM);
 			}
 		}
 	}

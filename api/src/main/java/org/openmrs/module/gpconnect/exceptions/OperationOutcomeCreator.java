@@ -6,8 +6,9 @@ import org.openmrs.module.gpconnect.util.CodeSystems;
 
 public class OperationOutcomeCreator {
 	
-	public static OperationOutcome build(String errorMessage, String theCodingCode, OperationOutcome.IssueType issueType) {
-		Coding coding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, theCodingCode, theCodingCode);
+	public static OperationOutcome build(String errorMessage, String theCodingCode, String theCodingDisplay,
+	        OperationOutcome.IssueType issueType) {
+		Coding coding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, theCodingCode, theCodingDisplay);
 		return new OperationOutcomeBuilder().setErrorMessage(errorMessage).setCoding(coding).setIssueType(issueType).build();
 	}
 }

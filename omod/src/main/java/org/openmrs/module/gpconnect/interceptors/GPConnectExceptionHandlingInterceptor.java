@@ -1,5 +1,7 @@
 package org.openmrs.module.gpconnect.interceptors;
 
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.BAD_REQUEST;
+
 import ca.uhn.fhir.rest.api.RequestTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
@@ -8,8 +10,7 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import ca.uhn.fhir.rest.server.interceptor.ExceptionHandlingInterceptor;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import org.hl7.fhir.dstu3.model.OperationOutcome;
-import org.openmrs.module.gpconnect.exceptions.OperationOutcomeCreator;
+import org.openmrs.module.gpconnect.exceptions.GPConnectExceptions;
 
 public class GPConnectExceptionHandlingInterceptor extends ExceptionHandlingInterceptor {
 	
@@ -25,9 +26,7 @@ public class GPConnectExceptionHandlingInterceptor extends ExceptionHandlingInte
 			&&  theRequestDetails.getParameters().size() > 0
 			&&  theRequestDetails.getParameters().get("identifier") == null
 			&&  theRequestDetails.getRequestType() == RequestTypeEnum.GET) {
-				String errorMessage = "Invalid parameter in request";
-				OperationOutcome operationOutcome = OperationOutcomeCreator.build(errorMessage, "BAD_REQUEST", OperationOutcome.IssueType.INVALID);
-				return new InvalidRequestException("BAD REQUEST", operationOutcome);
+				return GPConnectExceptions.invalidRequestException("Invalid parameter in request", BAD_REQUEST);
 			}
 
 		return super.preProcessOutgoingException(theRequestDetails, theException, theServletRequest);

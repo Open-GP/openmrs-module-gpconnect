@@ -1,7 +1,15 @@
 package org.openmrs.module.gpconnect.services;
 
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.BAD_REQUEST;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.DUPLICATE_REJECTED;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_NHS_NUMBER;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_RESOURCE;
+
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import org.hl7.fhir.convertors.conv30_40.Patient30_40;
 import org.hl7.fhir.dstu3.model.HumanName;
 import org.hl7.fhir.dstu3.model.Patient;
@@ -14,10 +22,6 @@ import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 
 @Component
 public class GPConnectPatientService {
@@ -36,47 +40,47 @@ public class GPConnectPatientService {
 
     public org.openmrs.Patient save(Patient dstu3Patient) {
         if (dstu3Patient.getIdentifier().isEmpty()) {
-            throw GPConnectExceptions.badRequest("Patient is missing id", "INVALID_NHS_NUMBER");
+            throw GPConnectExceptions.invalidRequestException("Patient is missing id", INVALID_NHS_NUMBER);
         }
 
         String nhsNumber = dstu3Patient.getIdentifier().get(0).getValue();
 
         if (nhsNumber.length() != 10) {
-            throw GPConnectExceptions.badRequest("NHS Number is invalid", "INVALID_NHS_NUMBER");
+            throw GPConnectExceptions.invalidRequestException("NHS Number is invalid", INVALID_NHS_NUMBER);
         }
 
         dstu3Patient.getIdentifier().stream().forEach(identifier ->{
             if(!identifier.hasSystem())
-                throw GPConnectExceptions.badRequest("Identifier is missing System", "BAD_REQUEST");
+                throw GPConnectExceptions.invalidRequestException("Identifier is missing System", BAD_REQUEST);
         });
 
         if (dstu3Patient.getBirthDate() == null) {
-            throw GPConnectExceptions.badRequest("Birth date is mandatory", "BAD_REQUEST");
+            throw GPConnectExceptions.invalidRequestException("Birth date is mandatory", BAD_REQUEST);
         }
 
         if (!hasValidNames(dstu3Patient)) {
-            throw GPConnectExceptions.badRequest("Patient must have an official name containing at least a family name", "BAD_REQUEST");
+            throw GPConnectExceptions.invalidRequestException("Patient must have an official name containing at least a family name", BAD_REQUEST);
         }
 
         if(dstu3Patient.hasAnimal()){
-            throw GPConnectExceptions.unprocessableEntry("Not allowed field: Animal", "INVALID_RESOURCE");
+            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Animal", INVALID_RESOURCE);
         }
 
         if(dstu3Patient.hasCommunication()){
-            throw GPConnectExceptions.unprocessableEntry("Not allowed field: Communication", "INVALID_RESOURCE");
+            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Communication", INVALID_RESOURCE);
         }
 
         if(dstu3Patient.hasPhoto()){
-            throw GPConnectExceptions.unprocessableEntry("Not allowed field: Photo", "INVALID_RESOURCE");
+            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Photo", INVALID_RESOURCE);
         }
 
         if(dstu3Patient.hasDeceasedBooleanType()){
-            throw GPConnectExceptions.unprocessableEntry("Not allowed field: Deceased", "INVALID_RESOURCE");
+            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Deceased", INVALID_RESOURCE);
         }
 
         Collection<org.openmrs.Patient> patients = findByNhsNumber(nhsNumber);
         if (patients.size() > 0) {
-            throw GPConnectExceptions.conflictException("Nhs Number already in use", "DUPLICATE_REJECTED");
+            throw GPConnectExceptions.resourceVersionConflictException("Nhs Number already in use", DUPLICATE_REJECTED);
         }
 
         org.hl7.fhir.r4.model.Patient r4Patient
