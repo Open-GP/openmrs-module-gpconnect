@@ -23,6 +23,7 @@ public class InteractionIdInterceptor {
     @Hook(Pointcut.SERVER_INCOMING_REQUEST_PRE_HANDLED)
     public void handleInteractionId(RequestDetails requestDetails, ServletRequestDetails servletRequestDetails, RestOperationTypeEnum operationType) {
         List<InteractionId> interactions = new ArrayList<>();
+        interactions.add(new InteractionId("Patient", "SEARCH", RestOperationTypeEnum.SEARCH_TYPE));
         interactions.add(new InteractionId("Practitioner", "READ", RestOperationTypeEnum.READ));
         interactions.add(new InteractionId("Practitioner", "SEARCH",  RestOperationTypeEnum.SEARCH_TYPE));
         interactions.add(new InteractionId("Location", "READ",  RestOperationTypeEnum.READ));

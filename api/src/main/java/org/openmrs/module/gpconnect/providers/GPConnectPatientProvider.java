@@ -127,12 +127,16 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 	}
 
 	private void validateIdentifierStructure(TokenAndListParam identifier) {
+		if (identifier == null) {
+			throw GPConnectExceptions.invalidRequestException("Exactly 1 identifier needs to be provided", BAD_REQUEST);
+		}
+
 		if (identifier != null) {
 
 			List<TokenOrListParam> identifierParams = identifier.getValuesAsQueryTokens();
 
 			if (identifierParams.size() > 1) {
-				throw GPConnectExceptions.invalidRequestException("Too many identifiers", BAD_REQUEST);
+				throw GPConnectExceptions.invalidRequestException("Exactly 1 identifier needs to be provided", BAD_REQUEST);
 			}
 
 			TokenParam tokenParam = identifierParams.get(0).getValuesAsQueryTokens().get(0);

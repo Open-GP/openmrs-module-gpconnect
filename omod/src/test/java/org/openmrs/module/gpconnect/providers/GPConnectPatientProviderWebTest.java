@@ -1,15 +1,27 @@
 package org.openmrs.module.gpconnect.providers;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import javax.servlet.ServletException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.DateTimeType;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
-import org.hl7.fhir.dstu3.model.OperationOutcome.OperationOutcomeIssueComponent;
+import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
 import org.hl7.fhir.dstu3.model.Patient;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,26 +33,7 @@ import org.openmrs.PatientIdentifierType;
 import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 import org.openmrs.module.gpconnect.services.GPConnectPatientService;
-import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.springframework.mock.web.MockHttpServletResponse;
-
-import javax.servlet.ServletException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderWebTest<GPConnectPatientProvider, Patient> {
@@ -111,7 +104,10 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("No patient details found for patient ID: Patient/" + INVALID_PATIENT_UUID));
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "PATIENT_NOT_FOUND", "Patient record not found", IssueType.NOTFOUND,
+            "No patient details found for patient ID: Patient/" + INVALID_PATIENT_UUID
+        );
     }
 
     @Test
@@ -151,7 +147,9 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
             Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any()
         )).thenReturn(provider);
 
-        MockHttpServletResponse response = get("/Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
+        MockHttpServletResponse response = get("/Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890")
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1")
+            .go();
 
         assertThat(response, statusEquals(200));
         Bundle resource = readBundleResponse(response);
@@ -181,7 +179,9 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
             Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any(),Matchers.any()
         )).thenReturn(provider);
 
-        MockHttpServletResponse response = get("/Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
+        MockHttpServletResponse response = get("/Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890")
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1")
+            .go();
 
         assertThat(response, statusEquals(200));
         Bundle resource = readBundleResponse(response);
@@ -194,78 +194,46 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
 
         MockHttpServletResponse response = get("/Patient?Identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
 
-        OperationOutcome resource = (OperationOutcome) readOperationOutcomeResponse(response);
-        List<OperationOutcomeIssueComponent> issues = resource.getIssue();
-
         assertThat(response, statusEquals(400));
-        assertTrue(resource.hasMeta());
-        assertThat(issues.size(), greaterThanOrEqualTo(1));
 
-        for (OperationOutcomeIssueComponent issue : issues) {
-            Coding expectedCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "BAD_REQUEST", "Bad request");
-            List<Coding> coding = issue.getDetails().getCoding();
-
-            assertEquals(issue.getSeverity(), OperationOutcome.IssueSeverity.ERROR);
-            assertTrue(issue.hasCode());
-            assertThat(coding.size(), equalTo(1));
-            assertTrue(coding.get(0).hasCode());
-            assertTrue(coding.get(0).hasDisplay());
-            assertEquals(expectedCoding.getCode(), coding.get(0).getCode());
-        }
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Invalid parameter in request"
+        );
     }
 
     @Test
     public void shouldThrowAppropriateExceptionForMultipleIdentifierParameters() throws Exception {
 
-        MockHttpServletResponse response = get("/Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890&identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890").go();
-
-        OperationOutcome resource = (OperationOutcome) readOperationOutcomeResponse(response);
-        List<OperationOutcomeIssueComponent> issues = resource.getIssue();
+        MockHttpServletResponse response = get("/Patient?identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890&identifier=https://fhir.nhs.uk/Id/nhs-number|1234567890")
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1")
+            .go();
 
         assertThat(response, statusEquals(400));
-        assertTrue(resource.hasMeta());
-        assertThat(issues.size(), greaterThanOrEqualTo(1));
 
-        for (OperationOutcomeIssueComponent issue : issues) {
-            Coding expectedCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "BAD_REQUEST", "BAD_REQUEST");
-            List<Coding> coding = issue.getDetails().getCoding();
-
-            assertEquals(issue.getSeverity(), OperationOutcome.IssueSeverity.ERROR);
-            assertTrue(issue.hasCode());
-            assertThat(coding.size(), equalTo(1));
-            assertTrue(coding.get(0).hasCode());
-            assertTrue(coding.get(0).hasDisplay());
-            assertEquals(expectedCoding.getCode(), coding.get(0).getCode());
-        }
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Exactly 1 identifier needs to be provided"
+        );
     }
 
     @Test
     public void shouldThrowAppropriateExceptionNoParameters() throws Exception {
 
-        MockHttpServletResponse response = get("/Patient").go();
-
-        OperationOutcome resource = (OperationOutcome) readOperationOutcomeResponse(response);
-        List<OperationOutcomeIssueComponent> issues = resource.getIssue();
+        MockHttpServletResponse response = get("/Patient")
+            .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:search:patient-1")
+            .go();
 
         assertThat(response, statusEquals(400));
-        assertTrue(resource.hasMeta());
-        assertThat(issues.size(), greaterThanOrEqualTo(1));
 
-        for (OperationOutcomeIssueComponent issue : issues) {
-            Coding expectedCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, "BAD_REQUEST", "BAD_REQUEST");
-            List<Coding> coding = issue.getDetails().getCoding();
-
-            assertEquals(issue.getSeverity(), OperationOutcome.IssueSeverity.ERROR);
-            assertTrue(issue.hasCode());
-            assertThat(coding.size(), equalTo(1));
-            assertTrue(coding.get(0).hasCode());
-            assertTrue(coding.get(0).hasDisplay());
-            assertEquals(expectedCoding.getCode(), coding.get(0).getCode());
-        }
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Exactly 1 identifier needs to be provided"
+        );
     }
 
     @Test
-    public void shouldReturn400IfTheInteractionIdResourceDoesNotMatchThePatientResourceInTheUrl() throws IOException, ServletException {
+    public void shouldReturn400IfTheInteractionIdResourceDoesNotMatchTheResourceInTheUrl() throws IOException, ServletException {
         org.hl7.fhir.r4.model.Patient patient = new org.hl7.fhir.r4.model.Patient();
         when(patientService.get(VALID_PATIENT_UUID)).thenReturn(patient);
 
@@ -277,10 +245,12 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
             .accept(FhirMediaTypes.JSON)
             .go();
 
-        assertThat(response, isBadRequest());
+        assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
-            equalTo("Searching without any parameters is not possible"));
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID,
+            "Interaction id does not match resource: Patient, action: SEARCH_TYPE"
+        );
     }
 }

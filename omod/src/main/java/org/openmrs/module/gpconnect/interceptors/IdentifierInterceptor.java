@@ -1,16 +1,14 @@
 package org.openmrs.module.gpconnect.interceptors;
 
 import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_IDENTIFIER_VALUE;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_PARAMETER;
 
 import ca.uhn.fhir.interceptor.api.Hook;
 import ca.uhn.fhir.interceptor.api.Interceptor;
 import ca.uhn.fhir.interceptor.api.Pointcut;
 import ca.uhn.fhir.rest.api.RestOperationTypeEnum;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
-import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
-import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.openmrs.module.gpconnect.exceptions.GPConnectExceptions;
-import org.openmrs.module.gpconnect.exceptions.OperationOutcomeCreator;
 
 @Interceptor
 public class IdentifierInterceptor {
@@ -22,10 +20,8 @@ public class IdentifierInterceptor {
                     + "This server is not configured to allow multiple (AND/OR) values for this param.", INVALID_IDENTIFIER_VALUE);
             } else if (isTheIdentifierSystemEmpty(requestDetails) || isTheIdentifierValueNotGiven(requestDetails)) {
                 String identifierSystemAndValue = requestDetails.getParameters().get("identifier")[0];
-                String errorMessage = "One or both of the identifier system and value are missing from given identifier : " + identifierSystemAndValue;
-                OperationOutcome operationOutcome = OperationOutcomeCreator
-                    .build(errorMessage, "INVALID_PARAMETER", "Submitted parameter is not valid.", OperationOutcome.IssueType.INVALID);
-                throw new UnprocessableEntityException("INVALID_PARAMETER", operationOutcome);
+                throw GPConnectExceptions.unprocessableEntityException(
+                    "One or both of the identifier system and value are missing from given identifier : " + identifierSystemAndValue, INVALID_PARAMETER);
             } else if (areThereMultipleValuesSeparatedByAPipeForIdentifier(requestDetails)) {
                 String identifierSystemAndValue = requestDetails.getParameters().get("identifier")[0];
                 throw GPConnectExceptions.unprocessableEntityException(

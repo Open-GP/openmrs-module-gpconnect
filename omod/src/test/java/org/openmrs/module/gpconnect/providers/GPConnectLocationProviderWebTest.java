@@ -9,9 +9,9 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import lombok.AccessLevel;
 import lombok.Getter;
-import org.hamcrest.CoreMatchers;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Location;
+import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -44,7 +44,7 @@ public class GPConnectLocationProviderWebTest extends BaseFhirR3ResourceProvider
                 .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
                 .go();
 
-        assertThat(response, isOk());
+        assertThat(response, statusEquals(200));
         assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));
 
         Location resource = readResponse(response);
@@ -59,11 +59,14 @@ public class GPConnectLocationProviderWebTest extends BaseFhirR3ResourceProvider
                 .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
                 .go();
 
-        assertThat(response, isNotFound());
+        assertThat(response, statusEquals(404));
         assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(), equalTo("Could not find location with Id " + INVALID_LOCATION_UUID));
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "LOCATION_NOT_FOUND", "Location record not found", IssueType.NOTFOUND,
+            "Could not find location with Id " + INVALID_LOCATION_UUID
+        );
     }
 
     @Test
@@ -75,11 +78,13 @@ public class GPConnectLocationProviderWebTest extends BaseFhirR3ResourceProvider
                 .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:practitioner-1")
                 .go();
 
-        assertThat(response, isBadRequest());
+        assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
-                CoreMatchers.equalTo("Interaction id does not match resource: Location, action: READ"));
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID,
+            "Interaction id does not match resource: Location, action: READ"
+        );
     }
 
     @Test
@@ -91,6 +96,6 @@ public class GPConnectLocationProviderWebTest extends BaseFhirR3ResourceProvider
                 .setInteractionId("urn:nhs:names:services:gpconnect:fhir:rest:read:location-1")
                 .go();
 
-        assertThat(response, isOk());
+        assertThat(response, statusEquals(200));
     }
 }

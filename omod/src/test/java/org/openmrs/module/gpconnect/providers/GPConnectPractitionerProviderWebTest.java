@@ -1,21 +1,16 @@
 package org.openmrs.module.gpconnect.providers;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.server.BundleProviders;
 import java.io.IOException;
-import java.util.List;
 import javax.servlet.ServletException;
 import lombok.AccessLevel;
 import lombok.Getter;
-import org.hl7.fhir.dstu3.model.Coding;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
-import org.hl7.fhir.dstu3.model.OperationOutcome.OperationOutcomeIssueComponent;
 import org.hl7.fhir.dstu3.model.Practitioner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,7 +19,6 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.module.fhir2.api.FhirPractitionerService;
-import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -50,7 +44,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
 
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST","Bad request", IssueType.INVALID, "Interaction id does not match resource: Practitioner, action: READ"
         );
     }
@@ -67,7 +61,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Interaction id does not match resource: Practitioner, action: READ"
         );
     }
@@ -103,7 +97,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Interaction id does not match resource: Practitioner, action: SEARCH_TYPE"
         );
     }
@@ -128,7 +122,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Interaction id does not match resource: Practitioner, action: SEARCH_TYPE"
         );
     }
@@ -174,7 +168,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Invalid parameter in request"
         );
     }
@@ -199,10 +193,11 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "INVALID_IDENTIFIER_VALUE", "Invalid identifier value", IssueType.VALUE,
             "Multiple values detected for non-repeatable parameter 'identifier'."
-            + "This server is not configured to allow multiple (AND/OR) values for this param.");
+            + "This server is not configured to allow multiple (AND/OR) values for this param."
+        );
     }
 
     @Test
@@ -225,9 +220,10 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(422));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "INVALID_IDENTIFIER_VALUE", "Invalid identifier value", IssueType.VALUE,
-            "One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id|G11111111|G22345655");
+            "One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id|G11111111|G22345655"
+        );
     }
 
     @Test
@@ -248,7 +244,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(400));
 
         final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Exactly 1 identifier needs to be provided");
     }
 
@@ -272,8 +268,9 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(400));
 
         final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
-            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Exactly 1 identifier needs to be provided");
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+            operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Exactly 1 identifier needs to be provided"
+        );
     }
 
     @Test
@@ -296,7 +293,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(422));
 
         final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
             "One or both of the identifier system and value are missing from given identifier : |");
     }
@@ -321,9 +318,10 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(422));
 
         final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
-            "One or both of the identifier system and value are missing from given identifier : ");
+            "One or both of the identifier system and value are missing from given identifier : "
+        );
     }
 
     @Test
@@ -346,9 +344,10 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(422));
 
         final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
-            "One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id");
+            "One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id"
+        );
     }
 
     @Test
@@ -371,7 +370,7 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(422));
 
         final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
             "One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id|");
     }
@@ -396,9 +395,10 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
         assertThat(response, statusEquals(400));
 
         final OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        assertThatOperationOutcomeHasCorrectStructureAndContent(
+        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "INVALID_IDENTIFIER_SYSTEM", "Invalid identifier system", IssueType.VALUE,
-            "The given identifier system code (Test) is not an expected code");
+            "The given identifier system code (Test) is not an expected code"
+        );
     }
 
     @Test
@@ -410,25 +410,5 @@ public class GPConnectPractitionerProviderWebTest extends BaseFhirR3ResourceProv
             .go();
 
         assertThat(response, statusEquals(200));
-    }
-
-    private void assertThatOperationOutcomeHasCorrectStructureAndContent(OperationOutcome operationOutcome, String theCode, String theDisplay, IssueType issueType, String errorMessage) {
-        assertTrue(operationOutcome.hasMeta());
-
-        List<OperationOutcomeIssueComponent> issues = operationOutcome.getIssue();
-        assertThat(issues.size(), equalTo(1));
-
-        OperationOutcomeIssueComponent issue = operationOutcome.getIssue().get(0);
-
-        assertThat(issue.getSeverity(), equalTo(OperationOutcome.IssueSeverity.ERROR));
-        assertThat(issue.getCode(), equalTo(issueType));
-
-        Coding expectedCoding = new Coding(CodeSystems.SPINE_ERROR_OR_WARNING_CODE, theCode, theDisplay);
-        List<Coding> coding = issue.getDetails().getCoding();
-        assertThat(coding.size(), equalTo(1));
-        assertThat(expectedCoding.getCode(), equalTo(coding.get(0).getCode()));
-        assertThat(expectedCoding.getDisplay(), equalTo(coding.get(0).getDisplay()));
-
-        assertThat(issue.getDiagnostics(), equalTo(errorMessage));
     }
 }

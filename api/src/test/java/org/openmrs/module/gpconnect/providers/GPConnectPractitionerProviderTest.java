@@ -17,6 +17,7 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import java.util.Collections;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
+import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
 import org.hl7.fhir.dstu3.model.Practitioner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.module.fhir2.api.FhirPractitionerService;
+import org.openmrs.module.gpconnect.GPConnectOperationOutcomeTestHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GPConnectPractitionerProviderTest {
@@ -63,9 +65,9 @@ public class GPConnectPractitionerProviderTest {
             fail("ResourceNotFoundException expected to be thrown but wasn't");
         } catch (ResourceNotFoundException resourceNotFoundException) {
             OperationOutcome operationOutcome = (OperationOutcome) resourceNotFoundException.getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("No practitioner details found for practitioner ID: Practitioner/" + INVALID_PRACTITIONER_UUID)
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "PRACTITIONER_NOT_FOUND", "Practitioner record not found", IssueType.NOTFOUND,
+                "No practitioner details found for practitioner ID: Practitioner/" + INVALID_PRACTITIONER_UUID
             );
         }
     }
@@ -118,9 +120,9 @@ public class GPConnectPractitionerProviderTest {
             fail("InvalidRequestException expected to be thrown but wasn't");
         } catch (final InvalidRequestException invalidRequestException) {
             final OperationOutcome operationOutcome = (OperationOutcome) invalidRequestException.getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("Exactly 1 identifier needs to be provided"));
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Exactly 1 identifier needs to be provided"
+            );
         }
     }
 
@@ -134,10 +136,11 @@ public class GPConnectPractitionerProviderTest {
             fail("InvalidRequestException expected to be thrown but wasn't");
         } catch (final InvalidRequestException invalidRequestException) {
             final OperationOutcome operationOutcome = (OperationOutcome) invalidRequestException.getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("Multiple values detected for non-repeatable parameter 'identifier'."
-                    + "This server is not configured to allow multiple (AND/OR) values for this param."));
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "INVALID_IDENTIFIER_VALUE", "Invalid identifier value", IssueType.VALUE,
+                "Multiple values detected for non-repeatable parameter 'identifier'."
+                    + "This server is not configured to allow multiple (AND/OR) values for this param."
+            );
         }
     }
 
@@ -151,10 +154,11 @@ public class GPConnectPractitionerProviderTest {
             fail("UnprocessableEntityException expected to be thrown but wasn't");
         } catch (final UnprocessableEntityException unprocessableEntityException) {
             final OperationOutcome operationOutcome = (OperationOutcome) unprocessableEntityException.getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("One or both of the identifier system and value are missing from given identifier : "
-                    + VALID_IDENTIFIER_SYSTEM + "|" + VALID_PRACTITIONER_SDS_USER_ID + "|" + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID));
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "INVALID_IDENTIFIER_VALUE", "Invalid identifier value", IssueType.VALUE,
+                "One or both of the identifier system and value are missing from given identifier : "
+                    + VALID_IDENTIFIER_SYSTEM + "|" + VALID_PRACTITIONER_SDS_USER_ID + "|" + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID
+            );
         }
     }
 
@@ -169,9 +173,10 @@ public class GPConnectPractitionerProviderTest {
         } catch (final UnprocessableEntityException unprocessableEntityException) {
             final OperationOutcome operationOutcome = (OperationOutcome) unprocessableEntityException
                 .getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("One or both of the identifier system and value are missing from given identifier : null|null"));
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
+                "One or both of the identifier system and value are missing from given identifier : null|null"
+            );
         }
     }
 
@@ -186,9 +191,10 @@ public class GPConnectPractitionerProviderTest {
         } catch (final UnprocessableEntityException unprocessableEntityException) {
             final OperationOutcome operationOutcome = (OperationOutcome) unprocessableEntityException
                 .getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("One or both of the identifier system and value are missing from given identifier : |"));
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
+                "One or both of the identifier system and value are missing from given identifier : |"
+            );
         }
     }
 
@@ -203,9 +209,10 @@ public class GPConnectPractitionerProviderTest {
         } catch (final UnprocessableEntityException unprocessableEntityException) {
             final OperationOutcome operationOutcome = (OperationOutcome) unprocessableEntityException
                 .getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("One or both of the identifier system and value are missing from given identifier : null|" + VALID_PRACTITIONER_SDS_USER_ID));
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
+                "One or both of the identifier system and value are missing from given identifier : null|" + VALID_PRACTITIONER_SDS_USER_ID
+            );
         }
     }
 
@@ -220,9 +227,10 @@ public class GPConnectPractitionerProviderTest {
         } catch (final UnprocessableEntityException unprocessableEntityException) {
             final OperationOutcome operationOutcome = (OperationOutcome) unprocessableEntityException
                 .getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("One or both of the identifier system and value are missing from given identifier : |null"));
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
+                "One or both of the identifier system and value are missing from given identifier : |null"
+            );
         }
     }
 
@@ -237,9 +245,10 @@ public class GPConnectPractitionerProviderTest {
         } catch (final UnprocessableEntityException unprocessableEntityException) {
             final OperationOutcome operationOutcome = (OperationOutcome) unprocessableEntityException
                 .getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id|null"));
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
+                "One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id|null"
+            );
         }
     }
 
@@ -253,9 +262,10 @@ public class GPConnectPractitionerProviderTest {
             fail("UnprocessableEntityException expected to be thrown but wasn't");
         } catch (final UnprocessableEntityException unprocessableEntityException) {
             final OperationOutcome operationOutcome = (OperationOutcome) unprocessableEntityException.getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id|"));
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "INVALID_PARAMETER", "Submitted parameter is not valid.", IssueType.INVALID,
+                "One or both of the identifier system and value are missing from given identifier : https://fhir.nhs.uk/Id/sds-user-id|"
+            );
         }
     }
 
@@ -269,9 +279,10 @@ public class GPConnectPractitionerProviderTest {
             fail("InvalidRequestException expected to be thrown but wasn't");
         } catch (final InvalidRequestException invalidRequestException) {
             final OperationOutcome operationOutcome = (OperationOutcome) invalidRequestException.getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("The given identifier system code (Test) is not an expected code"));
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "INVALID_IDENTIFIER_SYSTEM", "Invalid identifier system", IssueType.VALUE,
+                "The given identifier system code (Test) is not an expected code"
+            );
         }
     }
 }

@@ -2,6 +2,7 @@ package org.openmrs.module.gpconnect.providers;
 
 import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.BAD_REQUEST;
 import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_IDENTIFIER_SYSTEM;
+import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_IDENTIFIER_VALUE;
 import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_PARAMETER;
 import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.PRACTITIONER_NOT_FOUND;
 
@@ -102,7 +103,7 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 		String identifierSystem = tokenParam.getSystem();
 		String identifierValue = tokenParam.getValue();
 
-		if (identifierValue == null || identifierValue.isEmpty() || identifierSystem == null || identifierSystem.isEmpty() || identifierValue.split("\\|").length == 2) {
+		if (identifierValue == null || identifierValue.isEmpty() || identifierSystem == null || identifierSystem.isEmpty()) {
 			throw GPConnectExceptions.unprocessableEntityException(
 				String.format("One or both of the identifier system and value are missing from given identifier : %s|%s", identifierSystem, identifierValue), INVALID_PARAMETER);
 		}
@@ -113,7 +114,12 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 
 		if (identifierValue.split(",").length == 2) {
 			throw GPConnectExceptions.invalidRequestException("Multiple values detected for non-repeatable parameter 'identifier'."
-				+ "This server is not configured to allow multiple (AND/OR) values for this param.", BAD_REQUEST);
+				+ "This server is not configured to allow multiple (AND/OR) values for this param.", INVALID_IDENTIFIER_VALUE);
+		}
+
+		if (identifierValue.split("\\|").length == 2) {
+			throw GPConnectExceptions.unprocessableEntityException(
+				String.format("One or both of the identifier system and value are missing from given identifier : %s|%s", identifierSystem, identifierValue), INVALID_IDENTIFIER_VALUE);
 		}
 	}
 

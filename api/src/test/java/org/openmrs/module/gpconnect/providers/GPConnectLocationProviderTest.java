@@ -10,12 +10,14 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.hl7.fhir.dstu3.model.IdType;
 import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Location;
+import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.module.fhir2.api.FhirLocationService;
+import org.openmrs.module.gpconnect.GPConnectOperationOutcomeTestHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GPConnectLocationProviderTest {
@@ -23,10 +25,10 @@ public class GPConnectLocationProviderTest {
     private static final String INVALID_LOCATION_UUID = "sdfgdsfsd";
 
     @Mock
-    FhirLocationService locationService;
+    private FhirLocationService locationService;
 
     @InjectMocks
-    GPConnectLocationProvider locationProvider;
+    private GPConnectLocationProvider locationProvider;
 
     @Test
     public void shouldGetLocationByIdGivenValidId() {
@@ -51,9 +53,9 @@ public class GPConnectLocationProviderTest {
             fail("ResourceNotFoundException expected to be thrown but wasn't");
         } catch (ResourceNotFoundException resourceNotFoundException) {
             OperationOutcome operationOutcome = (OperationOutcome) resourceNotFoundException.getOperationOutcome();
-            assertThat(
-                operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("Could not find location with Id " + INVALID_LOCATION_UUID)
+            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+                operationOutcome, "LOCATION_NOT_FOUND", "Location record not found", IssueType.NOTFOUND,
+                "Could not find location with Id " + INVALID_LOCATION_UUID
             );
         }
     }
