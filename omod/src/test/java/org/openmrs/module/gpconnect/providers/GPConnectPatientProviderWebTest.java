@@ -254,4 +254,26 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
             "Interaction id does not match resource: Patient, action: SEARCH_TYPE"
         );
     }
+
+    @Test
+    public void shouldReturn404IfTheUrlIsIncorrectWhenRegisteringAPatient() throws IOException, ServletException {
+
+        InputStream is = this.getClass().getClassLoader().getResourceAsStream("patientRegister.json");
+        String patientRegisterTemplate =  IOUtils.toString(is, StandardCharsets.UTF_8.name());
+
+        String nhsNumber = "1234567890";
+
+        String patientRegister = patientRegisterTemplate.replace("$$nhsNumber$$", nhsNumber);
+
+
+        MockHttpServletResponse response = post("/Patient/$gpc.registerpatien").jsonContent(patientRegister).go();
+
+        assertThat(response, statusEquals(404));
+
+        OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
+        assertTrue(operationOutcome.hasMeta());
+        assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
+                equalTo("The following endpoint is invalid: [Patient/$gpc.registerpatien]"));
+
+    }
 }
