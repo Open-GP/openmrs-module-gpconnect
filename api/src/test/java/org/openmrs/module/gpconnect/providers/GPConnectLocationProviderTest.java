@@ -3,12 +3,11 @@ package org.openmrs.module.gpconnect.providers;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
+import static org.openmrs.module.gpconnect.GPConnectTestHelper.assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome;
 
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import org.hl7.fhir.dstu3.model.IdType;
-import org.hl7.fhir.dstu3.model.OperationOutcome;
 import org.hl7.fhir.dstu3.model.Location;
 import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
 import org.junit.Test;
@@ -17,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.module.fhir2.api.FhirLocationService;
-import org.openmrs.module.gpconnect.GPConnectOperationOutcomeTestHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class GPConnectLocationProviderTest {
@@ -48,15 +46,10 @@ public class GPConnectLocationProviderTest {
     public void shouldGetLocationNotFoundGivenInvalidId() {
         when(locationService.get(INVALID_LOCATION_UUID)).thenReturn(null);
 
-        try {
-            locationProvider.getLocationById(new IdType(INVALID_LOCATION_UUID));
-            fail("ResourceNotFoundException expected to be thrown but wasn't");
-        } catch (ResourceNotFoundException resourceNotFoundException) {
-            OperationOutcome operationOutcome = (OperationOutcome) resourceNotFoundException.getOperationOutcome();
-            GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
-                operationOutcome, "LOCATION_NOT_FOUND", "Location record not found", IssueType.NOTFOUND,
-                "Could not find location with Id " + INVALID_LOCATION_UUID
-            );
-        }
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() ->
+            locationProvider.getLocationById(new IdType(INVALID_LOCATION_UUID)), ResourceNotFoundException.class,
+            "LOCATION_NOT_FOUND", "Location record not found", IssueType.NOTFOUND,
+            "Could not find location with Id " + INVALID_LOCATION_UUID
+        );
     }
 }

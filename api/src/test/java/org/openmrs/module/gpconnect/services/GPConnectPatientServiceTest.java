@@ -1,20 +1,26 @@
 package org.openmrs.module.gpconnect.services;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.openmrs.module.gpconnect.GPConnectTestHelper.assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome;
+
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
-import ca.uhn.fhir.rest.server.exceptions.BaseServerResponseException;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
-
-import org.hl7.fhir.dstu3.model.Patient.AnimalComponent;
-import org.hl7.fhir.dstu3.model.Patient.PatientCommunicationComponent;
+import java.util.Collections;
+import java.util.Date;
 import org.hl7.fhir.dstu3.model.Attachment;
 import org.hl7.fhir.dstu3.model.BooleanType;
 import org.hl7.fhir.dstu3.model.HumanName;
 import org.hl7.fhir.dstu3.model.Identifier;
-import org.hl7.fhir.dstu3.model.OperationOutcome;
+import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.Patient.AnimalComponent;
+import org.hl7.fhir.dstu3.model.Patient.PatientCommunicationComponent;
 import org.hl7.fhir.dstu3.model.StringType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,35 +37,25 @@ import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 import org.openmrs.module.gpconnect.util.Extensions;
 
-import java.util.Collections;
-import java.util.Date;
-
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 @RunWith(MockitoJUnitRunner.class)
 public class GPConnectPatientServiceTest {
     private static final String INVALID_NHS_NUMBER = "123456789";
     private static final String VALID_NHS_NUMBER = "1234567890";
 
     @Mock
-    FhirPatientDao fhirPatientDao;
+    private FhirPatientDao fhirPatientDao;
 
     @Mock
-    NhsPatientMapper nhsPatientMapper;
+    private NhsPatientMapper nhsPatientMapper;
 
     @Mock
-    FhirPatientService fhirPatientService;
+    private FhirPatientService fhirPatientService;
 
     @Mock
-    NhsPatientService nhsPatientService;
+    private NhsPatientService nhsPatientService;
 
     @InjectMocks
-    GPConnectPatientService gpConnectPatientService;
+    private GPConnectPatientService gpConnectPatientService;
 
     @Test
     public void shouldSavePatientIntoDB() {
@@ -99,16 +95,16 @@ public class GPConnectPatientServiceTest {
         Patient patient = getValidGPConnectPatient("");
         patient.setIdentifier(Collections.emptyList());
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
-                "Patient is missing id", "INVALID_NHS_NUMBER");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+            "INVALID_NHS_NUMBER", "NHS number invalid", IssueType.VALUE, "Patient is missing id");
     }
 
     @Test
     public void shouldThrowExceptionWhenRegisteringInvalidNhsNumber() {
         Patient patient = getValidGPConnectPatient(INVALID_NHS_NUMBER);
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
-                "NHS Number is invalid", "INVALID_NHS_NUMBER");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+            "INVALID_NHS_NUMBER", "NHS number invalid", IssueType.VALUE, "NHS Number is invalid");
     }
 
     @Test
@@ -116,8 +112,8 @@ public class GPConnectPatientServiceTest {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
         patient.getIdentifier().get(0).setSystem(null);
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
-                "Identifier is missing System", "BAD_REQUEST");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+            "BAD_REQUEST", "Bad request", IssueType.INVALID, "Identifier is missing System");
     }
 
     @Test
@@ -127,8 +123,8 @@ public class GPConnectPatientServiceTest {
         identifier.setValue("No system");
         patient.addIdentifier(identifier);
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
-                "Identifier is missing System", "BAD_REQUEST");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+            "BAD_REQUEST", "Bad request", IssueType.INVALID, "Identifier is missing System");
     }
 
     @Test
@@ -138,8 +134,8 @@ public class GPConnectPatientServiceTest {
         animal.setId("dog");
         patient.setAnimal(animal);
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
-                "Not allowed field: Animal", "INVALID_RESOURCE");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
+            "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: Animal");
     }
 
     @Test
@@ -149,8 +145,8 @@ public class GPConnectPatientServiceTest {
         communication.setId("some communication");
         patient.setCommunication(Collections.singletonList(communication));
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
-        "Not allowed field: Communication", "INVALID_RESOURCE");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
+            "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: Communication");
     }
 
     @Test
@@ -160,8 +156,8 @@ public class GPConnectPatientServiceTest {
         attachment.setId("Some photo");
         patient.setPhoto(Collections.singletonList(attachment));
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
-        "Not allowed field: Photo", "INVALID_RESOURCE");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
+            "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: Photo");
     }
 
     @Test
@@ -169,8 +165,8 @@ public class GPConnectPatientServiceTest {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
         patient.setDeceased(new BooleanType(true));
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
-        "Not allowed field: Deceased", "INVALID_RESOURCE");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
+            "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: Deceased");
     }
 
     @Test
@@ -178,8 +174,8 @@ public class GPConnectPatientServiceTest {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
         patient.setBirthDate(null);
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
-                "Birth date is mandatory", "BAD_REQUEST");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+            "BAD_REQUEST", "Bad request", IssueType.INVALID, "Birth date is mandatory");
     }
 
     @Test
@@ -187,8 +183,8 @@ public class GPConnectPatientServiceTest {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
         patient.setName(Collections.emptyList());
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
-                "Patient must have an official name containing at least a family name", "BAD_REQUEST");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+            "BAD_REQUEST", "Bad request", IssueType.INVALID, "Patient must have an official name containing at least a family name");
     }
 
     @Test
@@ -198,8 +194,8 @@ public class GPConnectPatientServiceTest {
                 .setGiven(Collections.singletonList(new StringType("Homer")));
         patient.setName(Collections.singletonList(homer));
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
-                "Patient must have an official name containing at least a family name", "BAD_REQUEST");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+            "BAD_REQUEST", "Bad request", IssueType.INVALID, "Patient must have an official name containing at least a family name");
     }
 
     @Test
@@ -209,8 +205,8 @@ public class GPConnectPatientServiceTest {
         when(fhirPatientDao.search(Matchers.any(), Matchers.any()))
                 .thenReturn(Collections.singletonList(new org.openmrs.Patient()));
 
-        assertGPConnectException(() -> gpConnectPatientService.save(patient), ResourceVersionConflictException.class,
-                "Nhs Number already in use", "DUPLICATE_REJECTED");
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), ResourceVersionConflictException.class,
+            "DUPLICATE_REJECTED", "Create would lead to creation of a duplicate resource", IssueType.DUPLICATE, "Nhs Number already in use");
 
         ArgumentCaptor<SearchParameterMap> searchParameterMapArgumentCaptor = ArgumentCaptor
                 .forClass(SearchParameterMap.class);
@@ -225,24 +221,6 @@ public class GPConnectPatientServiceTest {
         TokenParam tokenParam = tokenAndListParam.getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
         assertThat(tokenParam.getSystem(), equalTo(Extensions.NHS_NUMBER_SYSTEM));
         assertThat(tokenParam.getValue(), equalTo(nhsNumber));
-    }
-
-    private void assertOperationOutcome(OperationOutcome operationOutcome, String diagnostics, String detailsCodingCode) {
-        OperationOutcome.OperationOutcomeIssueComponent issue = operationOutcome.getIssue().get(0);
-        assertThat(issue.getDiagnostics(), equalTo(diagnostics));
-        assertThat(issue.getDetails().getCoding().get(0).getCode(), equalTo(detailsCodingCode));
-    }
-
-    private void assertGPConnectException(Runnable action, Class exceptionClass, String diagnostics,
-            String detailsCodingCode) {
-        try {
-            action.run();
-            fail("Invalid Identifier expected to be thrown but wasn't");
-        } catch (final BaseServerResponseException exception) {
-            assertTrue(exceptionClass.isInstance(exception));
-            final OperationOutcome operationOutcome = (OperationOutcome) exception.getOperationOutcome();
-            assertOperationOutcome(operationOutcome, diagnostics, detailsCodingCode);
-        }
     }
 
     private Patient getValidGPConnectPatient(String nhsNumber) {

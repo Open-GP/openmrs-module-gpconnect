@@ -4,6 +4,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
 import static org.mockito.Mockito.when;
+import static org.openmrs.module.gpconnect.providers.GPConnectWebTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent;
 
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -63,7 +64,7 @@ public class GPConnectLocationProviderWebTest extends BaseFhirR3ResourceProvider
         assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "LOCATION_NOT_FOUND", "Location record not found", IssueType.NOTFOUND,
             "Could not find location with Id " + INVALID_LOCATION_UUID
         );
@@ -81,7 +82,7 @@ public class GPConnectLocationProviderWebTest extends BaseFhirR3ResourceProvider
         assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID,
             "Interaction id does not match resource: Location, action: READ"
         );

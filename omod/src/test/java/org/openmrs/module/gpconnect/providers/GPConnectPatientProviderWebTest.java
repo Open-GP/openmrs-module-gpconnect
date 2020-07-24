@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.openmrs.module.gpconnect.providers.GPConnectWebTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent;
 
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
@@ -104,7 +105,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         assertThat(response.getContentType(), equalTo(FhirMediaTypes.JSON.toString()));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "PATIENT_NOT_FOUND", "Patient record not found", IssueType.NOTFOUND,
             "No patient details found for patient ID: Patient/" + INVALID_PATIENT_UUID
         );
@@ -197,7 +198,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Invalid parameter in request"
         );
     }
@@ -212,7 +213,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Exactly 1 identifier needs to be provided"
         );
     }
@@ -227,7 +228,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID, "Exactly 1 identifier needs to be provided"
         );
     }
@@ -248,7 +249,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
         assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
-        GPConnectOperationOutcomeTestHelper.assertThatOperationOutcomeHasCorrectStructureAndContent(
+        assertThatOperationOutcomeHasCorrectStructureAndContent(
             operationOutcome, "BAD_REQUEST", "Bad request", IssueType.INVALID,
             "Interaction id does not match resource: Patient, action: SEARCH_TYPE"
         );

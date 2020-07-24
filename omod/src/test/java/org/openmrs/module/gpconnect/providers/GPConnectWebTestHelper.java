@@ -11,7 +11,7 @@ import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
 import org.hl7.fhir.dstu3.model.OperationOutcome.OperationOutcomeIssueComponent;
 import org.openmrs.module.gpconnect.util.CodeSystems;
 
-public class GPConnectOperationOutcomeTestHelper {
+public class GPConnectWebTestHelper {
     public static void assertThatOperationOutcomeHasCorrectStructureAndContent(OperationOutcome operationOutcome, String theCode, String theDisplay, IssueType issueType, String errorMessage) {
         assertTrue(operationOutcome.hasMeta());
 
