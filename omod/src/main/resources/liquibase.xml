@@ -121,4 +121,13 @@
       </createTable>
    </changeSet>
 
+   <changeSet id="gpconnect-7" author="OpenGP">
+      <preConditions>
+         <tableExists tableName="provider"/>
+      </preConditions>
+      <addColumn tableName="provider">
+         <column name="sds_role_profile_id" type="varchar(255)" />
+      </addColumn>
+   </changeSet>
+
 </databaseChangeLog>

@@ -15,8 +15,12 @@ import ca.uhn.fhir.rest.param.TokenParam;
 import ca.uhn.fhir.rest.server.exceptions.InvalidRequestException;
 import ca.uhn.fhir.rest.server.exceptions.ResourceNotFoundException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import org.hl7.fhir.dstu3.model.IdType;
+import org.hl7.fhir.dstu3.model.Identifier;
 import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
 import org.hl7.fhir.dstu3.model.Practitioner;
 import org.junit.Test;
@@ -32,8 +36,10 @@ public class GPConnectPractitionerProviderTest {
     private static final String INVALID_PRACTITIONER_UUID = "sdfgdsfsd";
     private static final String INVALID_PRACTITIONER_SDS_USER_ID = "HELLO1234";
     private static final String VALID_PRACTITIONER_SDS_USER_ID = "G22222226";
+    private static final String VALID_PRACTITIONER_SDS_ROLE_PROFILE_ID = "G22234567";
     private static final String ANOTHER_VALID_PRACTITIONER_SDS_USER_ID = "G13579135";
-    private static final String VALID_IDENTIFIER_SYSTEM = "https://fhir.nhs.uk/Id/sds-user-id";
+    private static final String VALID_SDS_USER_ID_IDENTIFIER_SYSTEM = "https://fhir.nhs.uk/Id/sds-user-id";
+    private static final String VALID_SDS_ROLE_PROFILE_ID_IDENTIFIER_SYSTEM = "https://fhir.nhs.uk/Id/sds-user-id";
 
     @Mock
     private FhirPractitionerService practitionerService;
@@ -45,14 +51,24 @@ public class GPConnectPractitionerProviderTest {
     public void shouldGetPractitionerByIdGivenValidId() {
         org.hl7.fhir.r4.model.Practitioner r4Practitioner = new org.hl7.fhir.r4.model.Practitioner();
         r4Practitioner.setId(new IdType(VALID_PRACTITIONER_UUID));
+        org.hl7.fhir.r4.model.Identifier r4SdsUserId = createIdentifier(4,"sdsUserId", VALID_PRACTITIONER_SDS_USER_ID);
+        org.hl7.fhir.r4.model.Identifier r4SdsRoleProfileId = createIdentifier(4,"sdsRoleProfileId", VALID_PRACTITIONER_SDS_ROLE_PROFILE_ID);
+        List<org.hl7.fhir.r4.model.Identifier> r4Identifiers = new ArrayList<>(Arrays.asList(r4SdsUserId, r4SdsRoleProfileId));
+        r4Practitioner.setIdentifier(r4Identifiers);
         when(practitionerService.get(VALID_PRACTITIONER_UUID)).thenReturn(r4Practitioner);
 
         Practitioner r3Practitioner = new Practitioner();
         r3Practitioner.setId(new IdType(VALID_PRACTITIONER_UUID));
+        Identifier r3SdsUserId = createIdentifier(3, "sdsUserId", VALID_PRACTITIONER_SDS_USER_ID);
+        Identifier r3SdsRoleProfileId = createIdentifier(3, "sdsRoleProfileId", VALID_PRACTITIONER_SDS_ROLE_PROFILE_ID);
+        List<Identifier> r3Identifiers = new ArrayList<>(Arrays.asList(r3SdsUserId, r3SdsRoleProfileId));
+        r3Practitioner.setIdentifier(r3Identifiers);
 
         Practitioner actualPractitioner = practitionerProvider.getPractitionerById(new IdType(VALID_PRACTITIONER_UUID));
 
         assertThat(actualPractitioner.getId(), equalTo(r3Practitioner.getId()));
+        assertThat(actualPractitioner.getIdentifier().get(0).getValue(), equalTo(r3Practitioner.getIdentifier().get(0).getValue()));
+        assertThat(actualPractitioner.getIdentifier().get(1).getValue(), equalTo(r3Practitioner.getIdentifier().get(1).getValue()));
     }
 
     @Test
@@ -68,7 +84,7 @@ public class GPConnectPractitionerProviderTest {
 
     @Test
     public void shouldReturnEmptyListWhenSearchingWithInvalidPractitionerId() {
-        TokenAndListParam identifier = generateIdentifier(VALID_IDENTIFIER_SYSTEM, INVALID_PRACTITIONER_SDS_USER_ID);
+        TokenAndListParam identifier = generateIdentifier(VALID_SDS_USER_ID_IDENTIFIER_SYSTEM, INVALID_PRACTITIONER_SDS_USER_ID);
 
         IBundleProvider bundleProvider = mock(IBundleProvider.class);
 
@@ -81,7 +97,7 @@ public class GPConnectPractitionerProviderTest {
 
     @Test
     public void shouldReturnAPractitionerWhenSearchingWithValidPractitionerId() {
-        TokenAndListParam identifier = generateIdentifier(VALID_IDENTIFIER_SYSTEM, VALID_PRACTITIONER_SDS_USER_ID);
+        TokenAndListParam identifier = generateIdentifier(VALID_SDS_USER_ID_IDENTIFIER_SYSTEM, VALID_PRACTITIONER_SDS_USER_ID);
 
         org.hl7.fhir.r4.model.Practitioner r4Practitioner = new org.hl7.fhir.r4.model.Practitioner();
 
@@ -102,7 +118,7 @@ public class GPConnectPractitionerProviderTest {
 
     @Test
     public void shouldReturn400WhenSearchingWithMoreThanOneIdentifierParameter() {
-        TokenAndListParam identifier = generateIdentifier(VALID_IDENTIFIER_SYSTEM, VALID_PRACTITIONER_SDS_USER_ID).addAnd(new TokenParam());
+        TokenAndListParam identifier = generateIdentifier(VALID_SDS_USER_ID_IDENTIFIER_SYSTEM, VALID_PRACTITIONER_SDS_USER_ID).addAnd(new TokenParam());
 
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() ->
             practitionerProvider.searchForPractitioners(null, identifier, null, null, null, null, null, null, null, null),
@@ -113,7 +129,7 @@ public class GPConnectPractitionerProviderTest {
 
     @Test
     public void shouldReturn400WhenSearchingWithMultipleIdentifierValuesSeparatedByAComma() {
-        TokenAndListParam identifier = generateIdentifier(VALID_IDENTIFIER_SYSTEM, VALID_PRACTITIONER_SDS_USER_ID + "," + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID);
+        TokenAndListParam identifier = generateIdentifier(VALID_SDS_USER_ID_IDENTIFIER_SYSTEM, VALID_PRACTITIONER_SDS_USER_ID + "," + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID);
 
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() ->
                 practitionerProvider.searchForPractitioners(null, identifier, null, null, null, null, null, null, null, null),
@@ -125,13 +141,13 @@ public class GPConnectPractitionerProviderTest {
 
     @Test
     public void shouldReturn422WhenSearchingWithMultipleIdentifierValuesSeparatedByAPipe() {
-        TokenAndListParam identifier = generateIdentifier(VALID_IDENTIFIER_SYSTEM, VALID_PRACTITIONER_SDS_USER_ID + "|" + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID);
+        TokenAndListParam identifier = generateIdentifier(VALID_SDS_USER_ID_IDENTIFIER_SYSTEM, VALID_PRACTITIONER_SDS_USER_ID + "|" + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID);
 
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() ->
                 practitionerProvider.searchForPractitioners(null, identifier, null, null, null, null, null, null, null, null),
             UnprocessableEntityException.class, "INVALID_IDENTIFIER_VALUE", "Invalid identifier value", IssueType.VALUE,
             "One or both of the identifier system and value are missing from given identifier : "
-                + VALID_IDENTIFIER_SYSTEM + "|" + VALID_PRACTITIONER_SDS_USER_ID + "|" + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID
+                + VALID_SDS_USER_ID_IDENTIFIER_SYSTEM + "|" + VALID_PRACTITIONER_SDS_USER_ID + "|" + ANOTHER_VALID_PRACTITIONER_SDS_USER_ID
         );
     }
 
@@ -181,7 +197,7 @@ public class GPConnectPractitionerProviderTest {
 
     @Test
     public void shouldReturn422WhenSearchingGivenIdentifierValueIsMissing() {
-        TokenAndListParam identifier = generateIdentifier(VALID_IDENTIFIER_SYSTEM, null);
+        TokenAndListParam identifier = generateIdentifier(VALID_SDS_USER_ID_IDENTIFIER_SYSTEM, null);
 
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() ->
                 practitionerProvider.searchForPractitioners(null, identifier, null, null, null, null, null, null, null, null),
@@ -192,7 +208,7 @@ public class GPConnectPractitionerProviderTest {
 
     @Test
     public void shouldReturn422WhenSearchingGivenIdentifierValueIsEmpty() {
-        TokenAndListParam identifier = generateIdentifier(VALID_IDENTIFIER_SYSTEM, "");
+        TokenAndListParam identifier = generateIdentifier(VALID_SDS_USER_ID_IDENTIFIER_SYSTEM, "");
 
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() ->
                 practitionerProvider.searchForPractitioners(null, identifier, null, null, null, null, null, null, null, null),
@@ -210,5 +226,36 @@ public class GPConnectPractitionerProviderTest {
             InvalidRequestException.class, "INVALID_IDENTIFIER_SYSTEM", "Invalid identifier system", IssueType.VALUE,
             "The given identifier system code (Test) is not an expected code"
         );
+    }
+
+    private Identifier createR3Identifier(String type, String value) {
+        if (type.equals("sdsUserId")) {
+            return new Identifier()
+                .setSystem(VALID_SDS_USER_ID_IDENTIFIER_SYSTEM)
+                .setValue(value);
+        } else {
+            return new Identifier()
+                .setSystem(VALID_SDS_ROLE_PROFILE_ID_IDENTIFIER_SYSTEM)
+                .setValue(value);
+        }
+    }
+
+    private org.hl7.fhir.r4.model.Identifier createR4Identifier(String type, String value) {
+        if (type.equals("sdsUserId")) {
+            return new org.hl7.fhir.r4.model.Identifier()
+                .setSystem(VALID_SDS_USER_ID_IDENTIFIER_SYSTEM)
+                .setValue(value);
+        } else {
+            return new org.hl7.fhir.r4.model.Identifier()
+                .setSystem(VALID_SDS_ROLE_PROFILE_ID_IDENTIFIER_SYSTEM)
+                .setValue(value);
+        }
+    }
+
+    private <T> T createIdentifier(int fhirVersion, String idType, String idValue) {
+        if (fhirVersion == 3) {
+            return (T) createR3Identifier(idType, idValue);
+        }
+        return (T) createR4Identifier(idType, idValue);
     }
 }
