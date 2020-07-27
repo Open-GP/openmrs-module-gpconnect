@@ -37,7 +37,6 @@ public class GPConnectExceptionHandlingInterceptor extends ExceptionHandlingInte
 			return GPConnectExceptions.invalidRequestException(errorMessage, BAD_REQUEST);
 		}
 
-
 		return super.preProcessOutgoingException(theRequestDetails, theException, theServletRequest);
 	}
 }
