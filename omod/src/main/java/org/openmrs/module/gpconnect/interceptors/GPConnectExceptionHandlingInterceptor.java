@@ -29,6 +29,15 @@ public class GPConnectExceptionHandlingInterceptor extends ExceptionHandlingInte
 				return GPConnectExceptions.invalidRequestException("Invalid parameter in request", BAD_REQUEST);
 			}
 
+		if(theException instanceof InvalidRequestException
+				&&  theRequestDetails.getResourceName().equals("Patient")
+				&&  !theRequestDetails.getCompleteUrl().endsWith("$gpc.registerpatient")
+				&&  theRequestDetails.getRequestType() == RequestTypeEnum.POST) {
+			String errorMessage = String.format("The following endpoint is invalid: %s", theRequestDetails.getRequestPath());
+			return GPConnectExceptions.invalidRequestException(errorMessage, BAD_REQUEST);
+		}
+
+
 		return super.preProcessOutgoingException(theRequestDetails, theException, theServletRequest);
 	}
 }

@@ -2,6 +2,7 @@ package org.openmrs.module.gpconnect.providers;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -256,7 +257,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
     }
 
     @Test
-    public void shouldReturn404IfTheUrlIsIncorrectWhenRegisteringAPatient() throws IOException, ServletException {
+    public void shouldReturn400IfTheUrlIsIncorrectWhenRegisteringAPatient() throws IOException, ServletException {
 
         InputStream is = this.getClass().getClassLoader().getResourceAsStream("patientRegister.json");
         String patientRegisterTemplate =  IOUtils.toString(is, StandardCharsets.UTF_8.name());
@@ -268,12 +269,12 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
 
         MockHttpServletResponse response = post("/Patient/$gpc.registerpatien").jsonContent(patientRegister).go();
 
-        assertThat(response, statusEquals(404));
+        assertThat(response, statusEquals(400));
 
         OperationOutcome operationOutcome = (OperationOutcome) readOperationOutcomeResponse(response);
         assertTrue(operationOutcome.hasMeta());
         assertThat(operationOutcome.getIssue().get(0).getDiagnostics(),
-                equalTo("The following endpoint is invalid: [Patient/$gpc.registerpatien]"));
+                equalTo("The following endpoint is invalid: Patient/$gpc.registerpatien"));
 
     }
 }

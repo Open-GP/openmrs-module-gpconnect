@@ -33,8 +33,9 @@ public class GPConnectServer extends FhirR3RestServlet {
 
 		IdentifierInterceptor identifierInterceptor = new IdentifierInterceptor();
 		registerInterceptor(identifierInterceptor);
+
 	}
-	
+
 	@Autowired
 	@Qualifier("fhirR3Resources")
 	@Override
