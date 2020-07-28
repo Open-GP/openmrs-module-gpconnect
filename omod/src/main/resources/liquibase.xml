@@ -122,12 +122,21 @@
    </changeSet>
 
    <changeSet id="gpconnect-7" author="OpenGP">
-      <preConditions>
-         <tableExists tableName="provider"/>
+      <preConditions onFail="MARK_RAN">
+         <not><tableExists tableName="nhs_patient"/></not>
       </preConditions>
-      <addColumn tableName="provider">
-         <column name="sds_role_profile_id" type="varchar(255)" />
-      </addColumn>
+      <comment>
+         Creating the nhs patient table
+      </comment>
+      <createTable tableName="nhs_patient">
+         <column name="patient_id" type="int" autoIncrement="false">
+            <constraints primaryKey="true" nullable="false"/>
+         </column>
+         <column name="cadaveric_donor" type="boolean">
+         </column>
+      </createTable>
+      <addForeignKeyConstraint constraintName="nhs_patient_owner_fk" baseTableName="nhs_patient" baseColumnNames="patient_id"  referencedTableName="patient"
+                               referencedColumnNames="patient_id" />
    </changeSet>
 
 </databaseChangeLog>
