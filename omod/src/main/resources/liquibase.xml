@@ -85,7 +85,7 @@
          <column name="death_notification_status" type="varchar(100)"/>
       </addColumn>
    </changeSet>
-   
+
    <changeSet id="gpconnect-nhs-connect-5" author="OpenGP">
       <preConditions>
          <tableExists tableName="patient_identifier_type"/>
@@ -123,20 +123,21 @@
 
    <changeSet id="gpconnect-7" author="OpenGP">
       <preConditions onFail="MARK_RAN">
-         <not><tableExists tableName="nhs_patient"/></not>
+         <not><tableExists tableName="nhs_practitioner"/></not>
       </preConditions>
       <comment>
-         Creating the nhs patient table
+         Creating the nhs practitioner table
       </comment>
-      <createTable tableName="nhs_patient">
-         <column name="patient_id" type="int" autoIncrement="false">
+      <createTable tableName="nhs_practitioner">
+         <column name="provider_id" type="int" autoIncrement="false">
             <constraints primaryKey="true" nullable="false"/>
          </column>
-         <column name="cadaveric_donor" type="boolean">
+         <column name="sds_role_profile_id" type="varchar(100)">
          </column>
       </createTable>
-      <addForeignKeyConstraint constraintName="nhs_patient_owner_fk" baseTableName="nhs_patient" baseColumnNames="patient_id"  referencedTableName="patient"
-                               referencedColumnNames="patient_id" />
+      <addForeignKeyConstraint constraintName="nhs_practitioner_owner_fk" baseTableName="nhs_practitioner" baseColumnNames="provider_id"  referencedTableName="provider"
+                               referencedColumnNames="provider_id" />
    </changeSet>
 
 </databaseChangeLog>
+
