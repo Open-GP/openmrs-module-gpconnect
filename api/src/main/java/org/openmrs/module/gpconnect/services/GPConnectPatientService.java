@@ -8,17 +8,25 @@ import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_RE
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
+import org.apache.commons.lang3.time.DateUtils;
 import org.hl7.fhir.convertors.conv30_40.Patient30_40;
+import org.hl7.fhir.dstu3.model.Extension;
 import org.hl7.fhir.dstu3.model.HumanName;
 import org.hl7.fhir.dstu3.model.Patient;
+import org.hl7.fhir.dstu3.model.Period;
 import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
 import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.exceptions.GPConnectExceptions;
+import org.openmrs.module.gpconnect.mappers.CodeableConceptExtension;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
+import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
+import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -83,6 +91,8 @@ public class GPConnectPatientService {
             throw GPConnectExceptions.resourceVersionConflictException("Nhs Number already in use", DUPLICATE_REJECTED);
         }
 
+        dstu3Patient.addExtension(getTempRegistrationDetailsExtension());
+
         org.hl7.fhir.r4.model.Patient r4Patient
                 = Patient30_40.convertPatient(dstu3Patient);
         fhirPatientService.create(r4Patient);
@@ -109,5 +119,27 @@ public class GPConnectPatientService {
     private boolean hasValidNames(Patient patient) {
         Optional<HumanName> officialName = patient.getName().stream().filter(humanName -> humanName.getUse().equals(HumanName.NameUse.OFFICIAL)).findFirst();
         return officialName.map(humanName -> (humanName.getFamily() != null) && (!humanName.getFamily().isEmpty())).orElse(false);
+    }
+
+    private Extension getTempRegistrationDetailsExtension(){
+        Period registrationPeriod = new Period();
+        Date registrationStartDate = new Date();
+        registrationPeriod.setStart(registrationStartDate);
+        registrationPeriod.setEnd(DateUtils.addMonths(registrationStartDate, 3));
+
+        Extension registrationPeriodExt = new Extension();
+        registrationPeriodExt.setUrl(Extensions.REGISTRATION_PERIOD);
+        registrationPeriodExt.setValue(registrationPeriod);
+
+        Optional<Extension> registrationTypeExt = new CodeableConceptExtension(
+                Extensions.REGISTRATION_TYPE, CodeSystems.REGISTRATION_TYPE, RegistrationType.dict())
+                .createExtension("T");
+
+        Extension registrationDetailsExt = new Extension();
+        registrationDetailsExt.setUrl(Extensions.REGISTRATION_DETAILS_URL);
+        registrationTypeExt.ifPresent(registrationDetailsExt::addExtension);
+        registrationDetailsExt.addExtension(registrationPeriodExt);
+
+        return registrationDetailsExt;
     }
 }
