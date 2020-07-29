@@ -7,17 +7,13 @@ import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.INVALID_RE
 
 import ca.uhn.fhir.rest.param.TokenAndListParam;
 import ca.uhn.fhir.rest.param.TokenParam;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.hl7.fhir.convertors.conv30_40.Patient30_40;
-import org.hl7.fhir.dstu3.model.Extension;
-import org.hl7.fhir.dstu3.model.HumanName;
-import org.hl7.fhir.dstu3.model.Patient;
-import org.hl7.fhir.dstu3.model.Period;
+import org.hl7.fhir.dstu3.model.*;
 import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
 import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
@@ -82,6 +78,8 @@ public class GPConnectPatientService {
             throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Photo", INVALID_RESOURCE);
         }
 
+        validateTelecomUses(dstu3Patient);
+
         if(dstu3Patient.hasDeceasedBooleanType()){
             throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Deceased", INVALID_RESOURCE);
         }
@@ -103,6 +101,25 @@ public class GPConnectPatientService {
         nhsPatientService.saveOrUpdate(nhsPatient);
 
         return newPatient;
+    }
+
+    private void validateTelecomUses(Patient dstu3Patient) {
+        List<ContactPoint> telecomList = dstu3Patient.getTelecom();
+        Map<ContactPoint.ContactPointUse, Long> contactPointUseCount = telecomList.stream().collect(Collectors.groupingBy(ContactPoint::getUse,Collectors.counting()));
+        contactPointUseCount.values().removeIf( value -> value < 2);
+
+        if(!contactPointUseCount.isEmpty()){
+            StringBuilder errorMessage = new StringBuilder("Invalid telecom. Duplicate use of: ");
+
+            contactPointUseCount.keySet().forEach( key -> {
+                errorMessage.append(key.getDisplay());
+                errorMessage.append(", ");
+            });
+
+            errorMessage.setLength(errorMessage.length() - 2);
+
+            throw GPConnectExceptions.invalidRequestException(errorMessage.toString(), BAD_REQUEST);
+        }
     }
 
     private Collection<org.openmrs.Patient> findByNhsNumber(String nhsNumber) {

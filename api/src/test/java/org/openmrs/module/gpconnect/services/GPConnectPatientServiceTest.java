@@ -13,15 +13,11 @@ import ca.uhn.fhir.rest.server.exceptions.ResourceVersionConflictException;
 import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import java.util.Collections;
 import java.util.Date;
-import org.hl7.fhir.dstu3.model.Attachment;
-import org.hl7.fhir.dstu3.model.BooleanType;
-import org.hl7.fhir.dstu3.model.HumanName;
-import org.hl7.fhir.dstu3.model.Identifier;
+
+import org.hl7.fhir.dstu3.model.*;
 import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
-import org.hl7.fhir.dstu3.model.Patient;
 import org.hl7.fhir.dstu3.model.Patient.AnimalComponent;
 import org.hl7.fhir.dstu3.model.Patient.PatientCommunicationComponent;
-import org.hl7.fhir.dstu3.model.StringType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -161,6 +157,28 @@ public class GPConnectPatientServiceTest {
     }
 
     @Test
+    public void shouldThrowExceptionWhenRegisteringWithInvalidTelecom() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+
+        addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.MOBILE, "07923456789");
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+                "BAD_REQUEST", "Bad request", IssueType.INVALID, "Invalid telecom. Duplicate use of: Mobile");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithMultipleInvalidTelecom() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+
+        addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.MOBILE, "07923456789");
+        addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.HOME, "07923456781");
+        addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.HOME, "07923456782");
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
+                "BAD_REQUEST", "Bad request", IssueType.INVALID, "Invalid telecom. Duplicate use of: Mobile, Home");
+    }
+
+    @Test
     public void shouldThrowExceptionWhenRegisteringWithDeceased() {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
         patient.setDeceased(new BooleanType(true));
@@ -217,6 +235,14 @@ public class GPConnectPatientServiceTest {
         assertNhsNumber(tokenAndListParam, VALID_NHS_NUMBER);
     }
 
+    private void addPatientTelecom(Patient patient, ContactPoint.ContactPointSystem contactPointSystem, ContactPoint.ContactPointUse contactPointUse, String contactValue) {
+        ContactPoint contactPoint = new ContactPoint();
+        contactPoint.setSystem(contactPointSystem);
+        contactPoint.setValue(contactValue);
+        contactPoint.setUse(contactPointUse);
+        patient.addTelecom(contactPoint);
+    }
+
     private void assertNhsNumber(TokenAndListParam tokenAndListParam, String nhsNumber) {
         TokenParam tokenParam = tokenAndListParam.getValuesAsQueryTokens().get(0).getValuesAsQueryTokens().get(0);
         assertThat(tokenParam.getSystem(), equalTo(Extensions.NHS_NUMBER_SYSTEM));
@@ -237,6 +263,14 @@ public class GPConnectPatientServiceTest {
         identifier.setValue(nhsNumber);
         identifier.setSystem(Extensions.NHS_NUMBER_SYSTEM);
         patient.addIdentifier(identifier);
+
+        ContactPoint contactPoint = new ContactPoint();
+        contactPoint.setUse(ContactPoint.ContactPointUse.MOBILE);
+        contactPoint.setValue("07911133122");
+        contactPoint.setSystem(ContactPoint.ContactPointSystem.PHONE);
+
+        patient.addTelecom(contactPoint);
+
         return patient;
     }
 }
