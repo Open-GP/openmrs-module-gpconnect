@@ -160,22 +160,22 @@ public class GPConnectPatientServiceTest {
     public void shouldThrowExceptionWhenRegisteringWithInvalidTelecom() {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
 
-        addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.MOBILE, "07923456789");
+        addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.TEMP, "07923456789");
 
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
-                "BAD_REQUEST", "Bad request", IssueType.INVALID, "Invalid telecom. Duplicate use of: Mobile");
+                "BAD_REQUEST", "Bad request", IssueType.INVALID, "Invalid telecom. Duplicate use of: {System: Phone, Use: Temp}");
     }
 
     @Test
     public void shouldThrowExceptionWhenRegisteringWithMultipleInvalidTelecom() {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
 
-        addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.MOBILE, "07923456789");
+        addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.TEMP, "07923456789");
         addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.HOME, "07923456781");
         addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.HOME, "07923456782");
 
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), InvalidRequestException.class,
-                "BAD_REQUEST", "Bad request", IssueType.INVALID, "Invalid telecom. Duplicate use of: Mobile, Home");
+                "BAD_REQUEST", "Bad request", IssueType.INVALID, "Invalid telecom. Duplicate use of: {System: Phone, Use: Home}, {System: Phone, Use: Temp}");
     }
 
     @Test
@@ -264,12 +264,8 @@ public class GPConnectPatientServiceTest {
         identifier.setSystem(Extensions.NHS_NUMBER_SYSTEM);
         patient.addIdentifier(identifier);
 
-        ContactPoint contactPoint = new ContactPoint();
-        contactPoint.setUse(ContactPoint.ContactPointUse.MOBILE);
-        contactPoint.setValue("07911133122");
-        contactPoint.setSystem(ContactPoint.ContactPointSystem.PHONE);
-
-        patient.addTelecom(contactPoint);
+        addPatientTelecom(patient,ContactPoint.ContactPointSystem.PHONE, ContactPoint.ContactPointUse.TEMP, "07123446789");
+        addPatientTelecom(patient,ContactPoint.ContactPointSystem.EMAIL, ContactPoint.ContactPointUse.TEMP, "hello@temp.com");
 
         return patient;
     }

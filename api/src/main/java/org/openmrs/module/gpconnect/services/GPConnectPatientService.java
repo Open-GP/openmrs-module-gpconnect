@@ -105,15 +105,20 @@ public class GPConnectPatientService {
 
     private void validateTelecomUses(Patient dstu3Patient) {
         List<ContactPoint> telecomList = dstu3Patient.getTelecom();
-        Map<ContactPoint.ContactPointUse, Long> contactPointUseCount = telecomList.stream().collect(Collectors.groupingBy(ContactPoint::getUse,Collectors.counting()));
+        Map<List<String>, Long> contactPointUseCount = telecomList.stream()
+                .collect(Collectors.groupingBy( x -> Arrays.asList(x.getSystem().getDisplay(), x.getUse().getDisplay()),
+                        Collectors.counting()));
         contactPointUseCount.values().removeIf( value -> value < 2);
 
         if(!contactPointUseCount.isEmpty()){
             StringBuilder errorMessage = new StringBuilder("Invalid telecom. Duplicate use of: ");
 
             contactPointUseCount.keySet().forEach( key -> {
-                errorMessage.append(key.getDisplay());
-                errorMessage.append(", ");
+                errorMessage.append("{System: ");
+                errorMessage.append(key.get(0));
+                errorMessage.append(", Use: ");
+                errorMessage.append(key.get(1));
+                errorMessage.append("}, ");
             });
 
             errorMessage.setLength(errorMessage.length() - 2);
