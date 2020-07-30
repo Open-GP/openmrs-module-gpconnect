@@ -19,10 +19,7 @@ import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
 import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.exceptions.GPConnectExceptions;
-import org.openmrs.module.gpconnect.mappers.CodeableConceptExtension;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
-import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
-import org.openmrs.module.gpconnect.util.CodeSystems;
 import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -89,8 +86,6 @@ public class GPConnectPatientService {
             throw GPConnectExceptions.resourceVersionConflictException("Nhs Number already in use", DUPLICATE_REJECTED);
         }
 
-        dstu3Patient.addExtension(getTempRegistrationDetailsExtension());
-
         org.hl7.fhir.r4.model.Patient r4Patient
                 = Patient30_40.convertPatient(dstu3Patient);
         fhirPatientService.create(r4Patient);
@@ -98,9 +93,18 @@ public class GPConnectPatientService {
         org.openmrs.Patient newPatient = findByNhsNumber(nhsNumber).iterator().next();
         NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(dstu3Patient, newPatient.getPatientId());
 
+        setTempRegistrationDetails(nhsPatient);
+
         nhsPatientService.saveOrUpdate(nhsPatient);
 
         return newPatient;
+    }
+
+    private void setTempRegistrationDetails(NhsPatient nhsPatient) {
+        Date registrationStartDate = new Date();
+        nhsPatient.setRegistrationType("T");
+        nhsPatient.setRegistrationStart(registrationStartDate);
+        nhsPatient.setRegistrationEnd(DateUtils.addMonths(registrationStartDate, 3));
     }
 
     private void validateTelecomUses(Patient dstu3Patient) {
@@ -141,27 +145,5 @@ public class GPConnectPatientService {
     private boolean hasValidNames(Patient patient) {
         Optional<HumanName> officialName = patient.getName().stream().filter(humanName -> humanName.getUse().equals(HumanName.NameUse.OFFICIAL)).findFirst();
         return officialName.map(humanName -> (humanName.getFamily() != null) && (!humanName.getFamily().isEmpty())).orElse(false);
-    }
-
-    private Extension getTempRegistrationDetailsExtension(){
-        Period registrationPeriod = new Period();
-        Date registrationStartDate = new Date();
-        registrationPeriod.setStart(registrationStartDate);
-        registrationPeriod.setEnd(DateUtils.addMonths(registrationStartDate, 3));
-
-        Extension registrationPeriodExt = new Extension();
-        registrationPeriodExt.setUrl(Extensions.REGISTRATION_PERIOD);
-        registrationPeriodExt.setValue(registrationPeriod);
-
-        Optional<Extension> registrationTypeExt = new CodeableConceptExtension(
-                Extensions.REGISTRATION_TYPE, CodeSystems.REGISTRATION_TYPE, RegistrationType.dict())
-                .createExtension("T");
-
-        Extension registrationDetailsExt = new Extension();
-        registrationDetailsExt.setUrl(Extensions.REGISTRATION_DETAILS_URL);
-        registrationTypeExt.ifPresent(registrationDetailsExt::addExtension);
-        registrationDetailsExt.addExtension(registrationPeriodExt);
-
-        return registrationDetailsExt;
     }
 }

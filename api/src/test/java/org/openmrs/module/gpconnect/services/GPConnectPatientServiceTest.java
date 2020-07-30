@@ -1,9 +1,8 @@
 package org.openmrs.module.gpconnect.services;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 import static org.openmrs.module.gpconnect.GPConnectTestHelper.assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome;
 
 import ca.uhn.fhir.rest.param.TokenAndListParam;
@@ -14,6 +13,7 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import java.util.Collections;
 import java.util.Date;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.hl7.fhir.dstu3.model.*;
 import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
 import org.hl7.fhir.dstu3.model.Patient.AnimalComponent;
@@ -84,6 +84,35 @@ public class GPConnectPatientServiceTest {
         verify(nhsPatientService).saveOrUpdate(expectedNhsPatient);
 
         assertThat(savedPatient, equalTo(createdPatient));
+    }
+
+    @Test
+    public void shouldAddRegistrationDetailsToNhsPatient() {
+        int patientId = 987;
+
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+        org.openmrs.Patient createdPatient = new org.openmrs.Patient();
+        createdPatient.setPatientId(patientId);
+
+        when(fhirPatientDao.search(Matchers.any(), Matchers.any())).thenReturn(Collections.emptyList())
+                .thenReturn(Collections.singletonList(createdPatient));
+
+        NhsPatient expectedNhsPatient = new NhsPatient();
+        expectedNhsPatient.setRegistrationType("T");
+
+        NhsPatient nhsPatient = new NhsPatient();
+        when(nhsPatientMapper.toNhsPatient(patient, patientId)).thenReturn(nhsPatient);
+
+        gpConnectPatientService.save(patient);
+
+        ArgumentCaptor<NhsPatient> nhsPatientArgumentCaptor = ArgumentCaptor.forClass(NhsPatient.class);
+        verify(nhsPatientService, times(1)).saveOrUpdate(nhsPatientArgumentCaptor.capture());
+
+        NhsPatient returnedNhsPatient = nhsPatientArgumentCaptor.getValue();
+        assertThat(returnedNhsPatient.registrationType, equalTo(expectedNhsPatient.registrationType));
+        assertNotNull(returnedNhsPatient.registrationStart);
+        assertNotNull(returnedNhsPatient.registrationEnd);
+        assertThat(returnedNhsPatient.registrationEnd, equalTo(DateUtils.addMonths(returnedNhsPatient.registrationStart, 3)));
     }
 
     @Test
