@@ -30,6 +30,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
+import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
 import org.openmrs.module.gpconnect.services.GPConnectPatientService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -202,7 +203,7 @@ public class GPConnectPatientProviderTest {
         org.openmrs.Patient savedOmrsPatient = new org.openmrs.Patient();
         savedOmrsPatient.setUuid("abcd");
 
-        when(gpConnectPatientService.save(patientToBeRegistered)).thenReturn(savedOmrsPatient);
+        when(gpConnectPatientService.save(patientToBeRegistered, true)).thenReturn(savedOmrsPatient);
         when(fhirPatientService.get(Matchers.any())).thenReturn(new org.hl7.fhir.r4.model.Patient());
         when(nhsPatientMapper.enhance(Matchers.any())).thenReturn(expectedPatient);
 
