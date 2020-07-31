@@ -139,5 +139,22 @@
                                referencedColumnNames="provider_id" />
    </changeSet>
 
+   <changeSet id="gpconnect-8" author="OpenGP">
+      <preConditions onFail="MARK_RAN">
+         <tableExists tableName="provider_attribute_type"/>
+      </preConditions>
+      <comment>
+         Inserting the SDS role profile id provider attribute type
+      </comment>
+      <insert tableName="provider_attribute_type">
+         <column name="name" value="SDS role profile id"/>
+         <column name="description" value="Specifies the details of the job role, area of work, work groups and business functions associated with that role profile"/>
+         <column name="min_occurs" valueNumeric="0"/>
+         <column name="creator" valueNumeric="2"/>
+         <column name="uuid" value="e7852971-2ec5-47dd-9961-c68bab71ce82"/>
+         <column name="date_created" valueDate="${now}"/>
+      </insert>
+   </changeSet>
+
 </databaseChangeLog>
 
