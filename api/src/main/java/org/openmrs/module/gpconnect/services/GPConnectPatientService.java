@@ -67,6 +67,10 @@ public class GPConnectPatientService {
             throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Animal", INVALID_RESOURCE);
         }
 
+        if(dstu3Patient.hasActive() && dstu3Patient.getActive()){
+            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Active", INVALID_RESOURCE);
+        }
+
         if(dstu3Patient.hasCommunication()){
             throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Communication", INVALID_RESOURCE);
         }

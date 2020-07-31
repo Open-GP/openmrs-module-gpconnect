@@ -164,6 +164,24 @@ public class GPConnectPatientServiceTest {
     }
 
     @Test
+    public void shouldThrowExceptionWhenRegisteringWithActivePatient() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+        patient.setActive(true);
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
+                "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: Active");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithMultipleBirths() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+        patient.setMultipleBirth(new BooleanType().setValue(true));
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient), UnprocessableEntityException.class,
+                "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: Multiple Births");
+    }
+
+    @Test
     public void shouldThrowExceptionWhenRegisteringWithCommunication() {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
         PatientCommunicationComponent communication = new Patient.PatientCommunicationComponent();
