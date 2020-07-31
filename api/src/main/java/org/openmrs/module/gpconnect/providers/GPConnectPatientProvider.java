@@ -12,6 +12,7 @@ import ca.uhn.fhir.rest.annotation.OptionalParam;
 import ca.uhn.fhir.rest.annotation.Read;
 import ca.uhn.fhir.rest.annotation.Search;
 import ca.uhn.fhir.rest.annotation.Sort;
+import ca.uhn.fhir.rest.api.MethodOutcome;
 import ca.uhn.fhir.rest.api.SortSpec;
 import ca.uhn.fhir.rest.api.server.IBundleProvider;
 import ca.uhn.fhir.rest.param.DateRangeParam;
@@ -28,11 +29,7 @@ import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Setter;
 import org.hl7.fhir.convertors.conv30_40.Patient30_40;
-import org.hl7.fhir.dstu3.model.Bundle;
-import org.hl7.fhir.dstu3.model.IdType;
-import org.hl7.fhir.dstu3.model.Meta;
-import org.hl7.fhir.dstu3.model.Patient;
-import org.hl7.fhir.dstu3.model.UriType;
+import org.hl7.fhir.dstu3.model.*;
 import org.hl7.fhir.instance.model.api.IBaseResource;
 import org.hl7.fhir.r4.model.Identifier;
 import org.openmrs.module.fhir2.api.FhirPatientService;
@@ -59,6 +56,12 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 	@Autowired
 	private GPConnectPatientService gpConnectPatientService;
 
+	@Operation(name="$setup")
+	public MethodOutcome createPatient(@OperationParam(name = "patient", type = Patient.class)  Patient patient){
+		gpConnectPatientService.save(patient, false);
+		return new MethodOutcome();
+	}
+
 	@Override
 	@Read
 	public Patient getPatientById(@IdParam @NotNull IdType id) {
@@ -74,7 +77,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 
 	@Operation(name = "$gpc.registerpatient")
 	public Bundle registerPatient(@OperationParam(name = "registerPatient", type = Patient.class) Patient patient) {
-		org.openmrs.Patient newPatient = gpConnectPatientService.save(patient);
+		org.openmrs.Patient newPatient = gpConnectPatientService.save(patient, true);
 
 		Patient createdPatient = this.getPatientById(new IdType(newPatient.getUuid()));
 

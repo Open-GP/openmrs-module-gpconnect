@@ -20,6 +20,7 @@ import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
 import org.openmrs.module.gpconnect.exceptions.GPConnectExceptions;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
+import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
 import org.openmrs.module.gpconnect.util.Extensions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -39,7 +40,7 @@ public class GPConnectPatientService {
     @Autowired
     NhsPatientService nhsPatientService;
 
-    public org.openmrs.Patient save(Patient dstu3Patient) {
+    public org.openmrs.Patient save(Patient dstu3Patient, boolean isTemporaryPatient) {
         if (dstu3Patient.getIdentifier().isEmpty()) {
             throw GPConnectExceptions.invalidRequestException("Patient is missing id", INVALID_NHS_NUMBER);
         }
@@ -67,16 +68,18 @@ public class GPConnectPatientService {
             throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Animal", INVALID_RESOURCE);
         }
 
-        if(dstu3Patient.hasActive() && dstu3Patient.getActive()){
-            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Active", INVALID_RESOURCE);
-        }
-
         if(dstu3Patient.hasCommunication()){
             throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Communication", INVALID_RESOURCE);
         }
 
         if(dstu3Patient.hasPhoto()){
             throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Photo", INVALID_RESOURCE);
+        }
+
+        if(isTemporaryPatient){
+            if(dstu3Patient.hasActive() && dstu3Patient.getActive()){
+                throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Active", INVALID_RESOURCE);
+            }
         }
 
         validateTelecomUses(dstu3Patient);
@@ -97,7 +100,9 @@ public class GPConnectPatientService {
         org.openmrs.Patient newPatient = findByNhsNumber(nhsNumber).iterator().next();
         NhsPatient nhsPatient = nhsPatientMapper.toNhsPatient(dstu3Patient, newPatient.getPatientId());
 
-        setTempRegistrationDetails(nhsPatient);
+        if(isTemporaryPatient) {
+            setTempRegistrationDetails(nhsPatient);
+        }
 
         nhsPatientService.saveOrUpdate(nhsPatient);
 

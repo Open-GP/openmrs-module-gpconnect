@@ -34,6 +34,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.PatientIdentifierType;
 import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
+import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
 import org.openmrs.module.gpconnect.services.GPConnectPatientService;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -121,7 +122,7 @@ public class GPConnectPatientProviderWebTest extends BaseFhirR3ResourceProviderW
 
         String patientRegister = patientRegisterTemplate.replace("$$nhsNumber$$", nhsNumber);
 
-        when(gpConnectPatientService.save(Matchers.any())).thenThrow(new ResourceVersionConflictException("Nhs number exists"));
+        when(gpConnectPatientService.save(Matchers.any(), Matchers.anyBoolean())).thenThrow(new ResourceVersionConflictException("Nhs number exists"));
 
         MockHttpServletResponse response = post("/Patient/$gpc.registerpatient").jsonContent(patientRegister).go();
 
