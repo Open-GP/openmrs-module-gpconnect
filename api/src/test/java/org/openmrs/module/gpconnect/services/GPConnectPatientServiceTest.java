@@ -13,6 +13,7 @@ import ca.uhn.fhir.rest.server.exceptions.UnprocessableEntityException;
 import java.util.Collections;
 import java.util.Date;
 
+import ca.uhn.fhir.util.ResourceReferenceInfo;
 import org.apache.commons.lang3.time.DateUtils;
 import org.hl7.fhir.dstu3.model.*;
 import org.hl7.fhir.dstu3.model.OperationOutcome.IssueType;
@@ -174,7 +175,6 @@ public class GPConnectPatientServiceTest {
     }
 
     @Test
-    @Ignore
     public void shouldThrowExceptionWhenRegisteringWithMultipleBirths() {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
         patient.setMultipleBirth(new BooleanType().setValue(true));
@@ -182,6 +182,62 @@ public class GPConnectPatientServiceTest {
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient,true), UnprocessableEntityException.class,
                 "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: Multiple Births");
     }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithCareProvider() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+
+        Reference reference = new Reference();
+        reference.setDisplay("Test reference");
+        patient.addGeneralPractitioner(reference);
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient,true), UnprocessableEntityException.class,
+                "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: General Practitioner");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithContact() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+        Patient.ContactComponent  contactComponent = new Patient.ContactComponent();
+        HumanName name = new HumanName();
+        name.setFamily("Smith");
+        contactComponent.setName(name);
+
+        patient.addContact(contactComponent);
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient,true), UnprocessableEntityException.class,
+                "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: Contact");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithManagingOrganization() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+
+        Reference managingOrgReference = new Reference();
+        managingOrgReference.setDisplay("Managing Organisation");
+
+        patient.setManagingOrganization(managingOrgReference);
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient,true), UnprocessableEntityException.class,
+                "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: Managing Organisation");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithMaritalStatus() {
+        Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
+
+        Coding coding = new Coding();
+        CodeableConcept codeableConcept = new CodeableConcept();
+        coding.setSystem("http://hl7.org/fhir/marital-status");
+        coding.setCode("M");
+        codeableConcept.addCoding(coding);
+
+        patient.setMaritalStatus(codeableConcept);
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient,true), UnprocessableEntityException.class,
+                "INVALID_RESOURCE", "Submitted resource is not valid.", IssueType.INVALID, "Not allowed field: Marital Status");
+    }
+
 
     @Test
     public void shouldThrowExceptionWhenRegisteringWithCommunication() {

@@ -56,7 +56,7 @@ public class GPConnectPatientService {
                 throw GPConnectExceptions.invalidRequestException("Identifier is missing System", BAD_REQUEST);
         });
 
-        if (dstu3Patient.getBirthDate() == null) {
+        if (!dstu3Patient.hasBirthDate()) {
             throw GPConnectExceptions.invalidRequestException("Birth date is mandatory", BAD_REQUEST);
         }
 
@@ -76,9 +76,31 @@ public class GPConnectPatientService {
             throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Photo", INVALID_RESOURCE);
         }
 
+        if(dstu3Patient.hasMultipleBirth()){
+            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Multiple Births", INVALID_RESOURCE);
+        }
+
+        if(dstu3Patient.hasMaritalStatus()){
+            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Marital Status", INVALID_RESOURCE);
+        }
+
+
         if(isTemporaryPatient){
+
             if(dstu3Patient.hasActive() && dstu3Patient.getActive()){
                 throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Active", INVALID_RESOURCE);
+            }
+
+            if(dstu3Patient.hasContact()){
+                throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Contact", INVALID_RESOURCE);
+            }
+
+            if(dstu3Patient.hasGeneralPractitioner()){
+                throw GPConnectExceptions.unprocessableEntityException("Not allowed field: General Practitioner", INVALID_RESOURCE);
+            }
+
+            if(dstu3Patient.hasManagingOrganization()){
+                throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Managing Organisation", INVALID_RESOURCE);
             }
         }
 
