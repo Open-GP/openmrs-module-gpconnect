@@ -19,6 +19,7 @@ import org.openmrs.module.fhir2.api.FhirPatientService;
 import org.openmrs.module.fhir2.api.dao.FhirPatientDao;
 import org.openmrs.module.fhir2.api.search.param.SearchParameterMap;
 import org.openmrs.module.gpconnect.entity.NhsPatient;
+import org.openmrs.module.gpconnect.exceptions.GPConnectCoding;
 import org.openmrs.module.gpconnect.exceptions.GPConnectExceptions;
 import org.openmrs.module.gpconnect.mappers.NhsPatientMapper;
 import org.openmrs.module.gpconnect.mappers.valueSets.RegistrationType;
@@ -42,51 +43,11 @@ public class GPConnectPatientService {
     NhsPatientService nhsPatientService;
 
     public org.openmrs.Patient save(Patient dstu3Patient, boolean isTemporaryPatient) {
-        if (dstu3Patient.getIdentifier().isEmpty()) {
-            throw GPConnectExceptions.invalidRequestException("Patient is missing id", INVALID_NHS_NUMBER);
-        }
+        PatientRegistrationValidator.validate(dstu3Patient, isTemporaryPatient);
 
         String nhsNumber = dstu3Patient.getIdentifier().get(0).getValue();
-
-        if (nhsNumber.length() != 10) {
-            throw GPConnectExceptions.invalidRequestException("NHS Number is invalid", INVALID_NHS_NUMBER);
-        }
-
-        dstu3Patient.getIdentifier().stream().forEach(identifier ->{
-            if(!identifier.hasSystem())
-                throw GPConnectExceptions.invalidRequestException("Identifier is missing System", BAD_REQUEST);
-        });
-
-        if (!dstu3Patient.hasBirthDate()) {
-            throw GPConnectExceptions.invalidRequestException("Birth date is mandatory", BAD_REQUEST);
-        }
-
-        if (!hasValidNames(dstu3Patient)) {
-            throw GPConnectExceptions.invalidRequestException("Patient must have an official name containing at least a family name", BAD_REQUEST);
-        }
-
-        if(isTemporaryPatient){
-            HashMap<String, Boolean> fieldsToValidate = new HashMap<String, Boolean>(){{
-                put("Animal", dstu3Patient.hasAnimal());
-                put("Communication", dstu3Patient.hasCommunication());
-                put("Photo", dstu3Patient.hasPhoto());
-                put("Multiple Births", dstu3Patient.hasMultipleBirth());
-                put("Marital Status", dstu3Patient.hasMaritalStatus());
-                put("Active", dstu3Patient.hasActive());
-                put("Contact", dstu3Patient.hasContact());
-                put("General Practitioner", dstu3Patient.hasGeneralPractitioner());
-                put("Managing Organisation", dstu3Patient.hasManagingOrganization());
-            }};
-            fieldsToValidate.forEach(this::validateNotAllowedField);
-        }
-
-        validateTelecomUses(dstu3Patient);
-
-        if(dstu3Patient.hasDeceasedBooleanType()){
-            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Deceased", INVALID_RESOURCE);
-        }
-
         Collection<org.openmrs.Patient> patients = findByNhsNumber(nhsNumber);
+
         if (patients.size() > 0) {
             throw GPConnectExceptions.resourceVersionConflictException("Nhs Number already in use", DUPLICATE_REJECTED);
         }
@@ -107,42 +68,11 @@ public class GPConnectPatientService {
         return newPatient;
     }
 
-    private void validateNotAllowedField(String fieldName, boolean hasField){
-        if(hasField){
-            String errorMessage = String.format("Not allowed field: %s", fieldName);
-            throw GPConnectExceptions.unprocessableEntityException(errorMessage, INVALID_RESOURCE);
-        }
-    }
-
     private void setTempRegistrationDetails(NhsPatient nhsPatient) {
         Date registrationStartDate = new Date();
         nhsPatient.setRegistrationType("T");
         nhsPatient.setRegistrationStart(registrationStartDate);
         nhsPatient.setRegistrationEnd(DateUtils.addMonths(registrationStartDate, 3));
-    }
-
-    private void validateTelecomUses(Patient dstu3Patient) {
-        List<ContactPoint> telecomList = dstu3Patient.getTelecom();
-        Map<List<String>, Long> contactPointUseCount = telecomList.stream()
-                .collect(Collectors.groupingBy( x -> Arrays.asList(x.getSystem().getDisplay(), x.getUse().getDisplay()),
-                        Collectors.counting()));
-        contactPointUseCount.values().removeIf( value -> value < 2);
-
-        if(!contactPointUseCount.isEmpty()){
-            StringBuilder errorMessage = new StringBuilder("Invalid telecom. Duplicate use of: ");
-
-            contactPointUseCount.keySet().forEach( key -> {
-                errorMessage.append("{System: ");
-                errorMessage.append(key.get(0));
-                errorMessage.append(", Use: ");
-                errorMessage.append(key.get(1));
-                errorMessage.append("}, ");
-            });
-
-            errorMessage.setLength(errorMessage.length() - 2);
-
-            throw GPConnectExceptions.invalidRequestException(errorMessage.toString(), BAD_REQUEST);
-        }
     }
 
     private Collection<org.openmrs.Patient> findByNhsNumber(String nhsNumber) {
