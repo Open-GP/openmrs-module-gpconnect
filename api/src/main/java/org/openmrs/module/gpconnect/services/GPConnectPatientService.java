@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.xpath.operations.Bool;
 import org.hl7.fhir.convertors.conv30_40.Patient30_40;
 import org.hl7.fhir.dstu3.model.*;
 import org.openmrs.module.fhir2.api.FhirPatientService;
@@ -64,44 +65,19 @@ public class GPConnectPatientService {
             throw GPConnectExceptions.invalidRequestException("Patient must have an official name containing at least a family name", BAD_REQUEST);
         }
 
-        if(dstu3Patient.hasAnimal()){
-            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Animal", INVALID_RESOURCE);
-        }
-
-        if(dstu3Patient.hasCommunication()){
-            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Communication", INVALID_RESOURCE);
-        }
-
-        if(dstu3Patient.hasPhoto()){
-            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Photo", INVALID_RESOURCE);
-        }
-
-        if(dstu3Patient.hasMultipleBirth()){
-            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Multiple Births", INVALID_RESOURCE);
-        }
-
-        if(dstu3Patient.hasMaritalStatus()){
-            throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Marital Status", INVALID_RESOURCE);
-        }
-
-
         if(isTemporaryPatient){
-
-            if(dstu3Patient.hasActive() && dstu3Patient.getActive()){
-                throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Active", INVALID_RESOURCE);
-            }
-
-            if(dstu3Patient.hasContact()){
-                throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Contact", INVALID_RESOURCE);
-            }
-
-            if(dstu3Patient.hasGeneralPractitioner()){
-                throw GPConnectExceptions.unprocessableEntityException("Not allowed field: General Practitioner", INVALID_RESOURCE);
-            }
-
-            if(dstu3Patient.hasManagingOrganization()){
-                throw GPConnectExceptions.unprocessableEntityException("Not allowed field: Managing Organisation", INVALID_RESOURCE);
-            }
+            HashMap<String, Boolean> fieldsToValidate = new HashMap<String, Boolean>(){{
+                put("Animal", dstu3Patient.hasAnimal());
+                put("Communication", dstu3Patient.hasCommunication());
+                put("Photo", dstu3Patient.hasPhoto());
+                put("Multiple Births", dstu3Patient.hasMultipleBirth());
+                put("Marital Status", dstu3Patient.hasMaritalStatus());
+                put("Active", dstu3Patient.hasActive());
+                put("Contact", dstu3Patient.hasContact());
+                put("General Practitioner", dstu3Patient.hasGeneralPractitioner());
+                put("Managing Organisation", dstu3Patient.hasManagingOrganization());
+            }};
+            fieldsToValidate.forEach(this::validateNotAllowedField);
         }
 
         validateTelecomUses(dstu3Patient);
@@ -129,6 +105,13 @@ public class GPConnectPatientService {
         nhsPatientService.saveOrUpdate(nhsPatient);
 
         return newPatient;
+    }
+
+    private void validateNotAllowedField(String fieldName, boolean hasField){
+        if(hasField){
+            String errorMessage = String.format("Not allowed field: %s", fieldName);
+            throw GPConnectExceptions.unprocessableEntityException(errorMessage, INVALID_RESOURCE);
+        }
     }
 
     private void setTempRegistrationDetails(NhsPatient nhsPatient) {
