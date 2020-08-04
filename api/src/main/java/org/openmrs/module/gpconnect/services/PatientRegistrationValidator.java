@@ -1,5 +1,6 @@
 package org.openmrs.module.gpconnect.services;
 
+import org.hl7.fhir.dstu3.model.Address;
 import org.hl7.fhir.dstu3.model.ContactPoint;
 import org.hl7.fhir.dstu3.model.HumanName;
 import org.hl7.fhir.dstu3.model.Patient;
@@ -16,6 +17,8 @@ public class PatientRegistrationValidator {
         validateMandatoryFields(dstu3Patient);
 
         validateDisallowedFields(dstu3Patient, isTemporaryPatient);
+
+        validateAddress(dstu3Patient);
 
         validateTelecomUses(dstu3Patient);
     }
@@ -83,6 +86,18 @@ public class PatientRegistrationValidator {
             errorMessage.setLength(errorMessage.length() - 2);
 
             throw GPConnectExceptions.invalidRequestException(errorMessage.toString(), BAD_REQUEST);
+        }
+    }
+
+    private static void validateAddress(Patient patient){
+        List<Address.AddressUse> validUses  = Arrays.asList(Address.AddressUse.HOME, Address.AddressUse.TEMP);
+        StringBuilder errorMessage = new StringBuilder("Invalid Address type: ");
+
+        for (Address address : patient.getAddress()) {
+            if (!validUses.contains(address.getUse())){
+                errorMessage.append(address.getUse().name());
+                throw GPConnectExceptions.unprocessableEntityException(errorMessage.toString(), INVALID_RESOURCE);
+            }
         }
     }
 }

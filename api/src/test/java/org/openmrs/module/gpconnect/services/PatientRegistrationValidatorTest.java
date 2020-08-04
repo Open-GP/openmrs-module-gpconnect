@@ -216,6 +216,21 @@ public class PatientRegistrationValidatorTest {
                 "BAD_REQUEST", "Bad request", OperationOutcome.IssueType.INVALID, "Patient must have an official name containing at least a family name");
     }
 
+    @Test
+    public void shouldThrowExceptionWhenRegisteringPatientWithInvalidAddressUse() {
+        Address invalidAddress = new Address();
+        invalidAddress.addLine("742 Evergreen Terrace");
+        invalidAddress.setCity("Springfield");
+        invalidAddress.setDistrict("mehville");
+        invalidAddress.setUse(Address.AddressUse.OLD);
+        invalidAddress.setType(Address.AddressType.PHYSICAL);
+
+        validPatient.addAddress(invalidAddress);
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> PatientRegistrationValidator.validate(validPatient, true), UnprocessableEntityException.class,
+                "INVALID_RESOURCE", "Submitted resource is not valid.", OperationOutcome.IssueType.INVALID, "Invalid Address type: OLD");
+    }
+
     private void addPatientTelecom(Patient validPatient, ContactPoint.ContactPointSystem contactPointSystem, ContactPoint.ContactPointUse contactPointUse, String contactValue) {
         ContactPoint contactPoint = new ContactPoint();
         contactPoint.setSystem(contactPointSystem);
