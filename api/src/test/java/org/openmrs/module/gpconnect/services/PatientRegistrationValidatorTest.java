@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openmrs.module.gpconnect.util.Extensions;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
@@ -229,6 +230,50 @@ public class PatientRegistrationValidatorTest {
 
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> PatientRegistrationValidator.validate(validPatient, true), UnprocessableEntityException.class,
                 "INVALID_RESOURCE", "Submitted resource is not valid.", OperationOutcome.IssueType.INVALID, "Invalid Address type: OLD");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringPatientWithHomeOrTempAddresses() {
+        Arrays.asList(Address.AddressUse.HOME, Address.AddressUse.TEMP)
+                .forEach((addressUse -> {
+                    Address homeAddress = new Address();
+                    homeAddress.addLine("742 Evergreen Terrace");
+                    homeAddress.setUse(addressUse);
+                    homeAddress.setType(Address.AddressType.PHYSICAL);
+
+                    Address otherHomeAddress = new Address();
+                    otherHomeAddress.addLine("Old McDonald's Farm");
+                    otherHomeAddress.setUse(addressUse);
+                    otherHomeAddress.setType(Address.AddressType.PHYSICAL);
+
+                    validPatient.setAddress(Arrays.asList(homeAddress, otherHomeAddress));
+
+                    String diagnostics = String.format("Patient must only have one address of use type: %s", addressUse.name());
+                    assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> PatientRegistrationValidator.validate(validPatient, true), UnprocessableEntityException.class,
+                            "INVALID_RESOURCE", "Submitted resource is not valid.", OperationOutcome.IssueType.INVALID, diagnostics);
+                }));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringPatientWithMultipleHomeAndTempAddresses() {
+        Arrays.asList(Address.AddressUse.HOME, Address.AddressUse.TEMP)
+                .forEach((addressUse -> {
+                    Address address = new Address();
+                    address.addLine("742 Evergreen Terrace");
+                    address.setUse(addressUse);
+                    address.setType(Address.AddressType.PHYSICAL);
+
+                    Address otherAddress = new Address();
+                    otherAddress.addLine("Old McDonald's Farm");
+                    otherAddress.setUse(addressUse);
+                    otherAddress.setType(Address.AddressType.PHYSICAL);
+
+                    validPatient.addAddress(address);
+                    validPatient.addAddress(otherAddress);
+                }));
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> PatientRegistrationValidator.validate(validPatient, true), UnprocessableEntityException.class,
+                "INVALID_RESOURCE", "Submitted resource is not valid.", OperationOutcome.IssueType.INVALID, "Patient must only have one address of use type: HOME, TEMP");
     }
 
     private void addPatientTelecom(Patient validPatient, ContactPoint.ContactPointSystem contactPointSystem, ContactPoint.ContactPointUse contactPointUse, String contactValue) {

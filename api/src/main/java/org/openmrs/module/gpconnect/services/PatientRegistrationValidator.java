@@ -8,6 +8,7 @@ import org.openmrs.module.gpconnect.exceptions.GPConnectExceptions;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.openmrs.module.gpconnect.exceptions.GPConnectCoding.*;
 
@@ -99,6 +100,32 @@ public class PatientRegistrationValidator {
                 throw GPConnectExceptions.unprocessableEntityException(errorMessage.toString(), INVALID_RESOURCE);
             }
         }
+
+        checkNumberOfAddressUseOccurrences(patient.getAddress());
     }
+
+    private static void checkNumberOfAddressUseOccurrences(List<Address> addresses){
+        Map<Address.AddressUse, Long> addressFrequencyMap = addresses.stream().collect(Collectors.groupingBy(Address::getUse, Collectors.counting()));
+
+        Stream<Address.AddressUse> addressUseWithMaxOneEntry = Stream.of(Address.AddressUse.HOME, Address.AddressUse.TEMP);
+
+        List<Address.AddressUse> addressUsesWithTooManyEntries = addressUseWithMaxOneEntry
+                .filter(addressUse -> containsMoreThanOneUse(addressFrequencyMap, addressUse))
+                .collect(Collectors.toList());
+
+        if(addressUsesWithTooManyEntries.size() > 0){
+            String listOfOffendingAddressUses = addressUsesWithTooManyEntries
+                    .stream()
+                    .map(Enum::name)
+                    .collect(Collectors.joining(", "));
+            String errorMessage = String.format("Patient must only have one address of use type: %s", listOfOffendingAddressUses);
+            throw GPConnectExceptions.unprocessableEntityException(errorMessage, INVALID_RESOURCE);
+        }
+    }
+
+    private static boolean containsMoreThanOneUse(Map<Address.AddressUse, Long> addressFrequencyMap, Address.AddressUse addressUse) {
+        return addressFrequencyMap.get(addressUse) != null && addressFrequencyMap.get(addressUse) > 1;
+    }
+
 }
 
