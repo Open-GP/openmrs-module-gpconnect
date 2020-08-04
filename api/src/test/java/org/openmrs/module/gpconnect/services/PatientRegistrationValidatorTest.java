@@ -184,8 +184,19 @@ public class PatientRegistrationValidatorTest {
     }
 
     @Test
-    public void shouldThrowExceptionWhenRegisteringWithDeceased() {
+    public void shouldThrowExceptionWhenRegisteringWithDeceasedWithBoolean() {
         validPatient.setDeceased(new BooleanType(true));
+
+        assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> PatientRegistrationValidator.validate(validPatient, true), UnprocessableEntityException.class,
+                "INVALID_RESOURCE", "Submitted resource is not valid.", OperationOutcome.IssueType.INVALID, "Not allowed field: Deceased");
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenRegisteringWithDeceasedWithDate() {
+
+        DateTimeType dateTimeType = new DateTimeType();
+        dateTimeType.setValue(new Date());
+        validPatient.setDeceased(dateTimeType);
 
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> PatientRegistrationValidator.validate(validPatient, true), UnprocessableEntityException.class,
                 "INVALID_RESOURCE", "Submitted resource is not valid.", OperationOutcome.IssueType.INVALID, "Not allowed field: Deceased");

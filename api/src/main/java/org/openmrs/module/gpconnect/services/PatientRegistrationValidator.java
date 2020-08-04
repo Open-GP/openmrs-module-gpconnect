@@ -32,7 +32,7 @@ public class PatientRegistrationValidator {
                 add(new FieldValidator(dstu3Patient.hasPhoto(), "Photo"));
                 add(new FieldValidator(dstu3Patient.hasMultipleBirth(), "Multiple Births"));
                 add(new FieldValidator(dstu3Patient.hasMaritalStatus(), "Marital Status"));
-                add(new FieldValidator(dstu3Patient.hasDeceasedBooleanType(), "Deceased"));
+                add(new FieldValidator(dstu3Patient.hasDeceased(), "Deceased"));
                 add(new FieldValidator(dstu3Patient.hasActive(), "Active"));
                 add(new FieldValidator(dstu3Patient.hasContact(), "Contact"));
                 add(new FieldValidator(dstu3Patient.hasGeneralPractitioner(), "General Practitioner"));
