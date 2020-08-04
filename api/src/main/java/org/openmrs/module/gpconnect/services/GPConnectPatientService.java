@@ -85,9 +85,4 @@ public class GPConnectPatientService {
         Collection<org.openmrs.Patient> patients = fhirPatientDao.search(params, resultUuids);
         return patients;
     }
-
-    private boolean hasValidNames(Patient patient) {
-        Optional<HumanName> officialName = patient.getName().stream().filter(humanName -> humanName.getUse().equals(HumanName.NameUse.OFFICIAL)).findFirst();
-        return officialName.map(humanName -> (humanName.getFamily() != null) && (!humanName.getFamily().isEmpty())).orElse(false);
-    }
 }
