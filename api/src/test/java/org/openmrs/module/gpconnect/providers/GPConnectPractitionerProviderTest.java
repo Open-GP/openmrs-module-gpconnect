@@ -39,7 +39,7 @@ public class GPConnectPractitionerProviderTest {
     private static final String VALID_PRACTITIONER_SDS_ROLE_PROFILE_ID = "G22234567";
     private static final String ANOTHER_VALID_PRACTITIONER_SDS_USER_ID = "G13579135";
     private static final String VALID_SDS_USER_ID_IDENTIFIER_SYSTEM = "https://fhir.nhs.uk/Id/sds-user-id";
-    private static final String VALID_SDS_ROLE_PROFILE_ID_IDENTIFIER_SYSTEM = "https://fhir.nhs.uk/Id/sds-user-id";
+    private static final String VALID_SDS_ROLE_PROFILE_ID_IDENTIFIER_SYSTEM = "https://fhir.nhs.uk/Id/sds-role-profile-id";
 
     @Mock
     private FhirPractitionerService practitionerService;
