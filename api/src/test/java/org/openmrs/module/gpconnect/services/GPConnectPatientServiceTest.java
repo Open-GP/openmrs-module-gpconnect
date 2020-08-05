@@ -62,7 +62,7 @@ public class GPConnectPatientServiceTest {
         org.openmrs.Patient createdPatient = new org.openmrs.Patient();
         createdPatient.setPatientId(patientId);
 
-        when(fhirPatientDao.search(Matchers.any(), Matchers.any())).thenReturn(Collections.emptyList())
+        when(fhirPatientDao.getSearchResults(Matchers.any(), Matchers.any())).thenReturn(Collections.emptyList())
                 .thenReturn(Collections.singletonList(createdPatient));
 
         NhsPatient expectedNhsPatient = new NhsPatient();
@@ -74,7 +74,7 @@ public class GPConnectPatientServiceTest {
 
         ArgumentCaptor<SearchParameterMap> searchParameterMapArgumentCaptor = ArgumentCaptor
                 .forClass(SearchParameterMap.class);
-        verify(fhirPatientDao, Mockito.times(2)).search(searchParameterMapArgumentCaptor.capture(), Matchers.any());
+        verify(fhirPatientDao, Mockito.times(2)).getSearchResults(searchParameterMapArgumentCaptor.capture(), Matchers.any());
         SearchParameterMap value = searchParameterMapArgumentCaptor.getValue();
         TokenAndListParam tokenAndListParam = (TokenAndListParam) value.getParameters("identifier.search.handler")
                 .get(0).getParam();
@@ -94,7 +94,7 @@ public class GPConnectPatientServiceTest {
         org.openmrs.Patient createdPatient = new org.openmrs.Patient();
         createdPatient.setPatientId(patientId);
 
-        when(fhirPatientDao.search(Matchers.any(), Matchers.any())).thenReturn(Collections.emptyList())
+        when(fhirPatientDao.getSearchResults(Matchers.any(), Matchers.any())).thenReturn(Collections.emptyList())
                 .thenReturn(Collections.singletonList(createdPatient));
 
         NhsPatient expectedNhsPatient = new NhsPatient();
@@ -119,7 +119,7 @@ public class GPConnectPatientServiceTest {
     public void shouldThrowExceptionWhenRegisteringDuplicatePatient() {
         Patient patient = getValidGPConnectPatient(VALID_NHS_NUMBER);
 
-        when(fhirPatientDao.search(Matchers.any(), Matchers.any()))
+        when(fhirPatientDao.getSearchResults(Matchers.any(), Matchers.any()))
                 .thenReturn(Collections.singletonList(new org.openmrs.Patient()));
 
         assertThatGPConnectExceptionIsThrownWithCorrectOperationOutcome(() -> gpConnectPatientService.save(patient,true), ResourceVersionConflictException.class,
@@ -127,7 +127,7 @@ public class GPConnectPatientServiceTest {
 
         ArgumentCaptor<SearchParameterMap> searchParameterMapArgumentCaptor = ArgumentCaptor
                 .forClass(SearchParameterMap.class);
-        verify(fhirPatientDao).search(searchParameterMapArgumentCaptor.capture(), Matchers.any());
+        verify(fhirPatientDao).getSearchResults(searchParameterMapArgumentCaptor.capture(), Matchers.any());
         SearchParameterMap value = searchParameterMapArgumentCaptor.getValue();
         TokenAndListParam tokenAndListParam = (TokenAndListParam) value.getParameters("identifier.search.handler")
                 .get(0).getParam();

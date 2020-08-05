@@ -81,8 +81,8 @@ public class GPConnectPatientService {
 
         SearchParameterMap params = (new SearchParameterMap()).addParameter("identifier.search.handler", identifier);
 
-        List<String> resultUuids = fhirPatientDao.getResultUuids(params);
-        Collection<org.openmrs.Patient> patients = fhirPatientDao.search(params, resultUuids);
+        List<String> resultUuids = fhirPatientDao.getSearchResultUuids(params);
+        Collection<org.openmrs.Patient> patients = fhirPatientDao.getSearchResults(params, resultUuids);
         return patients;
     }
 }

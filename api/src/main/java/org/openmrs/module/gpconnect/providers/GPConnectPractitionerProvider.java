@@ -87,8 +87,7 @@ public class GPConnectPractitionerProvider extends PractitionerFhirResourceProvi
 		List<IBaseResource> resources = provider.getResources(0, 0);
 
 		List<IBaseResource> r3Practitioners = resources.stream()
-				.map(iBaseResource -> Practitioner30_40.convertPractitioner((org.hl7.fhir.r4.model.Practitioner) iBaseResource))
-				.map(this::addMeta)
+				.map(practitioner -> addMeta((Practitioner) practitioner))
 				.collect(Collectors.toList());
 
 		return BundleProviders.newList(r3Practitioners);

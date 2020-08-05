@@ -17,7 +17,7 @@ public class FhirOrganizationDaoImpl extends BaseFhirDao<OpenmrsOrganization> im
 	}
 	
 	@Override
-	protected void setSessionFactory(SessionFactory sessionFactory) {
+	public void setSessionFactory(SessionFactory sessionFactory) {
 		super.setSessionFactory(sessionFactory);
 	}
 }
