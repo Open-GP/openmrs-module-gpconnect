@@ -53,6 +53,8 @@ public class PractitionerTranslatorTest {
     private ProvenanceTranslator<Provider> provenanceTranslator;
     @Mock
     private ProviderService providerService;
+    @Mock
+    private SdsRoleProfileIdTranslator sdsRoleProfileIdTranslator;
 
     @InjectMocks
     private PractitionerTranslator practitionerTranslator;
@@ -61,6 +63,7 @@ public class PractitionerTranslatorTest {
     public void shouldReturnProviderWithNoSdsRoleProfileIdGivenPractitionerWithNoSdsRoleProfileId() {
         Practitioner practitioner = createPractitionerWithValidIdentifiers(0);
         when(providerService.getProviderAttributeTypeByUuid(any())).thenReturn(new ProviderAttributeType());
+        when(sdsRoleProfileIdTranslator.toOpenmrsType(any())).thenReturn(null);
 
         Provider actualProvider = practitionerTranslator.toOpenmrsType(practitioner);
         assertTrue(actualProvider.getAttributes().isEmpty());
@@ -70,6 +73,9 @@ public class PractitionerTranslatorTest {
     public void shouldReturnProviderWithOneSdsRoleProfileIdGivenPractitionerWithOneSdsRoleProfileId() {
         Practitioner practitioner = createPractitionerWithValidIdentifiers(1);
         when(providerService.getProviderAttributeTypeByUuid(any())).thenReturn(new ProviderAttributeType());
+        ProviderAttribute providerAttribute = new ProviderAttribute();
+        providerAttribute.setValueReferenceInternal(VALID_PRACTITIONER_ROLE_PROFILE_IDS.get(0));
+        when(sdsRoleProfileIdTranslator.toOpenmrsType(any())).thenReturn(providerAttribute);
 
         Provider actualProvider = practitionerTranslator.toOpenmrsType(practitioner);
 
@@ -86,6 +92,12 @@ public class PractitionerTranslatorTest {
     public void shouldReturnProviderWithTwoSdsRoleProfileIdsGivenPractitionerWithTwoSdsRoleProfileIds() {
         Practitioner practitioner = createPractitionerWithValidIdentifiers(2);
         when(providerService.getProviderAttributeTypeByUuid(any())).thenReturn(new ProviderAttributeType());
+        ProviderAttribute providerAttribute = new ProviderAttribute();
+        providerAttribute.setValueReferenceInternal(VALID_PRACTITIONER_ROLE_PROFILE_IDS.get(0));
+        when(sdsRoleProfileIdTranslator.toOpenmrsType(practitioner.getIdentifier().get(1))).thenReturn(providerAttribute);
+        ProviderAttribute providerAttribute2 = new ProviderAttribute();
+        providerAttribute2.setValueReferenceInternal(VALID_PRACTITIONER_ROLE_PROFILE_IDS.get(1));
+        when(sdsRoleProfileIdTranslator.toOpenmrsType(practitioner.getIdentifier().get(2))).thenReturn(providerAttribute2);
 
         Provider actualProvider = practitionerTranslator.toOpenmrsType(practitioner);
 
@@ -119,6 +131,12 @@ public class PractitionerTranslatorTest {
     public void shouldReturnPractitionerWithOneSdsRoleProfileIdGivenProviderWithOneSdsRoleProfileId() {
         Provider provider = createProvider(1);
 
+        Identifier identifier1 = new Identifier()
+                .setSystem(VALID_SDS_ROLE_PROFILE_ID_IDENTIFIER_SYSTEM)
+                .setValue(VALID_PRACTITIONER_ROLE_PROFILE_IDS.get(0));
+
+        when(sdsRoleProfileIdTranslator.toFhirResource(any())).thenReturn(identifier1);
+
         Practitioner actualPractitioner = practitionerTranslator.toFhirResource(provider);
 
         assertThat(actualPractitioner.getIdentifier().size(), equalTo(2));
@@ -136,6 +154,16 @@ public class PractitionerTranslatorTest {
     @Test
     public void shouldReturnPractitionerWithTwoSdsRoleProfileIdsGivenProviderWithTwoSdsRoleProfileIds() {
         Provider provider = createProvider(2);
+
+        Identifier identifier1 = new Identifier()
+                .setSystem(VALID_SDS_ROLE_PROFILE_ID_IDENTIFIER_SYSTEM)
+                .setValue(VALID_PRACTITIONER_ROLE_PROFILE_IDS.get(0));
+
+        Identifier identifier2 = new Identifier()
+                .setSystem(VALID_SDS_ROLE_PROFILE_ID_IDENTIFIER_SYSTEM)
+                .setValue(VALID_PRACTITIONER_ROLE_PROFILE_IDS.get(1));
+
+        when(sdsRoleProfileIdTranslator.toFhirResource(any())).thenReturn(identifier1, identifier2);
 
         Practitioner actualPractitioner = practitionerTranslator.toFhirResource(provider);
 
