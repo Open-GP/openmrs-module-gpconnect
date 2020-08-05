@@ -47,7 +47,7 @@ public class PatientRegistrationValidator {
         String nhsNumber = dstu3Patient.getIdentifier().get(0).getValue();
 
         ArrayList<FieldValidator> mandatoryFields = new ArrayList<FieldValidator>(){{
-            add(new FieldValidator( hasValidNhsNumber(nhsNumber), "NHS Number is invalid", INVALID_NHS_NUMBER));
+            add(new FieldValidator( NhsNumberValidator.validate(nhsNumber), "NHS Number is invalid", INVALID_NHS_NUMBER));
             add(new FieldValidator( dstu3Patient.hasBirthDate(), "Birth date is mandatory"));
             add(new FieldValidator( hasValidNames(dstu3Patient), "Patient must have an official name containing at least a family name"));
         }};
@@ -55,10 +55,6 @@ public class PatientRegistrationValidator {
             mandatoryFields.add(new FieldValidator( identifier.hasSystem(), "Identifier is missing System"));
         });
         mandatoryFields.forEach(FieldValidator::validateMandatoryField);
-    }
-
-    private static boolean hasValidNhsNumber(String nhsNumber) {
-        return nhsNumber.length() == 10;
     }
 
     private static boolean hasValidNames(Patient patient) {
