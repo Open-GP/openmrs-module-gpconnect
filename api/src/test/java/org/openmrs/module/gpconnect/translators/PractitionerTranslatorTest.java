@@ -52,8 +52,6 @@ public class PractitionerTranslatorTest {
     @Mock
     private ProvenanceTranslator<Provider> provenanceTranslator;
     @Mock
-    private ProviderService providerService;
-    @Mock
     private SdsRoleProfileIdTranslator sdsRoleProfileIdTranslator;
 
     @InjectMocks
@@ -62,7 +60,6 @@ public class PractitionerTranslatorTest {
     @Test
     public void shouldReturnProviderWithNoSdsRoleProfileIdGivenPractitionerWithNoSdsRoleProfileId() {
         Practitioner practitioner = createPractitionerWithValidIdentifiers(0);
-        when(providerService.getProviderAttributeTypeByUuid(any())).thenReturn(new ProviderAttributeType());
         when(sdsRoleProfileIdTranslator.toOpenmrsType(any())).thenReturn(null);
 
         Provider actualProvider = practitionerTranslator.toOpenmrsType(practitioner);
@@ -72,7 +69,6 @@ public class PractitionerTranslatorTest {
     @Test
     public void shouldReturnProviderWithOneSdsRoleProfileIdGivenPractitionerWithOneSdsRoleProfileId() {
         Practitioner practitioner = createPractitionerWithValidIdentifiers(1);
-        when(providerService.getProviderAttributeTypeByUuid(any())).thenReturn(new ProviderAttributeType());
         ProviderAttribute providerAttribute = new ProviderAttribute();
         providerAttribute.setValueReferenceInternal(VALID_PRACTITIONER_ROLE_PROFILE_IDS.get(0));
         when(sdsRoleProfileIdTranslator.toOpenmrsType(any())).thenReturn(providerAttribute);
@@ -91,7 +87,6 @@ public class PractitionerTranslatorTest {
     @Test
     public void shouldReturnProviderWithTwoSdsRoleProfileIdsGivenPractitionerWithTwoSdsRoleProfileIds() {
         Practitioner practitioner = createPractitionerWithValidIdentifiers(2);
-        when(providerService.getProviderAttributeTypeByUuid(any())).thenReturn(new ProviderAttributeType());
         ProviderAttribute providerAttribute = new ProviderAttribute();
         providerAttribute.setValueReferenceInternal(VALID_PRACTITIONER_ROLE_PROFILE_IDS.get(0));
         when(sdsRoleProfileIdTranslator.toOpenmrsType(practitioner.getIdentifier().get(1))).thenReturn(providerAttribute);
