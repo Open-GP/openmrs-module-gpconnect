@@ -156,5 +156,9 @@
       </insert>
    </changeSet>
 
+   <changeSet id="gpconnect-9" author="OpenGP">
+      <dropTable tableName="nhs_practitioner"/>
+   </changeSet>
+
 </databaseChangeLog>
 
