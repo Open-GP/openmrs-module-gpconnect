@@ -36,7 +36,7 @@ import org.openmrs.module.gpconnect.util.Extensions;
 @RunWith(MockitoJUnitRunner.class)
 public class GPConnectPatientServiceTest {
     private static final String INVALID_NHS_NUMBER = "123456789";
-    private static final String VALID_NHS_NUMBER = "1234567890";
+    private static final String VALID_NHS_NUMBER = "9658218865";
 
     @Mock
     private FhirPatientDao fhirPatientDao;
