@@ -22,6 +22,10 @@ public class PatientTranslator extends PatientTranslatorImpl {
 		} else {
 			currentPatient.setUuid(patient.getIdElement().getIdPart());
 		}
+		if (!patient.hasActive()) {
+			currentPatient.setVoided(false);
+			currentPatient.setVoidReason(null);
+		}
 		Set<PersonAttribute> oldAttributes = currentPatient.getAttributes();
 		currentPatient.setAttributes(new TreeSet<>());
 		for (PersonAttribute personAttribute : oldAttributes) {
