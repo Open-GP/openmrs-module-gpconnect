@@ -2,6 +2,9 @@ package org.openmrs.module.gpconnect.services;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -23,8 +26,13 @@ public class NhsNumberValidatorTest {
     }
 
     @Test
-    public void shouldShowAsValidStringsWithLengthOf10() {
-        assertTrue(NhsNumberValidator.validate("1234567890"));
+    public void shouldShowAsValidStringsWithLengthOf10AndCorrectCheckDigit() {
+        List<String> validNhsNumber = Arrays.asList("9658218865", "9658218873", "9658218881", "9658218903", "9658218997");
+
+        validNhsNumber.forEach( number -> {
+            assertTrue(NhsNumberValidator.validate(number));
+        });
     }
 
 }
+
