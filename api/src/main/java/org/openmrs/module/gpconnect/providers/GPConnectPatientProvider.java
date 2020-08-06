@@ -155,7 +155,7 @@ public class GPConnectPatientProvider extends PatientFhirResourceProvider {
 					String.format("One or both of the identifier system and value are missing from given identifier : %s", identifierTypeName + "|"), INVALID_PARAMETER);
 			}
 
-			if (patientService.getPatientIdentifierTypeByIdentifier(new Identifier().setSystem(identifierTypeName)) == null){
+			if (patientService.getPatientIdentifierTypeByIdentifier(new Identifier().setType(new org.hl7.fhir.r4.model.CodeableConcept().setText(identifierTypeName))) == null){
 				throw GPConnectExceptions.invalidRequestException(
 					String.format("The given identifier system code (%s) is not an expected code", identifierTypeName), INVALID_IDENTIFIER_SYSTEM);
 			}
