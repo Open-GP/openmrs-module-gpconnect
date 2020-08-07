@@ -1,7 +1,7 @@
 GPConnect module
 ================
 
-The aim of this module is to enhance the existing FHIR OpenMRS module to be GPConnect compatible - see more details about what GPConnect is [here](https://digital.nhs.uk/services/gp-connect). 
+The aim of this module is to enhance the existing FHIR OpenMRS module to be GPConnect compatible - see more details about what GPConnect is [here](https://digital.nhs.uk/services/gp-connect). Further resources can also be found [here](https://github.com/Open-GP/opengp-architecture/wiki/Resources)
 
 A high level specification of the API can be found here: https://digital.nhs.uk/services/gp-connect/gp-connect-specifications-for-developers. Technically speaking, GPConnect is a standard extending [FHIR STU3](https://www.hl7.org/fhir/stu3/) - to note that is **not** the latest version of the FHIR standard. 
 
