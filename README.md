@@ -52,6 +52,42 @@ Setup
     ```
     $ mvn test
     ```
+
+### Development cycle
+#### Development
+- Practising trunk-based development (using branches only for experiments and end of day work saving)
+- Using TDD as much as possible (note: there needs to be some work on improving testing coverage around integration between components)
+- Before pushing to master:
+   - Run all java tests
+   - Deploy OpenGP distro locally with the latest version of the GPConnect module
+   - Run focused feature tests from gpconnect-provider-testing - and make sure all that need to pass are passing
+
+#### QA checklist
+- Run all (unit + gpconnect-provider-testing) tests and check passing
+
+- Compare the feature file in FocusedTests with the main feature file to see what has been commented out, and if any of this can now be uncommented and fixed as part of the ticket or whether the approach needs discussing, are they known issues etc
+
+    - If there are cases that can be fixed as part of this ticket do this next
+
+- Check the app locally to check functionality against ACs
+
+    - Make sure the data in the DB is set up 
+
+- Look at the code itself to understand the quality of what is written (to get accustomed with the codebase)
+
+- Look at test coverage
+
+- Do some exploratory testing locally
+
+    * Try and break things
+
+    * Make sure you’re connected to the MySQL database (username and password in the dockers compose file)
+
+    * Can be used to reproduce a certain test case as in openMRS
+
+- Add any remaining test coverage eg. The high level HTTP req unit tests in the java module
+
+
   
 
 ### Running OpenGP with only GPConnect
