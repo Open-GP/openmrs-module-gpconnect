@@ -52,3 +52,28 @@ Setup
     ```
     $ mvn test
     ```
+  
+
+### Running OpenGP with only GPConnect
+
+Running the OpenGP distro takes 5+ mins making it hard to get quick feedback for changes to the GPConnect module. As an alternative, you could setup a bare version of OpenMRS with only the core and the GPConnect module (see the dev-server-distro.properties file)
+
+The following instruction will run the the OpenMRS server locally (not on Docker) and use a docker container for the MySQL database
+
+* Setting up the server: 
+```shell script
+./create.sh
+``` 
+Notes: this creates an OpenMRS server with the name `dev-server`; you will be asked to choose ports where it runs - use: `8081` and `1045` for debugging
+
+* Running the server:
+```shell script
+./run.sh
+```
+Notes: this compiles the GPConnect module and starts the dev-server with the new code
+
+* Setting up the test data:
+```shell script
+PASS=<password> ./setupData.sh
+```
+Notes: this assumes the port chosen in the setting up step is `8081` and that the gpconnect-provider-testing repo is at the same level as this repo

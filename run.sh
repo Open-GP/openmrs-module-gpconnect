@@ -1,0 +1,1 @@
+mvn clean install openmrs-sdk:run -DserverId=dev-server

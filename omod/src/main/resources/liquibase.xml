@@ -160,5 +160,21 @@
       <dropTable tableName="nhs_practitioner"/>
    </changeSet>
 
+   <changeSet id="gpconnect-10" author="gpconnect">
+      <preConditions>
+         <sqlCheck expectedResult="0">select count(*) from person_attribute_type where person_attribute_type.name='Telephone number'</sqlCheck>
+      </preConditions>
+      <insert tableName="person_attribute_type">
+         <column name="name" value="Telephone Number"/>
+         <column name="description" value="The telephone number for the person"/>
+         <column name="format" value="java.lang.String"/>
+         <column name="searchable" valueNumeric="0"/>
+         <column name="creator" valueNumeric="2"/>
+         <column name="retired" valueNumeric="0"/>
+         <column name="uuid" value="14d4f066-15f5-102d-96e4-000c29c2a5d7"/>
+         <column name="date_created" valueDate="${now}"/>
+      </insert>
+   </changeSet>
+
 </databaseChangeLog>
 
